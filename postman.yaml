@@ -1,0 +1,412 @@
+openapi: 3.0.0
+info:
+  title: GluonW
+  description: The GluonW OpenAPI 3.0.0 sepcification.
+  version: 1.3.0
+  license:
+    name: MIT License
+servers:
+  - url: 'http://localhost:9000/api/v1'
+    description: Server location (change url for production)
+tags:
+  - name: GluonW
+    description: Ergo GluonW (StableGold)
+  - name: Ergo
+    description: Ergo Blockchain
+paths:
+  /fission/{ergAmount}:
+    get:
+      tags:
+        - Fission
+      summary: Erg to SigGold and SigGoldRsv Rate
+      description: Get the rate for the fission Tx
+      operationId: fissionRate
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      responses:
+        '200':
+          description: Fission function to convert Erg to SigGold and SigGoldRsv
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Fission
+      summary: Erg to SigGold and SigGoldRsv Tx
+      description: Erg to SigGold and SigGoldRsv
+      operationId: fissionTx
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the fission tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /transmute/toRsv/{goldAmount}:
+    get:
+      tags:
+        - Transmute
+        - ToRsv
+      summary: SigGold to SigGoldRsv Rate
+      description: Get the rate for the SigGold to SigGoldRsv
+      operationId: transmuteToRsvRate
+      parameters:
+        - $ref: '#/components/parameters/GoldAmount'
+      responses:
+        '200':
+          description: Convert SigGold to SigGoldRsv Rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Transmute
+        - ToRsv
+      summary: SigGold to SigGoldRsv Tx
+      description: SigGold and SigGoldRsv Tx
+      operationId: transmuteToRsvTx
+      parameters:
+        - $ref: '#/components/parameters/GoldAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the SigGold to SigGoldRsv tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /transmute/toGold/{rsvAmount}:
+    get:
+      tags:
+        - Transmute
+        - ToGold
+      summary: SigGoldRsv to SigGold Rate
+      description: Get the rate for the SigGoldRsv to SigGold
+      operationId: transmuteToGoldRate
+      parameters:
+        - $ref: '#/components/parameters/RsvAmount'
+      responses:
+        '200':
+          description: Convert SigGoldRsv to SigGold Rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Transmute
+        - ToGold
+      summary: SigGoldRsv to SigGold Tx
+      description: SigGoldRsv and SigGold Tx
+      operationId: transmuteToGoldTx
+      parameters:
+        - $ref: '#/components/parameters/RsvAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the SigGoldRsv to SigGold tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /mint/gold/{ergAmount}:
+    get:
+      tags:
+        - Mint
+        - ToGold
+      summary: Erg to SigGold Rate
+      description: Get the rate for the Erg to SigGold
+      operationId: mintGoldRate
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      responses:
+        '200':
+          description: Convert Erg to SigGold Rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Mint
+        - ToGold
+      summary: Erg to SigGold Tx
+      description: Erg and SigGold Tx
+      operationId: mintGoldTx
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the Erg to SigGold tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /mint/rsv/{ergAmount}:
+    get:
+      tags:
+        - Mint
+        - ToRsv
+      summary: Erg to SigGoldRsv Rate
+      description: Get the rate for the Erg to SigGoldRsv
+      operationId: mintRsvRate
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      responses:
+        '200':
+          description: Convert Erg to SigGoldRsv Rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Mint
+        - ToRsv
+      summary: Erg to SigGoldRsv Tx
+      description: Erg and SigGoldRsv Tx
+      operationId: mintRsvTx
+      parameters:
+        - $ref: '#/components/parameters/ErgAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the Erg to SigGold tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /redeem/gold/{goldAmount}:
+    get:
+      tags:
+        - Redeem
+        - ToGold
+      summary: SigGold to Erg Rate
+      description: Get the rate for the SigGold to Erg
+      operationId: redeemGoldRate
+      parameters:
+        - $ref: '#/components/parameters/GoldAmount'
+      responses:
+        '200':
+          description: Convert SigGold to Erg rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Redeem
+        - ToGold
+      summary: Redeem SigGold to Erg
+      description: Redeem SigGold to Erg Tx
+      operationId: mintRsvTx
+      parameters:
+        - $ref: '#/components/parameters/GoldAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the redemption of SigGold to Erg tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+  /redeem/rsv/{rsvAmount}:
+    get:
+      tags:
+        - Redeem
+        - ToRsv
+      summary: SigGoldRsv to Erg Rate
+      description: Get the rate for the SigGoldRsv to Erg
+      operationId: redeemGoldRate
+      parameters:
+        - $ref: '#/components/parameters/RsvAmount'
+      responses:
+        '200':
+          description: Convert SigGoldRsv to Erg rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+    put:
+      tags:
+        - Redeem
+        - ToRsv
+      summary: Redeem SigGoldRsv to Erg
+      description: Redeem SigGoldRsv to Erg Tx
+      operationId: mintRsvTx
+      parameters:
+        - $ref: '#/components/parameters/RsvAmount'
+      requestBody:
+        $ref: '#/components/requestBodies/WalletAddress'
+      responses:
+        '200':
+          description: ErgoPayResponse for the redemption of SigGoldRsv to Erg tx.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErgoPayResponse'
+        '400':
+          description: Invalid request data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorApiResponse'
+components:
+  schemas:
+    WalletAddress:
+      type: string
+    ErgoPayResponse:
+      type: object
+      properties:
+        reducedTxBytes:
+          type: string
+        address:
+          type: string
+        message:
+          type: string
+        messageSeverity:
+          type: string
+    ErrorApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+  parameters:
+    ErgAmount:
+      name: ergAmount
+      in: path
+      required: true
+      description: Amount of Ergs to trade
+      schema:
+        $ref: '#/components/schemas/ErgAmount'
+    GoldAmount:
+      name: goldAmount
+      in: path
+      required: true
+      description: Amount of gold to trade
+      schema:
+        $ref: '#/components/schemas/GoldAmount'
+    RsvAmount:
+      name: rsvAmount
+      in: path
+      required: true
+      description: Amount of rsv to trade
+      schema:
+        $ref: '#/components/schemas/RsvAmount'
+    WalletAddress:
+      name: walletAddress
+      in: path
+      required: true
+      description: The PK address of the user requesting the tx
+      schema:
+        $ref: '#/components/schemas/WalletAddress'
+  requestBodies:
+    WalletAddress:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WalletAddress'
+      description: Body with wallet address
+      required: true
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: api_key
+      in: header
+security:
+  - ApiKeyAuth: []

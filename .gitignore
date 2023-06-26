@@ -1,0 +1,33 @@
+logs
+ergo_config.json
+/.bsp
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
+logfile
+*.log
+.DS_Store
+
+# targets
+**/target
+
+# env
+.env
+config.env
+
+# DB Stuff
+data
+
+# metals
+project/.bloop
+project/project
+project/target
+project/metals.sbt
+.metals
+.bloop
+
+# vs code
+.vscode

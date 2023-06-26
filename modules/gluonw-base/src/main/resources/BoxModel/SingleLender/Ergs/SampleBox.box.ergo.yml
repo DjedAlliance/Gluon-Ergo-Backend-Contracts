@@ -1,0 +1,52 @@
+# ================ Box Info ================= #
+# Name      : SLE [Single Lender Ergs] Lend Box
+# Type      : Box
+# Author    : Kii
+# Version   : v 1.0
+
+box:
+  sle_lend_box:
+    registers:
+      r0:
+        type: "erg value"
+        value: "loan value"
+      r1:
+        type: "guardscript"
+      r2:
+        type: "token"
+        values:
+          - lendToken = 1
+      r3:
+        type: "creation info"
+      r4:
+        name: "funding info register"
+        type: "Coll[Long]"
+        values:
+          - fundingGoal
+          - deadlineHeight
+          - interestRatePercent
+          - repaymentHeightLength
+          - creationHeight
+      r5:
+        name: "lending project details register"
+        type: "Coll[Coll[Byte]]"
+        values:
+          - projectName
+          - description
+      r6:
+        name: "borrower register"
+        type: "Coll[Byte]"
+        values:
+          - borrowerPk
+      r7:
+        name: "single lender register"
+        type: "Coll[Byte]"
+        values:
+          - lenderPk
+    action_conditions:
+      - initialization
+      - not_funded:
+        - fund
+        - refund
+      - funded:
+        - convert_to_repayment
