@@ -7,11 +7,9 @@
 GET /api/v1/fission/:ergAmount                         controllers.GluonWController.fissionRate(ergAmount: Long)
 PUT /api/v1/fission/:ergAmount                         controllers.GluonWController.fission(ergAmount: Long)
 
-PUT /api/v1/fusion                                     controllers.GluonWController.fusion()
-
 GET /api/v1/transmute/toRsv/:goldAmount                controllers.GluonWController.transmuteSigGoldToSigGoldRsvRate(goldAmount: Long)
 PUT /api/v1/transmute/toRsv/:goldAmount                controllers.GluonWController.transmuteSigGoldToSigGoldRsv(goldAmount: Long)
-GET /api/v1/transmute/toGold/:rsvAmount                controllers.GluonWController.transmuteSigGoldRsvToSigGold(rsvAmount: Long)
+GET /api/v1/transmute/toGold/:rsvAmount                controllers.GluonWController.transmuteSigGoldRsvToSigGoldRate(rsvAmount: Long)
 PUT /api/v1/transmute/toGold/:rsvAmount                controllers.GluonWController.transmuteSigGoldRsvToSigGold(rsvAmount: Long)
 
 GET /api/v1/mint/gold/:ergAmount                       controllers.GluonWController.mintSigGoldRate(ergAmount: Long)

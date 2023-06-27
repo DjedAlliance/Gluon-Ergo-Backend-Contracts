@@ -1,13 +1,6 @@
 package commons.boxes
 
-import org.ergoplatform.ErgoAddress
-import org.ergoplatform.appkit.{
-  Address,
-  BlockchainContext,
-  ErgoContract,
-  OutBox,
-  UnsignedTransactionBuilder
-}
+import org.ergoplatform.appkit.{BlockchainContext, ErgoContract}
 import scorex.crypto.hash.Digest32
 
 trait Box
