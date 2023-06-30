@@ -50,5 +50,5 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
 
 abstract class IGluonWBoxExplorer extends Explorer(nodeInfo = MainNodeInfo()) {
   def getGluonWBox: GluonWBox
-  def getOracleBox: GoldOracleBox
+  def getGoldOracleBox: GoldOracleBox
 }
