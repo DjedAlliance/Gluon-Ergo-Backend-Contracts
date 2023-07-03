@@ -13,8 +13,7 @@ case class FissionTx(
   ergToExchange: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext,
-  implicit val algorithm: TGluonWAlgorithm)
+)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
     extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -35,9 +34,7 @@ case class FusionTx(
   ergToRetrieve: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext,
-  implicit val algorithm: TGluonWAlgorithm
-)
+)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
     extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -61,8 +58,7 @@ case class BetaDecayPlusTx(
   goldToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext,
-  implicit val algorithm: TGluonWAlgorithm)
+)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
     extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -86,8 +82,7 @@ case class BetaDecayMinusTx(
   goldToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext,
-  implicit val algorithm: TGluonWAlgorithm)
+)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
     extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {

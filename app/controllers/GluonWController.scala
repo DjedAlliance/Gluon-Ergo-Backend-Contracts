@@ -196,7 +196,11 @@ class GluonWController @Inject() (
     */
   override def fissionRate(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.fissionRate(ergAmount).toJson).as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW.fissionRate(ergAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 
   /**
@@ -220,8 +224,13 @@ class GluonWController @Inject() (
   override def transmuteSigGoldToSigGoldRsvRate(
     goldAmount: Long
   ): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Ok(gluonW.transmuteSigGoldToSigGoldRsvRate(goldAmount).toJson)
-      .as("application/json")
+    Ok(
+      Json.fromValues(
+        gluonW
+          .transmuteSigGoldToSigGoldRsvRate(goldAmount)
+          .map(rate => rate.toJson)
+      )
+    ).as("application/json")
   }
 
   /**
@@ -246,8 +255,13 @@ class GluonWController @Inject() (
     rsvAmount: Long
   ): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.transmuteSigGoldRsvToSigGoldRate(rsvAmount).toJson)
-        .as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW
+            .transmuteSigGoldRsvToSigGoldRate(rsvAmount)
+            .map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 
   /**
@@ -269,7 +283,11 @@ class GluonWController @Inject() (
     */
   override def mintSigGoldRate(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.mintSigGoldRate(ergAmount).toJson).as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW.mintSigGoldRate(ergAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 
   /**
@@ -292,7 +310,11 @@ class GluonWController @Inject() (
     */
   override def redeemSigGoldRate(goldAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.redeemSigGoldRate(goldAmount).toJson).as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW.redeemSigGoldRate(goldAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 
   /**
@@ -315,7 +337,11 @@ class GluonWController @Inject() (
     */
   override def mintSigGoldRsvRate(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.mintSigGoldRsvRate(ergAmount).toJson).as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW.mintSigGoldRsvRate(ergAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 
   /**
@@ -338,6 +364,10 @@ class GluonWController @Inject() (
     */
   override def redeemSigGoldRsvRate(rsvAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonW.redeemSigGoldRsvRate(rsvAmount).toJson).as("application/json")
+      Ok(
+        Json.fromValues(
+          gluonW.redeemSigGoldRsvRate(rsvAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
     }
 }
