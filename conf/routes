@@ -5,21 +5,21 @@
 # https://www.playframework.com/documentation/latest/ScalaRouting
 
 GET /api/v1/gold/price                                  controllers.GluonWController.goldPrice()
-GET /api/v1/rsv/price                                  controllers.GluonWController.rsvPrice()
-GET /api/v1/fission/:ergAmount                          controllers.GluonWController.fissionRate(ergAmount: Long)
+GET /api/v1/rsv/price                                   controllers.GluonWController.rsvPrice()
+GET /api/v1/fission/:ergAmount                          controllers.GluonWController.fissionPrice(ergAmount: Long)
 PUT /api/v1/fission/:ergAmount                          controllers.GluonWController.fission(ergAmount: Long)
 
-GET /api/v1/transmute/toRsv/:goldAmount                 controllers.GluonWController.transmuteSigGoldToSigGoldRsvRate(goldAmount: Long)
+GET /api/v1/transmute/toRsv/:goldAmount                 controllers.GluonWController.transmuteSigGoldToSigGoldRsvPrice(goldAmount: Long)
 PUT /api/v1/transmute/toRsv/:goldAmount                 controllers.GluonWController.transmuteSigGoldToSigGoldRsv(goldAmount: Long)
-GET /api/v1/transmute/toGold/:rsvAmount                 controllers.GluonWController.transmuteSigGoldRsvToSigGoldRate(rsvAmount: Long)
+GET /api/v1/transmute/toGold/:rsvAmount                 controllers.GluonWController.transmuteSigGoldRsvToSigGoldPrice(rsvAmount: Long)
 PUT /api/v1/transmute/toGold/:rsvAmount                 controllers.GluonWController.transmuteSigGoldRsvToSigGold(rsvAmount: Long)
 
-GET /api/v1/mint/gold/:ergAmount                        controllers.GluonWController.mintSigGoldRate(ergAmount: Long)
+GET /api/v1/mint/gold/:ergAmount                        controllers.GluonWController.mintSigGoldPrice(ergAmount: Long)
 PUT /api/v1/mint/gold/:ergAmount                        controllers.GluonWController.mintSigGold(ergAmount: Long)
-GET /api/v1/mint/rsv/:ergAmount                         controllers.GluonWController.mintSigGoldRsvRate(ergAmount: Long)
+GET /api/v1/mint/rsv/:ergAmount                         controllers.GluonWController.mintSigGoldRsvPrice(ergAmount: Long)
 PUT /api/v1/mint/rsv/:ergAmount                         controllers.GluonWController.mintSigGoldRsv(ergAmount: Long)
 
-GET /api/v1/redeem/gold/:goldAmount                     controllers.GluonWController.redeemSigGoldRate(goldAmount: Long)
+GET /api/v1/redeem/gold/:goldAmount                     controllers.GluonWController.redeemSigGoldPrice(goldAmount: Long)
 PUT /api/v1/redeem/gold/:goldAmount                     controllers.GluonWController.redeemSigGold(goldAmount: Long)
-GET /api/v1/redeem/rsv/:rsvAmount                       controllers.GluonWController.redeemSigGoldRsvRate(rsvAmount: Long)
+GET /api/v1/redeem/rsv/:rsvAmount                       controllers.GluonWController.redeemSigGoldRsvPrice(rsvAmount: Long)
 PUT /api/v1/redeem/rsv/:rsvAmount                       controllers.GluonWController.redeemSigGoldRsv(rsvAmount: Long)

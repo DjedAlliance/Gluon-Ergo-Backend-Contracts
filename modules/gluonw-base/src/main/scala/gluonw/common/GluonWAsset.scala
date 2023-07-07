@@ -14,13 +14,19 @@ object GluonWTokens extends TGluonWTokens {
   override val sigGoldRsvId: ErgoId =
     ErgoId.create(GluonWTokenConfig.sigGoldRsv)
 
+  def getId(asset: String): ErgoId =
+    asset match {
+      case "SIGGOLD" =>
+        GluonWTokens.sigGoldId
+      case "SIGGOLDRSV" =>
+        GluonWTokens.sigGoldRsvId
+    }
+
   def get(asset: String, amount: Long): ErgoToken =
     asset match {
-      case GluonWAsset.SIGGOLD.toString =>
+      case "SIGGOLD" =>
         new ErgoToken(GluonWTokens.sigGoldId, amount)
-      case GluonWAsset.SIGGOLDRSV.toString =>
+      case "SIGGOLDRSV" =>
         new ErgoToken(GluonWTokens.sigGoldRsvId, amount)
-      // @todo kii: Should throw Token does not exists
-      case _ => throw Throwable
     }
 }

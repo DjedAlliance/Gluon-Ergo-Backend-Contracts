@@ -39,11 +39,11 @@ trait TGluonWController {
   def fission(ergAmount: Long): Action[Json]
 
   /**
-    * Erg to SigGold and SigGoldRsv Rate
+    * Erg to SigGold and SigGoldRsv Price
     * @param ergAmount the amount of erg to be converted
     * @return
     */
-  def fissionRate(ergAmount: Long): Action[AnyContent]
+  def fissionPrice(ergAmount: Long): Action[AnyContent]
 
   /**
     * SigGold to Rsv
@@ -57,7 +57,7 @@ trait TGluonWController {
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  def transmuteSigGoldToSigGoldRsvRate(goldAmount: Long): Action[AnyContent]
+  def transmuteSigGoldToSigGoldRsvPrice(goldAmount: Long): Action[AnyContent]
 
   /**
     * SigGoldRsv to SigGold
@@ -71,7 +71,7 @@ trait TGluonWController {
     * @param rsvAmount the amount of SigGoldRsv to be converted
     * @return
     */
-  def transmuteSigGoldRsvToSigGoldRate(rsvAmount: Long): Action[AnyContent]
+  def transmuteSigGoldRsvToSigGoldPrice(rsvAmount: Long): Action[AnyContent]
 
   /**
     * Mint SigGold
@@ -85,7 +85,7 @@ trait TGluonWController {
     * @param ergAmount the Erg amount to convert to SigGold
     * @return
     */
-  def mintSigGoldRate(ergAmount: Long): Action[AnyContent]
+  def mintSigGoldPrice(ergAmount: Long): Action[AnyContent]
 
   /**
     * Redeem SigGold for Erg
@@ -99,7 +99,7 @@ trait TGluonWController {
     * @param goldAmount the amount of SigGold to be redeemed
     * @return
     */
-  def redeemSigGoldRate(goldAmount: Long): Action[AnyContent]
+  def redeemSigGoldPrice(goldAmount: Long): Action[AnyContent]
 
   /**
     * Mint SigGoldRsv
@@ -113,7 +113,7 @@ trait TGluonWController {
     * @param ergAmount the Erg amount to convert to SigGoldRsv
     * @return
     */
-  def mintSigGoldRsvRate(ergAmount: Long): Action[AnyContent]
+  def mintSigGoldRsvPrice(ergAmount: Long): Action[AnyContent]
 
   /**
     * Redeem SigGoldRsv for Erg
@@ -127,7 +127,7 @@ trait TGluonWController {
     * @param rsvAmount the amount of SigGoldRsv to be redeemed
     * @return
     */
-  def redeemSigGoldRsvRate(rsvAmount: Long): Action[AnyContent]
+  def redeemSigGoldRsvPrice(rsvAmount: Long): Action[AnyContent]
 }
 
 class GluonWController @Inject() (
@@ -162,14 +162,14 @@ class GluonWController @Inject() (
 
   override def goldPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonWBoxExplorer.getGoldOracleBox.getGoldRate.toJson)
+      Ok(gluonWBoxExplorer.getGoldOracleBox.getGoldPrice.toJson)
         .as("application/json")
     }
 
   override def rsvPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
-        gluonWBoxExplorer.getGluonWBox.getRsvRate.toJson
+        gluonWBoxExplorer.getGluonWBox.getRsvPrice.toJson
       ).as("application/json")
     }
 
@@ -189,16 +189,16 @@ class GluonWController @Inject() (
     }
 
   /**
-    * Erg to SigGold and SigGoldRsv Rate
+    * Erg to SigGold and SigGoldRsv Price
     *
     * @param ergAmount the amount of erg to be converted
     * @return
     */
-  override def fissionRate(ergAmount: Long): Action[AnyContent] =
+  override def fissionPrice(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.fissionRate(ergAmount).map(rate => rate.toJson)
+          gluonW.fissionPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
@@ -221,13 +221,13 @@ class GluonWController @Inject() (
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  override def transmuteSigGoldToSigGoldRsvRate(
+  override def transmuteSigGoldToSigGoldRsvPrice(
     goldAmount: Long
   ): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(
       Json.fromValues(
         gluonW
-          .transmuteSigGoldToSigGoldRsvRate(goldAmount)
+          .transmuteSigGoldToSigGoldRsvPrice(goldAmount)
           .map(rate => rate.toJson)
       )
     ).as("application/json")
@@ -251,14 +251,14 @@ class GluonWController @Inject() (
     * @param rsvAmount the amount of SigGoldRsv to be converted
     * @return
     */
-  override def transmuteSigGoldRsvToSigGoldRate(
+  override def transmuteSigGoldRsvToSigGoldPrice(
     rsvAmount: Long
   ): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
           gluonW
-            .transmuteSigGoldRsvToSigGoldRate(rsvAmount)
+            .transmuteSigGoldRsvToSigGoldPrice(rsvAmount)
             .map(rate => rate.toJson)
         )
       ).as("application/json")
@@ -281,11 +281,11 @@ class GluonWController @Inject() (
     * @param ergAmount the Erg amount to convert to SigGold
     * @return
     */
-  override def mintSigGoldRate(ergAmount: Long): Action[AnyContent] =
+  override def mintSigGoldPrice(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.mintSigGoldRate(ergAmount).map(rate => rate.toJson)
+          gluonW.mintSigGoldPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
@@ -308,11 +308,11 @@ class GluonWController @Inject() (
     * @param goldAmount the amount of SigGold to be redeemed
     * @return
     */
-  override def redeemSigGoldRate(goldAmount: Long): Action[AnyContent] =
+  override def redeemSigGoldPrice(goldAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemSigGoldRate(goldAmount).map(rate => rate.toJson)
+          gluonW.redeemSigGoldPrice(goldAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
@@ -335,11 +335,11 @@ class GluonWController @Inject() (
     * @param ergAmount the Erg amount to convert to SigGoldRsv
     * @return
     */
-  override def mintSigGoldRsvRate(ergAmount: Long): Action[AnyContent] =
+  override def mintSigGoldRsvPrice(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.mintSigGoldRsvRate(ergAmount).map(rate => rate.toJson)
+          gluonW.mintSigGoldRsvPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
@@ -362,11 +362,11 @@ class GluonWController @Inject() (
     * @param rsvAmount the amount of SigGoldRsv to be redeemed
     * @return
     */
-  override def redeemSigGoldRsvRate(rsvAmount: Long): Action[AnyContent] =
+  override def redeemSigGoldRsvPrice(rsvAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemSigGoldRsvRate(rsvAmount).map(rate => rate.toJson)
+          gluonW.redeemSigGoldRsvPrice(rsvAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }

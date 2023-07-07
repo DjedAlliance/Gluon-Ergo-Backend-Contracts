@@ -2,48 +2,33 @@ package gluonw.common
 
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import io.circe.Json
+import org.ergoplatform.appkit.ErgoId
 
-trait TAssetRate {
+/**
+  * AssetPrice
+  * Gives the price of the asset
+  */
+trait TAssetPrice {
   val name: String
-  val rate: Long
+  val id: ErgoId
+  val price: Long
 
   def toJson: Json =
     Json.fromFields(
       List(
         ("assetName", Json.fromString(name)),
-        ("rate", Json.fromLong(rate))
+        ("id", Json.fromString(id.toString)),
+        ("price", Json.fromLong(price))
       )
     )
 }
 
-case class AssetRate(name: String, rate: Long) extends TAssetRate
-
-object AssetRate {
-
-  def consolidate(assetRates: Seq[AssetRate]): Seq[AssetRate] = {
-    val assetRatesByName: Map[String, Seq[AssetRate]] =
-      assetRates.groupBy(_.name)
-    val consolidatedAssets: Seq[AssetRate] = assetRatesByName.map {
-      case (name, rates) =>
-        // Consolidate Value
-        val assetValue: Long = rates.foldLeft(0L) {
-          (acc: Long, rate: AssetRate) => acc + rate.rate
-        }
-
-        AssetRate(
-          name = name,
-          rate = assetValue
-        )
-    }.toSeq
-
-    consolidatedAssets
-  }
-}
+case class AssetPrice(name: String, price: Long, id: ErgoId) extends TAssetPrice
 
 /**
   * Algorithm and rates
   *
-  * Note regarding Rates:
+  * Note regarding Prices:
   * When getting rate, we will get rate for both
   */
 trait TGluonWAlgorithm {
@@ -53,29 +38,29 @@ trait TGluonWAlgorithm {
   def betaDecayPlus(inputGluonWBox: GluonWBox, goldAmount: Long): GluonWBox
   def betaDecayMinus(inputGluonWBox: GluonWBox, rsvAmount: Long): GluonWBox
 
-  def calculateFissionRate(
+  def calculateFissionPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergAmount: Long
-  ): (GluonWBox, Seq[AssetRate])
+  ): (GluonWBox, Seq[AssetPrice])
 
-  def calculateFusionRate(
+  def calculateFusionPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergRedeemed: Long
-  ): (GluonWBox, Seq[AssetRate])
+  ): (GluonWBox, Seq[AssetPrice])
 
-  def calculateBetaDecayPlusRate(
+  def calculateBetaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     goldAmount: Long
-  ): (GluonWBox, Seq[AssetRate])
+  ): (GluonWBox, Seq[AssetPrice])
 
-  def calculateBetaDecayMinusRate(
+  def calculateBetaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     rsvAmount: Long
-  ): (GluonWBox, Seq[AssetRate])
+  ): (GluonWBox, Seq[AssetPrice])
 }
 
 object GluonWAlgorithm extends TGluonWAlgorithm {
@@ -96,27 +81,27 @@ object GluonWAlgorithm extends TGluonWAlgorithm {
     rsvAmount: Long
   ): GluonWBox = ???
 
-  override def calculateFissionRate(
+  override def calculateFissionPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergAmount: Long
-  ): (GluonWBox, Seq[AssetRate]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = ???
 
-  override def calculateFusionRate(
+  override def calculateFusionPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergRedeemed: Long
-  ): (GluonWBox, Seq[AssetRate]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = ???
 
-  override def calculateBetaDecayPlusRate(
+  override def calculateBetaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     goldAmount: Long
-  ): (GluonWBox, Seq[AssetRate]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = ???
 
-  override def calculateBetaDecayMinusRate(
+  override def calculateBetaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     rsvAmount: Long
-  ): (GluonWBox, Seq[AssetRate]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = ???
 }

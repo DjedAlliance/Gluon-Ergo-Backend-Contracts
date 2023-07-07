@@ -24,12 +24,12 @@ trait TGluonW {
   def fission(ergAmount: Long, walletAddress: Address): Seq[Tx]
 
   /**
-    * Fission Rate
+    * Fission Price
     * Gets the rate for the Fission Tx
     * @param ergAmount Amount of Erg to be transacted
     * @return
     */
-  def fissionRate(ergAmount: Long): Seq[AssetRate]
+  def fissionPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
     * Transmute SigGold to SigGoldRsv
@@ -44,12 +44,12 @@ trait TGluonW {
   ): Seq[Tx]
 
   /**
-    * Transmute SigGold to SigGoldRsv Rate
+    * Transmute SigGold to SigGoldRsv Price
     * Beta Decay Plus Tx
     * @param goldAmount Amount of SigGold to be transacted
     * @return
     */
-  def transmuteSigGoldToSigGoldRsvRate(goldAmount: Long): Seq[AssetRate]
+  def transmuteSigGoldToSigGoldRsvPrice(goldAmount: Long): Seq[AssetPrice]
 
   /**
     * Transmute SigGoldRsv to SigGoldRsv
@@ -64,12 +64,12 @@ trait TGluonW {
   ): Seq[Tx]
 
   /**
-    * Transmute SigGoldRsv to SigGold Rate
+    * Transmute SigGoldRsv to SigGold Price
     * Beta Decay Plus Tx
     * @param rsvAmount Amount of SigGoldRsv to be transacted
     * @return
     */
-  def transmuteSigGoldRsvToSigGoldRate(rsvAmount: Long): Seq[AssetRate]
+  def transmuteSigGoldRsvToSigGoldPrice(rsvAmount: Long): Seq[AssetPrice]
 
   /**
     * Redeem SigGold to Erg
@@ -84,7 +84,7 @@ trait TGluonW {
     * @param goldAmount Amount of SigGold to be redeemed
     * @return
     */
-  def redeemSigGoldRate(goldAmount: Long): Seq[AssetRate]
+  def redeemSigGoldPrice(goldAmount: Long): Seq[AssetPrice]
 
   /**
     * Redeem SigGoldRsv to Erg rate
@@ -99,7 +99,7 @@ trait TGluonW {
     * @param rsvAmount Amount of SigGoldRsv to be redeemed
     * @return
     */
-  def redeemSigGoldRsvRate(rsvAmount: Long): Seq[AssetRate]
+  def redeemSigGoldRsvPrice(rsvAmount: Long): Seq[AssetPrice]
 
   /**
     * Mint SigGold with Erg
@@ -114,7 +114,7 @@ trait TGluonW {
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  def mintSigGoldRate(ergAmount: Long): Seq[AssetRate]
+  def mintSigGoldPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
     * Mint SigGoldRsv with Erg
@@ -129,7 +129,7 @@ trait TGluonW {
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  def mintSigGoldRsvRate(ergAmount: Long): Seq[AssetRate]
+  def mintSigGoldRsvPrice(ergAmount: Long): Seq[AssetPrice]
 }
 
 trait TxConverter {
@@ -154,48 +154,48 @@ class GluonW @Inject() (
 ) extends TGluonW {
   val algorithm: TGluonWAlgorithm = GluonWAlgorithm
 
-  def getRateFromAlgorithm(
+  def getPriceFromAlgorithm(
     assetAmount: Long,
     algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
       GluonWBox,
-      Seq[AssetRate]
+      Seq[AssetPrice]
     )
-  ): Seq[AssetRate] = {
+  ): Seq[AssetPrice] = {
     // 1. Get the Latest GluonWBox
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
-    getRateAndGluonWBoxFromAlgorithmWithGluonWBox(
+    getPriceAndGluonWBoxFromAlgorithmWithGluonWBox(
       assetAmount,
       gluonWBox,
       algorithmFunc
     )._2
   }
 
-  def getRateAndGluonWBoxFromAlgorithm(
+  def getPriceAndGluonWBoxFromAlgorithm(
     assetAmount: Long,
     algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
       GluonWBox,
-      Seq[AssetRate]
+      Seq[AssetPrice]
     )
-  ): (GluonWBox, Seq[AssetRate]) = {
+  ): (GluonWBox, Seq[AssetPrice]) = {
     // 1. Get the Latest GluonWBox
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
-    getRateAndGluonWBoxFromAlgorithmWithGluonWBox(
+    getPriceAndGluonWBoxFromAlgorithmWithGluonWBox(
       assetAmount,
       gluonWBox,
       algorithmFunc
     )
   }
 
-  def getRateAndGluonWBoxFromAlgorithmWithGluonWBox(
+  def getPriceAndGluonWBoxFromAlgorithmWithGluonWBox(
     assetAmount: Long,
     gluonWBox: GluonWBox,
     algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
       GluonWBox,
-      Seq[AssetRate]
+      Seq[AssetPrice]
     )
-  ): (GluonWBox, Seq[AssetRate]) = {
+  ): (GluonWBox, Seq[AssetPrice]) = {
     // 1. Get the Oracle Box
     val goldOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
 
@@ -236,15 +236,15 @@ class GluonW @Inject() (
     }
 
   /**
-    * Fission Rate
+    * Fission Price
     * Gets the rate for the Fission Tx
     *
     * @param ergAmount Amount of Erg to be transacted
-    * @return SigGold AssetRate and SigGoldRsv AssetRate
+    * @return SigGold AssetPrice and SigGoldRsv AssetPrice
     */
-  override def fissionRate(ergAmount: Long): Seq[AssetRate] =
+  override def fissionPrice(ergAmount: Long): Seq[AssetPrice] =
     // Use Algorithm to calculate Fission rate
-    getRateFromAlgorithm(ergAmount, algorithm.calculateFissionRate)
+    getPriceFromAlgorithm(ergAmount, algorithm.calculateFissionPrice)
 
   /**
     * Transmute SigGold to SigGoldRsv
@@ -288,17 +288,17 @@ class GluonW @Inject() (
     }
 
   /**
-    * Transmute SigGold to SigGoldRsv Rate
+    * Transmute SigGold to SigGoldRsv Price
     * Beta Decay Plus Tx
     *
     * @param goldAmount Amount of SigGold to be transacted
-    * @return AssetRate of SigGoldRsv
+    * @return AssetPrice of SigGoldRsv
     */
-  override def transmuteSigGoldToSigGoldRsvRate(
+  override def transmuteSigGoldToSigGoldRsvPrice(
     goldAmount: Long
-  ): Seq[AssetRate] =
+  ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayPlus rate
-    getRateFromAlgorithm(goldAmount, algorithm.calculateBetaDecayPlusRate)
+    getPriceFromAlgorithm(goldAmount, algorithm.calculateBetaDecayPlusPrice)
 
   /**
     * Transmute SigGoldRsv to SigGoldRsv
@@ -341,17 +341,17 @@ class GluonW @Inject() (
     }
 
   /**
-    * Transmute SigGoldRsv to SigGold Rate
+    * Transmute SigGoldRsv to SigGold Price
     * Beta Decay Minus Tx
     *
     * @param rsvAmount Amount of SigGoldRsv to be transacted
     * @return
     */
-  override def transmuteSigGoldRsvToSigGoldRate(
+  override def transmuteSigGoldRsvToSigGoldPrice(
     rsvAmount: Long
-  ): Seq[AssetRate] =
+  ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayMinus rate
-    getRateFromAlgorithm(rsvAmount, algorithm.calculateBetaDecayMinusRate)
+    getPriceFromAlgorithm(rsvAmount, algorithm.calculateBetaDecayMinusPrice)
 
   /**
     * Redeem SigGold to Erg
@@ -383,14 +383,14 @@ class GluonW @Inject() (
     * @param goldAmount Amount of SigGold to be redeemed
     * @return
     */
-  override def redeemSigGoldRate(goldAmount: Long): Seq[AssetRate] = {
+  override def redeemSigGoldPrice(goldAmount: Long): Seq[AssetPrice] = {
     // Calculate amount required for BetaDecayMinusTx and fusion
     // This has to be done in reverse, for example,
     // 1. Calculate how much of equilibrium to get the value
-    val betaDecayMinusRateAndGluonWBox: (GluonWBox, Seq[AssetRate]) =
-      getRateAndGluonWBoxFromAlgorithm(
+    val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
+      getPriceAndGluonWBoxFromAlgorithm(
         goldAmount,
-        algorithm.calculateBetaDecayMinusRate
+        algorithm.calculateBetaDecayMinusPrice
       )
     ???
   }
@@ -424,7 +424,7 @@ class GluonW @Inject() (
     * @param rsvAmount Amount of SigGoldRsv to be redeemed
     * @return
     */
-  override def redeemSigGoldRsvRate(rsvAmount: Long): Seq[AssetRate] =
+  override def redeemSigGoldRsvPrice(rsvAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
     // 3. Calculate amount required for BetaDecayPlusTx and fusion
@@ -456,7 +456,7 @@ class GluonW @Inject() (
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintSigGoldRate(ergAmount: Long): Seq[AssetRate] =
+  override def mintSigGoldPrice(ergAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
     // 3. Calculate amount of SigGold received
@@ -492,7 +492,7 @@ class GluonW @Inject() (
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintSigGoldRsvRate(ergAmount: Long): Seq[AssetRate] =
+  override def mintSigGoldRsvPrice(ergAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
     // 3. Calculate amount of SigGold received

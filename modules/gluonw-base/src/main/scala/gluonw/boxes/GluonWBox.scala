@@ -1,7 +1,7 @@
 package gluonw.boxes
 
 import boxes.{Box, BoxWrapper, BoxWrapperHelper, BoxWrapperJson}
-import gluonw.common.AssetRate
+import gluonw.common.AssetPrice
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
 import org.ergoplatform.appkit.{
@@ -22,7 +22,7 @@ case class GluonWBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
-  def getRsvRate: AssetRate = ???
+  def getRsvPrice: AssetPrice = ???
 
   def getRsvAmount: Long = ???
 
@@ -46,7 +46,7 @@ case class GoldOracleBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
-  def getGoldRate: AssetRate = ???
+  def getGoldPrice: AssetPrice = ???
 
   override def toJson(): Json =
     Json.fromFields(
