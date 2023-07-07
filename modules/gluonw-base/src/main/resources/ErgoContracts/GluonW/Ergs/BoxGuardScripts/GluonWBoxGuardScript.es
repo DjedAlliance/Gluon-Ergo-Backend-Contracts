@@ -10,20 +10,20 @@
 
     // ===== Contract Hard-Coded Constants ===== //
     // val _MinFee:                     Long
-    // val _SigGoldTokenId:             Coll[Byte]
-    // val _SigGoldRsvTokenId:          Coll[Byte]
+    // val _NeutronsTokenId:            Coll[Byte]
+    // val _ProtonsTokenId:             Coll[Byte]
 
     // ===== Box Contents ===== //
     // Tokens
     // 1. (GluonWNFT, 1)
-    // 2. (SigGold, IntMax)
-    // 3. (SigGoldRsv, IntMax)
+    // 2. (Neutrons, IntMax)
+    // 3. (Protons, IntMax)
 
     // ===== Relevant Transactions ===== //
-    // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons (SigGold) and Protons (SigGoldRsv)
-    // 2. Fusion            - The user sends Neutrons (SigGold) and Protons (SigGoldRsv) to the reactor and receives Ergs
-    // 3. Beta Decay +      - The user sends Neutrons (SigGold) to the reactor and receives Protons (SigGoldRsv)
-    // 4. Beta Decay -      - The user sends Protons (SigGoldRsv) to the reactor and receives Neutrons (SigGold)
+    // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
+    // 2. Fusion            - The user sends Neutrons and Protons to the reactor and receives Ergs
+    // 3. Beta Decay +      - The user sends Neutrons to the reactor and receives Protons
+    // 4. Beta Decay -      - The user sends Protons to the reactor and receives Neutrons
     //
     // For all 4 tx:
     // Inputs: GluonWBox, UserPk
@@ -36,33 +36,33 @@
     // For each Tx:
     // 1. Fission       - the reactor has a reduction in both protons and neutrons but
     //                      has an increment in Ergs
-    // Out.SigGold.val < In.SigGold.val, Out.SigGoldRsv.val < In.SigGoldRsv.val, Out.val > In.val
+    // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
     // 2. Fission       - the reactor has a increment in both protons and neutrons but
     //                      has an reduction in Ergs
-    // Out.SigGold.val > In.SigGold.val, Out.SigGoldRsv.val > In.SigGoldRsv.val, Out.val < In.val
+    // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val < In.val
     //
-    // 3. BetaDecay +    - the reactor has an increment of neutrons (SigGold) and a decrement in protons (SigGoldRsv)
+    // 3. BetaDecay +    - the reactor has an increment of neutrons (SigGold) and a decrement in protons (Protons)
     //                      has an increment in Ergs due to fees
-    // Out.SigGold.val > In.SigGold.val, Out.SigGoldRsv.val < In.SigGoldRsv.val, Out.val > In.val
+    // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
-    // 4. BetaDecay -    - the reactor has an decrement of neutrons (SigGold) and a increment in protons (SigGoldRsv)
+    // 4. BetaDecay -    - the reactor has an decrement of neutrons (SigGold) and a increment in protons (Protons)
     //                      has an increment in Ergs due to fees
-    // Out.SigGold.val < In.SigGold.val, Out.SigGoldRsv.val > In.SigGoldRsv.val, Out.val > In.val
+    // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val > In.val
 
     val IN_GLUONW_BOX: Box = SELF
     val OUT_GLUONW_BOX: Box = OUTPUTS(0)
     val GOLD_ORACLE_BOX = CONTEXT.dataInputs(0)
 
-    val IN_GLUONW_SIGGOLD_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _SigGoldTokenId}
-    val IN_GLUONW_SIGGOLDRSV_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _SigGoldRsvTokenId}
+    val IN_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
+        .filter{(token: (Coll[Byte], Long)) => token._1 == _NeutronsTokenId}
+    val IN_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
+        .filter{(token: (Coll[Byte], Long)) => token._1 == _ProtonsTokenId}
 
-    val OUT_GLUONW_SIGGOLD_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _SigGoldTokenId}
-    val OUT_GLUONW_SIGGOLDRSV_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _SigGoldRsvTokenId}
+    val OUT_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
+        .filter{(token: (Coll[Byte], Long)) => token._1 == _NeutronsTokenId}
+    val OUT_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
+        .filter{(token: (Coll[Byte], Long)) => token._1 == _ProtonsTokenId}
 
     val __checkGluonWBoxNFT: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
@@ -71,11 +71,11 @@
 
     val isFissionTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check SigGold reduction in OutBox
-        IN_GLUONW_SIGGOLD_TOKEN._2 > OUT_GLUONW_SIGGOLD_TOKEN._2,
+        // Check Neutrons reduction in OutBox
+        IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check SigGoldRsv reduction in OutBox
-        IN_GLUONW_SIGGOLDRSV_TOKEN._2 > OUT_GLUONW_SIGGOLDRSV_TOKEN._2,
+        // Check Protons reduction in OutBox
+        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value increment in OutBox
         IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value
@@ -83,11 +83,11 @@
 
     val isFusionTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check SigGold increment in OutBox
-        IN_GLUONW_SIGGOLD_TOKEN._2 < OUT_GLUONW_SIGGOLD_TOKEN._2,
+        // Check Neutrons increment in OutBox
+        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check SigGoldRsv increment in OutBox
-        IN_GLUONW_SIGGOLDRSV_TOKEN._2 < OUT_GLUONW_SIGGOLDRSV_TOKEN._2,
+        // Check Protons increment in OutBox
+        IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value reduction in OutBox
         IN_GLUONW_BOX.value > OUT_GLUONW_BOX.value
@@ -95,11 +95,11 @@
 
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check SigGold increment in OutBox
-        IN_GLUONW_SIGGOLD_TOKEN._2 < OUT_GLUONW_SIGGOLD_TOKEN._2,
+        // Check Neutrons increment in OutBox
+        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check SigGoldRsv reduction in OutBox
-        IN_GLUONW_SIGGOLDRSV_TOKEN._2 > OUT_GLUONW_SIGGOLDRSV_TOKEN._2,
+        // Check Protons reduction in OutBox
+        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value increment in OutBox
         IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value
@@ -107,11 +107,11 @@
 
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check SigGold decrement in OutBox
-        IN_GLUONW_SIGGOLD_TOKEN._2 > OUT_GLUONW_SIGGOLD_TOKEN._2,
+        // Check Neutrons decrement in OutBox
+        IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check SigGoldRsv increment in OutBox
-        IN_GLUONW_SIGGOLDRSV_TOKEN._2 < OUT_GLUONW_SIGGOLDRSV_TOKEN._2,
+        // Check Protons increment in OutBox
+        IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value increment in OutBox
         IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value
@@ -121,15 +121,15 @@
 
     // ===== Variable Declarations ===== //
     // @todo kii: Change this amount to something more legit
-    val _totalMintedSigGoldAmount: Long = 1000000
-    val _totalMintedSigGoldRsvAmount: Long = 1000000
+    val _totalMintedNeutronsAmount: Long = 1000000
+    val _totalMintedProtonsAmount: Long = 1000000
 
     // Variable in Paper: S neutrons
-    val _sigGoldInCirculation: Long = _totalMintedSigGoldAmount - IN_GLUONW_SIGGOLD_TOKEN._2
+    val _neutronsInCirculation: Long = _totalMintedNeutronsAmount - IN_GLUONW_NEUTRONS_TOKEN._2
     // Variable in Paper: S protons
-    val _sigGoldRsvInCirculation: Long = _totalMintedSigGoldRsvAmount - IN_GLUONW_SIGGOLDRSV_TOKEN._2
-    val SNeutrons: Long = _sigGoldInCirculation
-    val SProtons: Long = _sigGoldRsvInCirculation
+    val _protonsInCirculation: Long = _totalMintedProtonsAmount - IN_GLUONW_PROTONS_TOKEN._2
+    val SNeutrons: Long = _neutronsInCirculation
+    val SProtons: Long = _protonsInCirculation
 
     // Variable in Paper: R
     // As the box that come into existence would have a minimum fee, we have to reduce the
@@ -142,13 +142,13 @@
     // We're using 10,000 because there are constants that goes up to 0.66
     val precision: Long = 10000
 
+    def Min(compareValues: (Long, Long)) = if (compareValues._1 < compareValues._2) compareValues._1 else compareValues._2
+
     // q* = 0.66
     // @todo kii, reason about replacing 1 with precision at all parts using 1.
     val qStar = 66 / precision
     val rightHandMin = SNeutrons * Pt / R
     val fusionRatio: Long = Min(qStar, rightHandMin)
-
-    def Min(compareValues: (Long, Long)) = if (compareValues._1 < compareValues._2) compareValues._1 else compareValues._2
 
     // ===== (END) Variable Declarations ===== //
 
@@ -168,8 +168,8 @@
         val PhiT: Long = 10 / precision
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_SIGGOLD_TOKEN._2 - OUT_GLUONW_SIGGOLD_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_SIGGOLDRSV_TOKEN._2 - OUT_GLUONW_SIGGOLDRSV_TOKEN._2
+        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
+        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
         val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
 
         val NeutronsExpectedValue: Long = M * (1 - PhiT) * (SNeutrons / RErg)
@@ -199,8 +199,8 @@
         val PhiFusion: Long = 10 / precision
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_SIGGOLD_TOKEN._2 - OUT_GLUONW_SIGGOLD_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_SIGGOLDRSV_TOKEN._2 - OUT_GLUONW_SIGGOLDRSV_TOKEN._2
+        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
+        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
         val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
 
         // M(1 - phiFusion) = Ergs
@@ -230,7 +230,7 @@
         // ===== BetaDecayPlus Tx ===== //
         // Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S proton)) / q(R, S proton)) * (S protons / S neutrons) [Protons]
 
-        val M: Long = OUT_GLUONW_SIGGOLD_TOKEN._2 - IN_GLUONW_SIGGOLD_TOKEN._2
+        val M: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
 
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
@@ -238,8 +238,8 @@
         val VarPhiBeta: Long = 20 / precision
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_SIGGOLD_TOKEN._2 - OUT_GLUONW_SIGGOLD_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_SIGGOLDRSV_TOKEN._2 - OUT_GLUONW_SIGGOLDRSV_TOKEN._2
+        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
+        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
         val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
 
         // ** Fusion Ratio **
@@ -268,7 +268,7 @@
         // ===== BetaDecayMinus Tx ===== //
         // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
 
-        val M: Long = OUT_GLUONW_SIGGOLDRSV_TOKEN._2 - IN_GLUONW_SIGGOLDRSV_TOKEN._2
+        val M: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
 
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
@@ -276,8 +276,8 @@
         val VarPhiBeta: Long = 20 / precision
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_SIGGOLD_TOKEN._2 - OUT_GLUONW_SIGGOLD_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_SIGGOLDRSV_TOKEN._2 - OUT_GLUONW_SIGGOLDRSV_TOKEN._2
+        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
+        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
         val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
 
         // ** Fusion Ratio **
