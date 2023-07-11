@@ -11,6 +11,7 @@ import org.ergoplatform.appkit.{
   ErgoToken,
   InputBox
 }
+import registers.Register
 
 case class GluonWBox(
   value: Long,
@@ -22,6 +23,10 @@ case class GluonWBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
+  def Neutrons: ErgoToken = tokens.tail.head
+
+  def Protons: ErgoToken = tokens.tail.tail.head
+
   def getRsvPrice: AssetPrice = ???
 
   def getRsvAmount: Long = ???
@@ -29,6 +34,8 @@ case class GluonWBox(
   def getSigGoldCirculatingSupply: Long = ???
 
   def getSigGoldRsvCirculatingSupply: Long = ???
+
+  override def R4: Option[Register[_]] = ???
 
   override def toJson(): Json =
     Json.fromFields(

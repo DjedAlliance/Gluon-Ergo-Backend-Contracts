@@ -18,6 +18,9 @@
     // 1. (GluonWNFT, 1)
     // 2. (Neutrons, IntMax)
     // 3. (Protons, IntMax)
+    //
+    // Registers
+    // R4 - (Total Protons Supply, Total Protons Supply): (Long, Long)
 
     // ===== Relevant Transactions ===== //
     // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
@@ -142,13 +145,11 @@
     // We're using 10,000 because there are constants that goes up to 0.66
     val precision: Long = 10000
 
-    def Min(compareValues: (Long, Long)) = if (compareValues._1 < compareValues._2) compareValues._1 else compareValues._2
-
     // q* = 0.66
     // @todo kii, reason about replacing 1 with precision at all parts using 1.
     val qStar = 66 / precision
     val rightHandMin = SNeutrons * Pt / R
-    val fusionRatio: Long = Min(qStar, rightHandMin)
+    val fusionRatio: Long = min(qStar, rightHandMin)
 
     // ===== (END) Variable Declarations ===== //
 

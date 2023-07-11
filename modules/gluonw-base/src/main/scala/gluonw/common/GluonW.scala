@@ -5,7 +5,7 @@ import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import gluonw.txs.{BetaDecayPlusTx, FissionTx}
-import org.ergoplatform.appkit.{Address, BlockchainContext, ErgoToken, InputBox}
+import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import txs.Tx
 
 import javax.inject.Inject
