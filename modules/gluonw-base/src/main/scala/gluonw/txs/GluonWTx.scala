@@ -2,8 +2,8 @@ package gluonw.txs
 
 import boxes.{BoxWrapper, FundsToAddressBox}
 import commons.{ErgCommons, ErgoBoxHelper}
-import gluonw.boxes.GluonWBox
-import gluonw.common.{GluonWAlgorithm, TGluonWAlgorithm}
+import gluonw.boxes.{GluonWBox, GoldOracleBox}
+import gluonw.common.TGluonWAlgorithm
 import org.ergoplatform.appkit.{
   Address,
   BlockchainContext,
@@ -29,6 +29,9 @@ case class FissionTx(
     // Consolidate user boxes to get total value
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
+
+    implicit val neutronOracleBox: GoldOracleBox =
+      GoldOracleBox.from(dataInputs.head)
 
     val outGluonWBox: GluonWBox =
       algorithm.fission(inGluonWBox, ergToExchange)
@@ -74,8 +77,10 @@ case class FusionTx(
     val userBox: FundsToAddressBox =
       FundsToAddressBox.from(inputBoxes.tail.head)
 
+    implicit val neutronOracleBox: GoldOracleBox =
+      GoldOracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      GluonWAlgorithm.fusion(inGluonWBox, ergToRetrieve)
+      algorithm.fusion(inGluonWBox, ergToRetrieve)
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -111,7 +116,7 @@ case class FusionTx(
   */
 case class BetaDecayPlusTx(
   inputBoxes: Seq[InputBox],
-  goldToTransmute: Long,
+  neutronsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
 )(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
@@ -122,8 +127,10 @@ case class BetaDecayPlusTx(
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
 
+    implicit val neutronOracleBox: GoldOracleBox =
+      GoldOracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      GluonWAlgorithm.betaDecayPlus(inGluonWBox, goldToTransmute)
+      algorithm.betaDecayPlus(inGluonWBox, neutronsToTransmute)
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -157,7 +164,7 @@ case class BetaDecayPlusTx(
   */
 case class BetaDecayMinusTx(
   inputBoxes: Seq[InputBox],
-  goldToTransmute: Long,
+  protonsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
 )(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
@@ -168,8 +175,10 @@ case class BetaDecayMinusTx(
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
 
+    implicit val neutronOracleBox: GoldOracleBox =
+      GoldOracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      GluonWAlgorithm.betaDecayMinus(inGluonWBox, goldToTransmute)
+      algorithm.betaDecayMinus(inGluonWBox, protonsToTransmute)
 
     val neutronsGained: Long =
       inGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue

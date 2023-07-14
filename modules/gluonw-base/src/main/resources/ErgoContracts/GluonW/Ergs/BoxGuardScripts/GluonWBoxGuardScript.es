@@ -148,7 +148,7 @@
     // q* = 0.66
     // @todo kii, reason about replacing 1 with precision at all parts using 1.
     val qStar = 66 / precision
-    val rightHandMin = SNeutrons * Pt / R
+    val rightHandMin = SNeutrons * Pt / RErg
     val fusionRatio: Long = min(qStar, rightHandMin)
 
     // ===== (END) Variable Declarations ===== //

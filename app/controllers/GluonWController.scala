@@ -32,102 +32,102 @@ trait TGluonWController {
   def rsvPrice(): Action[AnyContent]
 
   /**
-    * Erg to SigGold and SigGoldRsv
+    * Erg to Neutrons and Protons
     * @param ergAmount the amount of erg to be converted
     * @return
     */
   def fission(ergAmount: Long): Action[Json]
 
   /**
-    * Erg to SigGold and SigGoldRsv Price
+    * Erg to Neutrons and Protons Price
     * @param ergAmount the amount of erg to be converted
     * @return
     */
   def fissionPrice(ergAmount: Long): Action[AnyContent]
 
   /**
-    * SigGold to Rsv
+    * Neutrons to Rsv
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  def transmuteSigGoldToSigGoldRsv(goldAmount: Long): Action[Json]
+  def transmuteNeutronsToProtons(goldAmount: Long): Action[Json]
 
   /**
-    * SigGold to Rsv rate
+    * Neutrons to Rsv rate
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  def transmuteSigGoldToSigGoldRsvPrice(goldAmount: Long): Action[AnyContent]
+  def transmuteNeutronsToProtonsPrice(goldAmount: Long): Action[AnyContent]
 
   /**
-    * SigGoldRsv to SigGold
-    * @param rsvAmount the amount of SigGoldRsv to be converted
+    * Protons to Neutrons
+    * @param rsvAmount the amount of Protons to be converted
     * @return
     */
-  def transmuteSigGoldRsvToSigGold(rsvAmount: Long): Action[Json]
+  def transmuteProtonsToNeutrons(rsvAmount: Long): Action[Json]
 
   /**
-    * SigGoldRsv to SigGold rate
-    * @param rsvAmount the amount of SigGoldRsv to be converted
+    * Protons to Neutrons rate
+    * @param rsvAmount the amount of Protons to be converted
     * @return
     */
-  def transmuteSigGoldRsvToSigGoldPrice(rsvAmount: Long): Action[AnyContent]
+  def transmuteProtonsToNeutronsPrice(rsvAmount: Long): Action[AnyContent]
 
   /**
-    * Mint SigGold
+    * Mint Neutrons
     * @param ergAmount the Erg amount to convert to sigGold
     * @return
     */
-  def mintSigGold(ergAmount: Long): Action[Json]
+  def mintNeutrons(ergAmount: Long): Action[Json]
 
   /**
-    * Mint SigGold rate
-    * @param ergAmount the Erg amount to convert to SigGold
+    * Mint Neutrons rate
+    * @param ergAmount the Erg amount to convert to Neutrons
     * @return
     */
-  def mintSigGoldPrice(ergAmount: Long): Action[AnyContent]
+  def mintNeutronsPrice(ergAmount: Long): Action[AnyContent]
 
   /**
-    * Redeem SigGold for Erg
-    * @param goldAmount the amount of SigGold to be redeemed
+    * Redeem Neutrons for Erg
+    * @param goldAmount the amount of Neutrons to be redeemed
     * @return
     */
-  def redeemSigGold(goldAmount: Long): Action[Json]
+  def redeemNeutrons(goldAmount: Long): Action[Json]
 
   /**
-    * Redeem SigGold for Erg rate
-    * @param goldAmount the amount of SigGold to be redeemed
+    * Redeem Neutrons for Erg rate
+    * @param goldAmount the amount of Neutrons to be redeemed
     * @return
     */
-  def redeemSigGoldPrice(goldAmount: Long): Action[AnyContent]
+  def redeemNeutronsPrice(goldAmount: Long): Action[AnyContent]
 
   /**
-    * Mint SigGoldRsv
-    * @param ergAmount the Erg amount to convert to SigGoldRsv
+    * Mint Protons
+    * @param ergAmount the Erg amount to convert to Protons
     * @return
     */
-  def mintSigGoldRsv(ergAmount: Long): Action[Json]
+  def mintProtons(ergAmount: Long): Action[Json]
 
   /**
-    * Mint SigGoldRsv rate
-    * @param ergAmount the Erg amount to convert to SigGoldRsv
+    * Mint Protons rate
+    * @param ergAmount the Erg amount to convert to Protons
     * @return
     */
-  def mintSigGoldRsvPrice(ergAmount: Long): Action[AnyContent]
+  def mintProtonsPrice(ergAmount: Long): Action[AnyContent]
 
   /**
-    * Redeem SigGoldRsv for Erg
-    * @param rsvAmount the amount of SigGoldRsv to be redeemed
+    * Redeem Protons for Erg
+    * @param rsvAmount the amount of Protons to be redeemed
     * @return
     */
-  def redeemSigGoldRsv(rsvAmount: Long): Action[Json]
+  def redeemProtons(rsvAmount: Long): Action[Json]
 
   /**
-    * Redeem SigGoldRsv for Erg rate
-    * @param rsvAmount the amount of SigGoldRsv to be redeemed
+    * Redeem Protons for Erg rate
+    * @param rsvAmount the amount of Protons to be redeemed
     * @return
     */
-  def redeemSigGoldRsvPrice(rsvAmount: Long): Action[AnyContent]
+  def redeemProtonsPrice(rsvAmount: Long): Action[AnyContent]
 }
 
 class GluonWController @Inject() (
@@ -162,19 +162,22 @@ class GluonWController @Inject() (
 
   override def goldPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
-      Ok(gluonWBoxExplorer.getGoldOracleBox.getGoldPrice.toJson)
-        .as("application/json")
+      Ok(
+        gluonWBoxExplorer.getGluonWBox
+          .getNeutronsPrice(gluonWBoxExplorer.getGoldOracleBox)
+          .toJson
+      ).as("application/json")
     }
 
   override def rsvPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
-        gluonWBoxExplorer.getGluonWBox.getRsvPrice.toJson
+        gluonWBoxExplorer.getGluonWBox.getProtonsPrice.toJson
       ).as("application/json")
     }
 
   /**
-    * Erg to SigGold and SigGoldRsv
+    * Erg to Neutrons and Protons
     *
     * @param ergAmount the amount of erg to be converted
     * @return
@@ -189,7 +192,7 @@ class GluonWController @Inject() (
     }
 
   /**
-    * Erg to SigGold and SigGoldRsv Price
+    * Erg to Neutrons and Protons Price
     *
     * @param ergAmount the amount of erg to be converted
     * @return
@@ -204,169 +207,169 @@ class GluonWController @Inject() (
     }
 
   /**
-    * SigGold to Rsv
+    * Neutrons to Rsv
     *
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  override def transmuteSigGoldToSigGoldRsv(goldAmount: Long): Action[Json] =
+  override def transmuteNeutronsToProtons(goldAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, goldAmount, gluonW.transmuteSigGoldToSigGoldRsv))
+      Ok(TxCall(request, goldAmount, gluonW.transmuteNeutronsToProtons))
         .as("application/json")
     }
 
   /**
-    * SigGold to Rsv rate
+    * Neutrons to Rsv rate
     *
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
-  override def transmuteSigGoldToSigGoldRsvPrice(
+  override def transmuteNeutronsToProtonsPrice(
     goldAmount: Long
   ): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(
       Json.fromValues(
         gluonW
-          .transmuteSigGoldToSigGoldRsvPrice(goldAmount)
+          .transmuteNeutronsToProtonsPrice(goldAmount)
           .map(rate => rate.toJson)
       )
     ).as("application/json")
   }
 
   /**
-    * SigGoldRsv to SigGold
+    * Protons to Neutrons
     *
-    * @param rsvAmount the amount of SigGoldRsv to be converted
+    * @param rsvAmount the amount of Protons to be converted
     * @return
     */
-  override def transmuteSigGoldRsvToSigGold(rsvAmount: Long): Action[Json] =
+  override def transmuteProtonsToNeutrons(rsvAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, rsvAmount, gluonW.transmuteSigGoldRsvToSigGold))
+      Ok(TxCall(request, rsvAmount, gluonW.transmuteProtonsToNeutrons))
         .as("application/json")
     }
 
   /**
-    * SigGoldRsv to SigGold rate
+    * Protons to Neutrons rate
     *
-    * @param rsvAmount the amount of SigGoldRsv to be converted
+    * @param rsvAmount the amount of Protons to be converted
     * @return
     */
-  override def transmuteSigGoldRsvToSigGoldPrice(
+  override def transmuteProtonsToNeutronsPrice(
     rsvAmount: Long
   ): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
           gluonW
-            .transmuteSigGoldRsvToSigGoldPrice(rsvAmount)
+            .transmuteProtonsToNeutronsPrice(rsvAmount)
             .map(rate => rate.toJson)
         )
       ).as("application/json")
     }
 
   /**
-    * Mint SigGold
+    * Mint Neutrons
     *
     * @param ergAmount the Erg amount to convert to sigGold
     * @return
     */
-  override def mintSigGold(ergAmount: Long): Action[Json] =
+  override def mintNeutrons(ergAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, ergAmount, gluonW.mintSigGold)).as("application/json")
+      Ok(TxCall(request, ergAmount, gluonW.mintNeutrons)).as("application/json")
     }
 
   /**
-    * Mint SigGold rate
+    * Mint Neutrons rate
     *
-    * @param ergAmount the Erg amount to convert to SigGold
+    * @param ergAmount the Erg amount to convert to Neutrons
     * @return
     */
-  override def mintSigGoldPrice(ergAmount: Long): Action[AnyContent] =
+  override def mintNeutronsPrice(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.mintSigGoldPrice(ergAmount).map(rate => rate.toJson)
+          gluonW.mintNeutronsPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
 
   /**
-    * Redeem SigGold for Erg
+    * Redeem Neutrons for Erg
     *
-    * @param goldAmount the amount of SigGold to be redeemed
+    * @param goldAmount the amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemSigGold(goldAmount: Long): Action[Json] =
+  override def redeemNeutrons(goldAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, goldAmount, gluonW.redeemSigGold))
+      Ok(TxCall(request, goldAmount, gluonW.redeemNeutrons))
         .as("application/json")
     }
 
   /**
-    * Redeem SigGold for Erg rate
+    * Redeem Neutrons for Erg rate
     *
-    * @param goldAmount the amount of SigGold to be redeemed
+    * @param goldAmount the amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemSigGoldPrice(goldAmount: Long): Action[AnyContent] =
+  override def redeemNeutronsPrice(goldAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemSigGoldPrice(goldAmount).map(rate => rate.toJson)
+          gluonW.redeemNeutronsPrice(goldAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
 
   /**
-    * Mint SigGoldRsv
+    * Mint Protons
     *
-    * @param ergAmount the Erg amount to convert to SigGoldRsv
+    * @param ergAmount the Erg amount to convert to Protons
     * @return
     */
-  override def mintSigGoldRsv(ergAmount: Long): Action[Json] =
+  override def mintProtons(ergAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, ergAmount, gluonW.mintSigGoldRsv))
+      Ok(TxCall(request, ergAmount, gluonW.mintProtons))
         .as("application/json")
     }
 
   /**
-    * Mint SigGoldRsv rate
+    * Mint Protons rate
     *
-    * @param ergAmount the Erg amount to convert to SigGoldRsv
+    * @param ergAmount the Erg amount to convert to Protons
     * @return
     */
-  override def mintSigGoldRsvPrice(ergAmount: Long): Action[AnyContent] =
+  override def mintProtonsPrice(ergAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.mintSigGoldRsvPrice(ergAmount).map(rate => rate.toJson)
+          gluonW.mintProtonsPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
 
   /**
-    * Redeem SigGoldRsv for Erg
+    * Redeem Protons for Erg
     *
-    * @param rsvAmount the amount of SigGoldRsv to be redeemed
+    * @param rsvAmount the amount of Protons to be redeemed
     * @return
     */
-  override def redeemSigGoldRsv(rsvAmount: Long): Action[Json] =
+  override def redeemProtons(rsvAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, rsvAmount, gluonW.redeemSigGoldRsv))
+      Ok(TxCall(request, rsvAmount, gluonW.redeemProtons))
         .as("application/json")
     }
 
   /**
-    * Redeem SigGoldRsv for Erg rate
+    * Redeem Protons for Erg rate
     *
-    * @param rsvAmount the amount of SigGoldRsv to be redeemed
+    * @param rsvAmount the amount of Protons to be redeemed
     * @return
     */
-  override def redeemSigGoldRsvPrice(rsvAmount: Long): Action[AnyContent] =
+  override def redeemProtonsPrice(rsvAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemSigGoldRsvPrice(rsvAmount).map(rate => rate.toJson)
+          gluonW.redeemProtonsPrice(rsvAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }

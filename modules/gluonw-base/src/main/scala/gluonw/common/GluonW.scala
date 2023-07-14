@@ -4,7 +4,7 @@ import commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
-import gluonw.txs.{BetaDecayPlusTx, FissionTx}
+import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import txs.Tx
 
@@ -32,104 +32,104 @@ trait TGluonW {
   def fissionPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
-    * Transmute SigGold to SigGoldRsv
+    * Transmute Neutrons to Protons
     * Beta Decay Plus Tx
-    * @param goldAmount Amount of SigGold to be transacted
+    * @param neutronsAmount Amount of Neutrons to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def transmuteSigGoldToSigGoldRsv(
-    goldAmount: Long,
+  def transmuteNeutronsToProtons(
+    neutronsAmount: Long,
     walletAddress: Address
   ): Seq[Tx]
 
   /**
-    * Transmute SigGold to SigGoldRsv Price
+    * Transmute Neutrons to Protons Price
     * Beta Decay Plus Tx
-    * @param goldAmount Amount of SigGold to be transacted
+    * @param neutronsAmount Amount of Neutrons to be transacted
     * @return
     */
-  def transmuteSigGoldToSigGoldRsvPrice(goldAmount: Long): Seq[AssetPrice]
+  def transmuteNeutronsToProtonsPrice(neutronsAmount: Long): Seq[AssetPrice]
 
   /**
-    * Transmute SigGoldRsv to SigGoldRsv
+    * Transmute Protons to Protons
     * Beta Decay Plus Tx
-    * @param rsvAmount Amount of SigGold to be transacted
+    * @param protonsAmount Amount of Neutrons to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def transmuteSigGoldRsvToSigGold(
-    rsvAmount: Long,
+  def transmuteProtonsToNeutrons(
+    protonsAmount: Long,
     walletAddress: Address
   ): Seq[Tx]
 
   /**
-    * Transmute SigGoldRsv to SigGold Price
+    * Transmute Protons to Neutrons Price
     * Beta Decay Plus Tx
-    * @param rsvAmount Amount of SigGoldRsv to be transacted
+    * @param protonsAmount Amount of Protons to be transacted
     * @return
     */
-  def transmuteSigGoldRsvToSigGoldPrice(rsvAmount: Long): Seq[AssetPrice]
+  def transmuteProtonsToNeutronsPrice(protonsAmount: Long): Seq[AssetPrice]
 
   /**
-    * Redeem SigGold to Erg
-    * @param goldAmount Amount of SigGold to be redeemed
+    * Redeem Neutrons to Erg
+    * @param neutronsAmount Amount of Neutrons to be redeemed
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def redeemSigGold(goldAmount: Long, walletAddress: Address): Seq[Tx]
+  def redeemNeutrons(neutronsAmount: Long, walletAddress: Address): Seq[Tx]
 
   /**
-    * Redeem SigGold to Erg rate
-    * @param goldAmount Amount of SigGold to be redeemed
+    * Redeem Neutrons to Erg rate
+    * @param neutronsAmount Amount of Neutrons to be redeemed
     * @return
     */
-  def redeemSigGoldPrice(goldAmount: Long): Seq[AssetPrice]
+  def redeemNeutronsPrice(neutronsAmount: Long): Seq[AssetPrice]
 
   /**
-    * Redeem SigGoldRsv to Erg rate
-    * @param rsvAmount Amount of SigGoldRsv to be redeemed
+    * Redeem Protons to Erg rate
+    * @param protonsAmount Amount of Protons to be redeemed
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def redeemSigGoldRsv(rsvAmount: Long, walletAddress: Address): Seq[Tx]
+  def redeemProtons(protonsAmount: Long, walletAddress: Address): Seq[Tx]
 
   /**
-    * Redeem SigGoldRsv to Erg rate
-    * @param rsvAmount Amount of SigGoldRsv to be redeemed
+    * Redeem Protons to Erg rate
+    * @param protonsAmount Amount of Protons to be redeemed
     * @return
     */
-  def redeemSigGoldRsvPrice(rsvAmount: Long): Seq[AssetPrice]
+  def redeemProtonsPrice(protonsAmount: Long): Seq[AssetPrice]
 
   /**
-    * Mint SigGold with Erg
+    * Mint Neutrons with Erg
     * @param ergAmount Amount of Ergs to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def mintSigGold(ergAmount: Long, walletAddress: Address): Seq[Tx]
+  def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[Tx]
 
   /**
-    * Mint SigGold with Erg rate
+    * Mint Neutrons with Erg rate
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  def mintSigGoldPrice(ergAmount: Long): Seq[AssetPrice]
+  def mintNeutronsPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
-    * Mint SigGoldRsv with Erg
+    * Mint Protons with Erg
     * @param ergAmount Amount of Ergs to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def mintSigGoldRsv(ergAmount: Long, walletAddress: Address): Seq[Tx]
+  def mintProtons(ergAmount: Long, walletAddress: Address): Seq[Tx]
 
   /**
-    * Mint SigGoldRsv with Erg rate
+    * Mint Protons with Erg rate
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  def mintSigGoldRsvPrice(ergAmount: Long): Seq[AssetPrice]
+  def mintProtonsPrice(ergAmount: Long): Seq[AssetPrice]
 }
 
 trait TxConverter {
@@ -152,7 +152,8 @@ class GluonW @Inject() (
   client: Client,
   gluonWBoxExplorer: GluonWBoxExplorer
 ) extends TGluonW {
-  val algorithm: TGluonWAlgorithm = GluonWAlgorithm
+  val gluonWConstants: GluonWConstants = GluonWConstants()
+  val algorithm: TGluonWAlgorithm = GluonWAlgorithm(gluonWConstants)
 
   def getPriceFromAlgorithm(
     assetAmount: Long,
@@ -197,10 +198,10 @@ class GluonW @Inject() (
     )
   ): (GluonWBox, Seq[AssetPrice]) = {
     // 1. Get the Oracle Box
-    val goldOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+    val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
 
     // 2. Use Algorithm to calculate rate
-    algorithmFunc(gluonWBox, goldOracleBox, assetAmount)
+    algorithmFunc(gluonWBox, neutronOracleBox, assetAmount)
   }
 
   /**
@@ -209,8 +210,8 @@ class GluonW @Inject() (
     *
     * @param ergAmount     Amount of Erg to be transacted
     * @param walletAddress Wallet Address of the user
-    * @return Tx that will give the user the amount of SigGold and
-    *         SigGoldRsv they deserve
+    * @return Tx that will give the user the amount of Neutrons and
+    *         Protons they deserve
     */
   override def fission(ergAmount: Long, walletAddress: Address): Seq[Tx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
@@ -222,14 +223,14 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val goldOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
 
       // 4. Create FissionTx
       val fissionTx: FissionTx = FissionTx(
         ergToExchange = ergAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
-        dataInputs = Seq(goldOracleBox.box.get.input)
+        dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm)
 
       Seq(fissionTx)
@@ -240,23 +241,23 @@ class GluonW @Inject() (
     * Gets the rate for the Fission Tx
     *
     * @param ergAmount Amount of Erg to be transacted
-    * @return SigGold AssetPrice and SigGoldRsv AssetPrice
+    * @return Neutrons AssetPrice and Protons AssetPrice
     */
   override def fissionPrice(ergAmount: Long): Seq[AssetPrice] =
     // Use Algorithm to calculate Fission rate
     getPriceFromAlgorithm(ergAmount, algorithm.calculateFissionPrice)
 
   /**
-    * Transmute SigGold to SigGoldRsv
+    * Transmute Neutrons to Protons
     * Beta Decay Plus Tx
     *
-    * @param goldAmount    Amount of SigGold to be transacted
+    * @param neutronsAmount    Amount of Neutrons to be transacted
     * @param walletAddress Wallet Address of the user
-    * @return Tx that will return the amount of SigGoldRsv the user deserves
+    * @return Tx that will return the amount of Protons the user deserves
     *         back to the user
     */
-  override def transmuteSigGoldToSigGoldRsv(
-    goldAmount: Long,
+  override def transmuteNeutronsToProtons(
+    neutronsAmount: Long,
     walletAddress: Address
   ): Seq[Tx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
@@ -266,7 +267,7 @@ class GluonW @Inject() (
           walletAddress,
           amount = ErgCommons.MinMinerFee,
           tokensToSpend = Seq(
-            GluonWTokens.get(GluonWAsset.SIGGOLD.toString, goldAmount)
+            GluonWTokens.get(GluonWAsset.SIGGOLD.toString, neutronsAmount)
           ).asJava
         )
 
@@ -274,42 +275,42 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val goldOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
 
       // 4. Create BetaDecayPlusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
-        goldToTransmute = goldAmount,
+        neutronsToTransmute = neutronsAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
-        dataInputs = Seq(goldOracleBox.box.get.input)
+        dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm)
 
       Seq(betaDecayPlusTx)
     }
 
   /**
-    * Transmute SigGold to SigGoldRsv Price
+    * Transmute Neutrons to Protons Price
     * Beta Decay Plus Tx
     *
-    * @param goldAmount Amount of SigGold to be transacted
-    * @return AssetPrice of SigGoldRsv
+    * @param neutronsAmount Amount of Neutrons to be transacted
+    * @return AssetPrice of Protons
     */
-  override def transmuteSigGoldToSigGoldRsvPrice(
-    goldAmount: Long
+  override def transmuteNeutronsToProtonsPrice(
+    neutronsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayPlus rate
-    getPriceFromAlgorithm(goldAmount, algorithm.calculateBetaDecayPlusPrice)
+    getPriceFromAlgorithm(neutronsAmount, algorithm.calculateBetaDecayPlusPrice)
 
   /**
-    * Transmute SigGoldRsv to SigGoldRsv
+    * Transmute Protons to Protons
     * Beta Decay Plus Tx
     *
-    * @param rsvAmount     Amount of SigGold to be transacted
+    * @param protonsAmount     Amount of Neutrons to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def transmuteSigGoldRsvToSigGold(
-    rsvAmount: Long,
+  override def transmuteProtonsToNeutrons(
+    protonsAmount: Long,
     walletAddress: Address
   ): Seq[Tx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
@@ -319,7 +320,7 @@ class GluonW @Inject() (
           walletAddress,
           amount = ErgCommons.MinMinerFee,
           tokensToSpend = Seq(
-            GluonWTokens.get(GluonWAsset.SIGGOLDRSV.toString, rsvAmount)
+            GluonWTokens.get(GluonWAsset.SIGGOLDRSV.toString, protonsAmount)
           ).asJava
         )
 
@@ -327,44 +328,44 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val goldOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
 
       // 4. Create BetaDecayMinusTx
-      val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
-        goldToTransmute = rsvAmount,
+      val betaDecayPlusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+        protonsToTransmute = protonsAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
-        dataInputs = Seq(goldOracleBox.box.get.input)
+        dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm)
 
       Seq(betaDecayPlusTx)
     }
 
   /**
-    * Transmute SigGoldRsv to SigGold Price
+    * Transmute Protons to Neutrons Price
     * Beta Decay Minus Tx
     *
-    * @param rsvAmount Amount of SigGoldRsv to be transacted
+    * @param protonsAmount Amount of Protons to be transacted
     * @return
     */
-  override def transmuteSigGoldRsvToSigGoldPrice(
-    rsvAmount: Long
+  override def transmuteProtonsToNeutronsPrice(
+    protonsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayMinus rate
-    getPriceFromAlgorithm(rsvAmount, algorithm.calculateBetaDecayMinusPrice)
+    getPriceFromAlgorithm(protonsAmount, algorithm.calculateBetaDecayMinusPrice)
 
   /**
-    * Redeem SigGold to Erg
+    * Redeem Neutrons to Erg
     *
     * Redeeming Erg with purely sigGold requires decaying some of the sigGold
     * to sigGoldRsv and then consecutively carrying out a fusion tx
     * BetaDecay- -> Fusion
-    * @param goldAmount    Amount of SigGold to be redeemed
+    * @param neutronsAmount    Amount of Neutrons to be redeemed
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def redeemSigGold(
-    goldAmount: Long,
+  override def redeemNeutrons(
+    neutronsAmount: Long,
     walletAddress: Address
   ): Seq[Tx] =
     // 1. Get the box from the user
@@ -377,36 +378,36 @@ class GluonW @Inject() (
     ???
 
   /**
-    * Redeem SigGold to Erg rate
+    * Redeem Neutrons to Erg rate
     *
     * BetaDecay- -> Fusion
-    * @param goldAmount Amount of SigGold to be redeemed
+    * @param neutronsAmount Amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemSigGoldPrice(goldAmount: Long): Seq[AssetPrice] = {
+  override def redeemNeutronsPrice(neutronsAmount: Long): Seq[AssetPrice] = {
     // Calculate amount required for BetaDecayMinusTx and fusion
     // This has to be done in reverse, for example,
     // 1. Calculate how much of equilibrium to get the value
     val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
       getPriceAndGluonWBoxFromAlgorithm(
-        goldAmount,
+        neutronsAmount,
         algorithm.calculateBetaDecayMinusPrice
       )
     ???
   }
 
   /**
-    * Redeem SigGoldRsv to Erg
+    * Redeem Protons to Erg
     *
     * Redeeming Erg with purely sigGoldRsv requires decaying some of the sigGoldRsv
     * to sigGold and then consecutively carrying out a fusion tx
     * BetaDecay+ -> Fusion
-    * @param rsvAmount     Amount of SigGoldRsv to be redeemed
+    * @param protonsAmount     Amount of Protons to be redeemed
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def redeemSigGoldRsv(
-    rsvAmount: Long,
+  override def redeemProtons(
+    protonsAmount: Long,
     walletAddress: Address
   ): Seq[Tx] =
     // 1. Get the box from the user
@@ -419,59 +420,59 @@ class GluonW @Inject() (
     ???
 
   /**
-    * Redeem SigGoldRsv to Erg rate
+    * Redeem Protons to Erg rate
     *
-    * @param rsvAmount Amount of SigGoldRsv to be redeemed
+    * @param protonsAmount Amount of Protons to be redeemed
     * @return
     */
-  override def redeemSigGoldRsvPrice(rsvAmount: Long): Seq[AssetPrice] =
+  override def redeemProtonsPrice(protonsAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
     // 3. Calculate amount required for BetaDecayPlusTx and fusion
     ???
 
   /**
-    * Mint SigGold with Erg
+    * Mint Neutrons with Erg
     *
-    * Minting pure SigGold with Erg requires a fission tx to retrieve both
-    * SigGold and SigGoldRsv, and then converting the SigGoldRsv into SigGold
+    * Minting pure Neutrons with Erg requires a fission tx to retrieve both
+    * Neutrons and Protons, and then converting the Protons into Neutrons
     * Fission -> BetaDecay-
     * @param ergAmount     Amount of Ergs to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def mintSigGold(ergAmount: Long, walletAddress: Address): Seq[Tx] =
+  override def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[Tx] =
     // 1. Get the box from the user
     // 2. Get the Latest GluonWBox
     // 3. Get the Oracle Box
     // 5. Create FissionTx
     // 6. Get GluonWBox and UserBox from Tx
-    // 7. Create BetaDecay-Tx with SigGoldRsv retrieved
+    // 7. Create BetaDecay-Tx with Protons retrieved
     ???
 
   /**
-    * Mint SigGold with Erg rate
+    * Mint Neutrons with Erg rate
     *
     * Fission -> BetaDecay-
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintSigGoldPrice(ergAmount: Long): Seq[AssetPrice] =
+  override def mintNeutronsPrice(ergAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
-    // 3. Calculate amount of SigGold received
+    // 3. Calculate amount of Neutrons received
     // with fissionTx and BetaDecay-Tx
     ???
 
   /**
-    * Mint SigGoldRsv with Erg
+    * Mint Protons with Erg
     *
     * Fission -> BetaDecay+
     * @param ergAmount     Amount of Ergs to be transacted
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def mintSigGoldRsv(
+  override def mintProtons(
     ergAmount: Long,
     walletAddress: Address
   ): Seq[Tx] =
@@ -480,22 +481,22 @@ class GluonW @Inject() (
     // 3. Get the Oracle Box
     // 5. Create FissionTx
     // 6. Get GluonWBox and UserBox from Tx
-    // 7. Create BetaDecay+Tx with SigGoldRsv retrieved
+    // 7. Create BetaDecay+Tx with Protons retrieved
     ???
 
   /**
-    * Mint SigGoldRsv with Erg rate
+    * Mint Protons with Erg rate
     *
-    * Minting pure SigGoldRsv with Erg requires a fission tx to retrieve both
-    * SigGoldRsv and SigGold, and then converting the SigGold into SigGoldRsv
+    * Minting pure Protons with Erg requires a fission tx to retrieve both
+    * Protons and Neutrons, and then converting the Neutrons into Protons
     * Fission -> BetaDecay+
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintSigGoldRsvPrice(ergAmount: Long): Seq[AssetPrice] =
+  override def mintProtonsPrice(ergAmount: Long): Seq[AssetPrice] =
     // 1. Get the Latest GluonWBox
     // 2. Get the Oracle Box
-    // 3. Calculate amount of SigGold received
+    // 3. Calculate amount of Neutrons received
     // with fissionTx and BetaDecay+Tx
     ???
 }
