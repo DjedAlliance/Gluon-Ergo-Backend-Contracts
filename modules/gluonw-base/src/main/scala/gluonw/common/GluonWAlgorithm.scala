@@ -260,23 +260,89 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergAmount: Long
-  ): (GluonWBox, Seq[AssetPrice]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = {
+    val outGluonWBox: GluonWBox =
+      fission(inputGluonWBox, ergAmount)(goldOracleBox)
+
+    (
+      outGluonWBox,
+      Seq(
+        AssetPrice(
+          name = GluonWAsset.SIGGOLD.toString,
+          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
+          GluonWTokens.sigGoldId
+        ),
+        AssetPrice(
+          name = GluonWAsset.SIGGOLDRSV.toString,
+          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
+          GluonWTokens.sigGoldRsvId
+        )
+      )
+    )
+  }
 
   override def calculateFusionPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     ergRedeemed: Long
-  ): (GluonWBox, Seq[AssetPrice]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = {
+    val outGluonWBox: GluonWBox =
+      fission(inputGluonWBox, ergRedeemed)(goldOracleBox)
+
+    (
+      outGluonWBox,
+      Seq(
+        AssetPrice(
+          name = GluonWAsset.SIGGOLD.toString,
+          outGluonWBox.Neutrons.getValue - inputGluonWBox.Neutrons.getValue,
+          GluonWTokens.sigGoldId
+        ),
+        AssetPrice(
+          name = GluonWAsset.SIGGOLDRSV.toString,
+          outGluonWBox.Protons.getValue - inputGluonWBox.Protons.getValue,
+          GluonWTokens.sigGoldRsvId
+        )
+      )
+    )
+  }
 
   override def calculateBetaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     goldAmount: Long
-  ): (GluonWBox, Seq[AssetPrice]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = {
+    val outGluonWBox: GluonWBox =
+      fission(inputGluonWBox, goldAmount)(goldOracleBox)
+
+    (
+      outGluonWBox,
+      Seq(
+        AssetPrice(
+          name = GluonWAsset.SIGGOLDRSV.toString,
+          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
+          GluonWTokens.sigGoldRsvId
+        )
+      )
+    )
+  }
 
   override def calculateBetaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     goldOracleBox: GoldOracleBox,
     rsvAmount: Long
-  ): (GluonWBox, Seq[AssetPrice]) = ???
+  ): (GluonWBox, Seq[AssetPrice]) = {
+    val outGluonWBox: GluonWBox =
+      fission(inputGluonWBox, rsvAmount)(goldOracleBox)
+
+    (
+      outGluonWBox,
+      Seq(
+        AssetPrice(
+          name = GluonWAsset.SIGGOLD.toString,
+          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
+          GluonWTokens.sigGoldId
+        )
+      )
+    )
+  }
 }

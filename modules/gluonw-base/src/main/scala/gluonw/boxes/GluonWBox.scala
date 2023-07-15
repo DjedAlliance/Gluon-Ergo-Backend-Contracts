@@ -14,6 +14,8 @@ import org.ergoplatform.appkit.{
 }
 import registers.Register
 
+import scala.jdk.CollectionConverters.iterableAsScalaIterableConverter
+
 case class GluonWBox(
   value: Long,
   neutronsTotalSupplyRegister: LongRegister = new LongRegister(100000000L),
@@ -29,13 +31,6 @@ case class GluonWBox(
   def Neutrons: ErgoToken = tokens.tail.head
 
   def Protons: ErgoToken = tokens.tail.tail.head
-
-  /**
-    * Get price of Protons.
-    * This value can be retrieved via algorithm?
-    * @return
-    */
-  def getProtonsPrice: AssetPrice = ???
 
   def getNeutronsPrice(goldOracleBox: GoldOracleBox): AssetPrice = AssetPrice(
     name = GluonWAsset.SIGGOLD.toString,
@@ -53,7 +48,7 @@ case class GluonWBox(
 
   override def R5: Option[Register[_]] = Option(protonsTotalSupplyRegister)
 
-  // @todo kii: Implement Neutrons and protons asset price.
+  // @todo kii: do we need to Implement Neutrons and protons asset price?
   override def toJson(): Json =
     Json.fromFields(
       List(
@@ -95,7 +90,7 @@ case class GluonWBox(
 
 case class GoldOracleBox(
   value: Long,
-  GoldPriceRegister: LongRegister,
+  goldPriceRegister: LongRegister,
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -104,20 +99,47 @@ case class GoldOracleBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
-  def getGoldPrice: Long = GoldPriceRegister.value
+  def getGoldPrice: Long = goldPriceRegister.value
 
-  override def R4: Option[Register[_]] = Option(GoldPriceRegister)
+  override def R4: Option[Register[_]] = Option(goldPriceRegister)
 
   override def toJson(): Json =
     Json.fromFields(
-      List()
+      List(
+        ("name", Json.fromString("SigGold")),
+        ("tokenId", Json.fromString(tokens.tail.head.getId.toString)),
+        ("priceInNanoErgPerKg", Json.fromLong(getGoldPrice))
+      )
     )
 }
 
 object GoldOracleBox extends BoxWrapperHelper {
-  override def from(inputBox: InputBox): GoldOracleBox = ???
+
+  override def from(inputBox: InputBox): GoldOracleBox =
+    GoldOracleBox(
+      value = inputBox.getValue,
+      id = inputBox.getId,
+      tokens = inputBox.getTokens.asScala.toSeq,
+      box = Option(Box(inputBox)),
+      goldPriceRegister = new LongRegister(
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      )
+    )
 }
 
 object GluonWBox extends BoxWrapperHelper {
-  override def from(inputBox: InputBox): GluonWBox = ???
+
+  override def from(inputBox: InputBox): GluonWBox =
+    GluonWBox(
+      value = inputBox.getValue,
+      id = inputBox.getId,
+      tokens = inputBox.getTokens.asScala.toSeq,
+      box = Option(Box(inputBox)),
+      neutronsTotalSupplyRegister = new LongRegister(
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      ),
+      protonsTotalSupplyRegister = new LongRegister(
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      )
+    )
 }
