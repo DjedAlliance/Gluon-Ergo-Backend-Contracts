@@ -5,14 +5,17 @@ import org.ergoplatform.appkit.{ErgoId, ErgoToken}
 
 object GluonWAsset extends Enumeration {
   type Asset = Value
-  val ERG, SIGGOLD, SIGGOLDRSV = Value
+  val ERG, SIGGOLD, SIGGOLDRSV, NFT = Value
 }
 
 object GluonWTokens extends TGluonWTokens {
-  override val sigGoldId: ErgoId = ErgoId.create(GluonWTokenConfig.sigGold)
+
+  override val gluonWBoxNFTId: ErgoId =
+    GluonWTokenConfig.getTokens().gluonWBoxNFTId
+  override val sigGoldId: ErgoId = GluonWTokenConfig.getTokens().sigGoldId
 
   override val sigGoldRsvId: ErgoId =
-    ErgoId.create(GluonWTokenConfig.sigGoldRsv)
+    GluonWTokenConfig.getTokens().sigGoldRsvId
 
   def getId(asset: String): ErgoId =
     asset match {
@@ -20,6 +23,8 @@ object GluonWTokens extends TGluonWTokens {
         GluonWTokens.sigGoldId
       case "SIGGOLDRSV" =>
         GluonWTokens.sigGoldRsvId
+      case "NFT" =>
+        GluonWTokens.gluonWBoxNFTId
     }
 
   def get(asset: String, amount: Long): ErgoToken =
@@ -28,5 +33,7 @@ object GluonWTokens extends TGluonWTokens {
         new ErgoToken(GluonWTokens.sigGoldId, amount)
       case "SIGGOLDRSV" =>
         new ErgoToken(GluonWTokens.sigGoldRsvId, amount)
+      case "NFT" =>
+        new ErgoToken(GluonWTokens.gluonWBoxNFTId, amount)
     }
 }

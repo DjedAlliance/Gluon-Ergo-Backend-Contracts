@@ -1,17 +1,18 @@
 package commons.node
 
 import commons.configs.{MainNetNodeConfig, NodeConfig, TestNetNodeConfig}
-import node.{
+import edge.node.{
   BaseClient,
   MainNetNodeExplorerInfo,
   NodeInfo,
   TestNetNodeExplorerInfo
 }
+import org.ergoplatform.appkit.NetworkType
 
 import javax.inject.Singleton
 
 @Singleton
-case class MainNodeInfo()
+case class MainNodeInfo(networkType: NetworkType = NodeConfig.networkType)
     extends NodeInfo(
       mainNetNodeExplorerInfo = MainNetNodeExplorerInfo(
         mainnetNodeUrl = MainNetNodeConfig.nodeUrl,
@@ -21,11 +22,11 @@ case class MainNodeInfo()
         testnetNodeUrl = TestNetNodeConfig.nodeUrl,
         testnetExplorerUrl = TestNetNodeConfig.explorerUrl
       ),
-      networkType = NodeConfig.networkType
+      networkType = networkType
     )
 
 @Singleton
-class Client()
+class Client(networkType: NetworkType = NodeConfig.networkType)
     extends BaseClient(
-      nodeInfo = MainNodeInfo()
+      nodeInfo = MainNodeInfo(networkType)
     ) {}

@@ -1,7 +1,12 @@
 package gluonw.boxes
 
-import boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
-import edge.registers.LongRegister
+import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
+import edge.registers.{
+  CollBytePairRegister,
+  LongPairRegister,
+  LongRegister,
+  Register
+}
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
@@ -12,14 +17,18 @@ import org.ergoplatform.appkit.{
   ErgoToken,
   InputBox
 }
-import registers.Register
+import special.collection.Coll
 
 import scala.jdk.CollectionConverters.iterableAsScalaIterableConverter
 
 case class GluonWBox(
   value: Long,
-  neutronsTotalSupplyRegister: LongRegister = new LongRegister(100000000L),
-  protonsTotalSupplyRegister: LongRegister = new LongRegister(100000000L),
+  totalSupplyRegister: LongPairRegister = new LongPairRegister(
+    (100000000L, 100000000L)
+  ),
+  tokenIdRegister: CollBytePairRegister = new CollBytePairRegister(
+    (GluonWTokens.sigGoldId.getBytes, GluonWTokens.sigGoldRsvId.getBytes)
+  ),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -38,15 +47,18 @@ case class GluonWBox(
     id = GluonWTokens.sigGoldId
   )
 
+  def neutronsTotalSupply: Long = totalSupplyRegister.value._1
+  def protonsTotalSupply: Long = totalSupplyRegister.value._2
+
   def getNeutronsCirculatingSupply: Long =
-    neutronsTotalSupplyRegister.value - Neutrons.getValue
+    neutronsTotalSupply - Neutrons.getValue
 
   def getProtonsCirculatingSupply: Long =
-    protonsTotalSupplyRegister.value - Protons.getValue
+    protonsTotalSupply - Protons.getValue
 
-  override def R4: Option[Register[_]] = Option(neutronsTotalSupplyRegister)
+  override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
-  override def R5: Option[Register[_]] = Option(protonsTotalSupplyRegister)
+  override def R5: Option[Register[_]] = Option(tokenIdRegister)
 
   // @todo kii: do we need to Implement Neutrons and protons asset price?
   override def toJson(): Json =
@@ -129,17 +141,24 @@ object GoldOracleBox extends BoxWrapperHelper {
 
 object GluonWBox extends BoxWrapperHelper {
 
-  override def from(inputBox: InputBox): GluonWBox =
+  override def from(inputBox: InputBox): GluonWBox = {
+    val tokenIdRegisterTuple: (Coll[Byte], Coll[Byte]) =
+      inputBox.getRegisters
+        .get(0)
+        .getValue
+        .asInstanceOf[(Coll[Byte], Coll[Byte])]
+
     GluonWBox(
       value = inputBox.getValue,
       id = inputBox.getId,
       tokens = inputBox.getTokens.asScala.toSeq,
       box = Option(Box(inputBox)),
-      neutronsTotalSupplyRegister = new LongRegister(
-        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      totalSupplyRegister = new LongPairRegister(
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[(Long, Long)]
       ),
-      protonsTotalSupplyRegister = new LongRegister(
-        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      tokenIdRegister = new CollBytePairRegister(
+        (tokenIdRegisterTuple._1.toArray, tokenIdRegisterTuple._2.toArray)
       )
     )
+  }
 }

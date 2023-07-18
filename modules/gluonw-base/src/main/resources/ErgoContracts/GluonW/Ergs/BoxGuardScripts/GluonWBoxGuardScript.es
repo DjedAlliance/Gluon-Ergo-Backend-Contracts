@@ -10,8 +10,7 @@
 
     // ===== Contract Hard-Coded Constants ===== //
     // val _MinFee:                     Long
-    // val _NeutronsTokenId:            Coll[Byte]
-    // val _ProtonsTokenId:             Coll[Byte]
+    // val _MutatePk:                   Coll[Byte]
 
     // ===== Box Contents ===== //
     // Tokens
@@ -20,7 +19,8 @@
     // 3. (Protons, IntMax)
     //
     // Registers
-    // R4 - (Total Protons Supply, Total Protons Supply): (Long, Long)
+    // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
+    // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
 
     // ===== Relevant Transactions ===== //
     // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
@@ -55,21 +55,27 @@
 
     val IN_GLUONW_BOX: Box = SELF
     val OUT_GLUONW_BOX: Box = OUTPUTS(0)
-    val GOLD_ORACLE_BOX = CONTEXT.dataInputs(0)
+    val GOLD_ORACLE_BOX: Box = CONTEXT.dataInputs(0)
+    val ASSET_TOKENID_REGISTER: (Coll[Byte], Coll[Byte]) = IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get
+    val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUONW_BOX.R4[(Long, Long)].get
+    val NEUTRONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._1
+    val PROTONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._2
+    val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1
+    val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2
 
-    val IN_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _NeutronsTokenId}
-    val IN_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _ProtonsTokenId}
+    val IN_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(1)
+    val IN_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(2)
 
-    val OUT_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _NeutronsTokenId}
-    val OUT_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens
-        .filter{(token: (Coll[Byte], Long)) => token._1 == _ProtonsTokenId}
+    val OUT_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(1)
+    val OUT_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(2)
 
     val __checkGluonWBoxNFT: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
-        IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+        IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
+        IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
+        IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
+        IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
+        IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
@@ -123,14 +129,10 @@
     // ===== (END) Tx Definition ===== //
 
     // ===== Variable Declarations ===== //
-    // @todo kii: Change this amount to something more legit
-    val _totalMintedNeutronsAmount: Long = 1000000
-    val _totalMintedProtonsAmount: Long = 1000000
-
     // Variable in Paper: S neutrons
-    val _neutronsInCirculation: Long = _totalMintedNeutronsAmount - IN_GLUONW_NEUTRONS_TOKEN._2
+    val _neutronsInCirculation: Long = NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2
     // Variable in Paper: S protons
-    val _protonsInCirculation: Long = _totalMintedProtonsAmount - IN_GLUONW_PROTONS_TOKEN._2
+    val _protonsInCirculation: Long = PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2
     val SNeutrons: Long = _neutronsInCirculation
     val SProtons: Long = _protonsInCirculation
 
@@ -140,7 +142,7 @@
     val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee
     val RErg: Long = _fissionedErg
     // Price of Gold
-    val Pt: Long = CONTEXT.dataInputs(0).R4[Long]
+    val Pt: Long = CONTEXT.dataInputs(0).R4[Long].get
 
     // We're using 10,000 because there are constants that goes up to 0.66
     val precision: Long = 10000
@@ -301,8 +303,24 @@
             __outProtonsValueValid,
             __ergsValueValid
         )))
-    }
+    } else {
+        val isMutate: Boolean = allOf(Coll(
+            __checkGluonWBoxNFT,
+            // Check Neutrons reduction in OutBox
+            IN_GLUONW_NEUTRONS_TOKEN._2 == OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-    // Fails if not a valid tx
-    sigmaProp(false)
+            // Check Protons reduction in OutBox
+            IN_GLUONW_PROTONS_TOKEN._2 == OUT_GLUONW_PROTONS_TOKEN._2,
+
+            // Check Erg value increment in OutBox
+            IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
+        ))
+
+        if (isMutate) {
+            _MutatePk
+        } else {
+            // Fails if not a valid tx
+            sigmaProp(false)
+        }
+    }
 }

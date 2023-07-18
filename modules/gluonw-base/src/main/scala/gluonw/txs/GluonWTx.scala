@@ -1,7 +1,7 @@
 package gluonw.txs
 
-import boxes.{BoxWrapper, FundsToAddressBox}
-import commons.{ErgCommons, ErgoBoxHelper}
+import edge.boxes.{BoxWrapper, FundsToAddressBox}
+import edge.commons.{ErgCommons, ErgoBoxHelper}
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import gluonw.common.TGluonWAlgorithm
 import org.ergoplatform.appkit.{
@@ -11,7 +11,7 @@ import org.ergoplatform.appkit.{
   ErgoToken,
   InputBox
 }
-import txs.Tx
+import edge.txs.Tx
 
 abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends Tx
 

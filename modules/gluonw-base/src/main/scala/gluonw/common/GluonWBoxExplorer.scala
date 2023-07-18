@@ -2,8 +2,8 @@ package gluonw.common
 
 import commons.configs.GetOracleConfig
 import commons.node.{Client, MainNodeInfo}
-import errors.ParseException
-import explorer.Explorer
+import edge.errors.ParseException
+import edge.explorer.Explorer
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import gluonw.contracts.GluonWBoxContract
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}

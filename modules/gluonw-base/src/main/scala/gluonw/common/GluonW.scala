@@ -1,12 +1,12 @@
 package gluonw.common
 
-import commons.ErgCommons
+import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
-import txs.Tx
+import edge.txs.Tx
 
 import javax.inject.Inject
 import scala.collection.convert.ImplicitConversions.`iterable AsScalaIterable`

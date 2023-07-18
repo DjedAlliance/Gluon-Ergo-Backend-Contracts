@@ -1,6 +1,6 @@
 package gluonw.common
 
-import commons.ErgCommons
+import edge.commons.ErgCommons
 import gluonw.boxes.{GluonWBox, GoldOracleBox}
 import io.circe.Json
 import org.ergoplatform.appkit.{ErgoId, ErgoToken}
@@ -65,8 +65,9 @@ case class GluonWConstants() extends TGluonWConstants {
     pt: Long,
     fissionedErg: Long
   ): Long = {
-    val rightHandMin = rightHandMin(neutronsInCirculation, pt, fissionedErg)
-    Math.min(qStar, rightHandMin)
+    val rightHandMinVal: Long =
+      rightHandMin(neutronsInCirculation, pt, fissionedErg)
+    Math.min(qStar, rightHandMinVal)
   }
 
   override def phiT: Long = (0.01 * precision).toLong
