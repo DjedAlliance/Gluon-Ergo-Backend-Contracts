@@ -1,21 +1,13 @@
 package gluonw.common
 
-import commons.ErgCommons
+import edge.commons.ErgCommons
+import edge.node.{BaseClient, DefaultNodeInfo}
+import edge.tokens.Tokens
 import gluonw.boxes.GluonWBox
-import node.{BaseClient, DefaultNodeInfo}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{
-  Address,
-  ErgoContract,
-  ErgoProver,
-  ErgoToken,
-  InputBox,
-  NetworkType,
-  Parameters
-}
+import org.ergoplatform.appkit.{Address, ErgoContract, ErgoProver, ErgoToken, InputBox, NetworkType, Parameters}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import tokens.Tokens
 
 abstract class UnitSpec extends AnyWordSpec with Matchers {}
 

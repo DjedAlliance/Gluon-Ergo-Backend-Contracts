@@ -1,7 +1,10 @@
 package gluonw.tools
 
 import edge.commons.ErgCommons
-import commons.node.Client
+import commons.node.{Client, TestClient}
+import edge.boxes.BoxWrapper
+import edge.node.BaseClient
+import edge.txs.Tx
 import gluonw.common.{GluonWAsset, GluonWTokens}
 import org.ergoplatform.appkit.{
   Address,
@@ -30,7 +33,7 @@ object BoxCreation extends App {
   val configFileName = "ergo_config.json"
   val conf: ErgoToolConfig = ErgoToolConfig.load(configFileName)
   val nodeConf: ErgoNodeConfig = conf.getNode
-  val client: Client = new Client(nodeConf.getNetworkType)
+  val client: BaseClient = new TestClient(nodeConf.getNetworkType)
   client.setClient()
 
   val tokens: Seq[(String, (String, Long))] = Seq(
@@ -58,7 +61,7 @@ object BoxCreation extends App {
         val gluonWBox: GluonWBox = GluonWBox(
           value = ErgCommons.MinBoxFee,
           tokens = Seq(
-            new ErgoToken(GluonWTokens.sigGoldId, 1),
+            new ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
             new ErgoToken(GluonWTokens.sigGoldId, totalSupply),
             new ErgoToken(GluonWTokens.sigGoldRsvId, totalSupply)
           )
@@ -66,13 +69,13 @@ object BoxCreation extends App {
 
         mergeBox(
           Seq(nftToken, sigGoldToken, sigGoldRsvToken),
-          Seq(gluonWBox.getOutBox(ctx, ctx.newTxBuilder()))
+          Seq(gluonWBox)
         )(client, conf, nodeConf)
       }
     }
 
     signedTxs.map { signedTx =>
-//        ctx.sendTransaction(signedTx)
+      ctx.sendTransaction(signedTx)
       val jsonVal = signedTx.toJson(true)
       System.out.println(jsonVal)
     }
@@ -86,7 +89,7 @@ object BoxCreation extends App {
     amount: Long = 1L,
     decimals: Int = 0
   )(
-    client: Client,
+    client: BaseClient,
     config: ErgoToolConfig,
     nodeConfig: ErgoNodeConfig
   ): Seq[SignedTransaction] =
@@ -141,8 +144,8 @@ object BoxCreation extends App {
       Seq(signed)
     }
 
-  def mergeBox(tokensToMerge: Seq[ErgoToken], outBox: Seq[OutBox])(
-    client: Client,
+  def mergeBox(tokensToMerge: Seq[ErgoToken], outBox: Seq[BoxWrapper])(
+    client: BaseClient,
     config: ErgoToolConfig,
     nodeConfig: ErgoNodeConfig
   ): Seq[SignedTransaction] =
@@ -188,15 +191,13 @@ object BoxCreation extends App {
         boxesToMerge: _*
       )
 
-      val txB: UnsignedTransactionBuilder = ctx.newTxBuilder()
-      val tx: UnsignedTransaction = txB
-        .addInputs(inputBoxes.toSeq: _*)
-        .addOutputs(outBox: _*)
-        .fee(Parameters.MinFee)
-        .sendChangeTo(ownerAddress)
-        .build()
+      val tx: Tx = Tx(
+        inputBoxes = inputBoxes.toSeq,
+        changeAddress = ownerAddress,
+        outBoxes = outBox
+      )(ctx)
 
-      val signed: SignedTransaction = prover.sign(tx)
+      val signed: SignedTransaction = tx.signTxWithProver(prover)
 
       Seq(signed)
     }

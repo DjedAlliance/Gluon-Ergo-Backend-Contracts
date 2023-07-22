@@ -26,7 +26,12 @@ case class MainNodeInfo(networkType: NetworkType = NodeConfig.networkType)
     )
 
 @Singleton
-class Client(networkType: NetworkType = NodeConfig.networkType)
+class Client()
+    extends BaseClient(
+      nodeInfo = MainNodeInfo()
+    ) {}
+
+class TestClient(networkType: NetworkType = NodeConfig.networkType)
     extends BaseClient(
       nodeInfo = MainNodeInfo(networkType)
     ) {}

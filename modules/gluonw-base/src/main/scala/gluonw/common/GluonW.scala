@@ -3,10 +3,10 @@ package gluonw.common
 import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
-import gluonw.boxes.{GluonWBox, GoldOracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
-import edge.txs.Tx
+import edge.txs.{TTx, Tx}
 
 import javax.inject.Inject
 import scala.collection.convert.ImplicitConversions.`iterable AsScalaIterable`
@@ -21,7 +21,7 @@ trait TGluonW {
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def fission(ergAmount: Long, walletAddress: Address): Seq[Tx]
+  def fission(ergAmount: Long, walletAddress: Address): Seq[TTx]
 
   /**
     * Fission Price
@@ -41,7 +41,7 @@ trait TGluonW {
   def transmuteNeutronsToProtons(
     neutronsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx]
+  ): Seq[TTx]
 
   /**
     * Transmute Neutrons to Protons Price
@@ -61,7 +61,7 @@ trait TGluonW {
   def transmuteProtonsToNeutrons(
     protonsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx]
+  ): Seq[TTx]
 
   /**
     * Transmute Protons to Neutrons Price
@@ -77,7 +77,7 @@ trait TGluonW {
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def redeemNeutrons(neutronsAmount: Long, walletAddress: Address): Seq[Tx]
+  def redeemNeutrons(neutronsAmount: Long, walletAddress: Address): Seq[TTx]
 
   /**
     * Redeem Neutrons to Erg rate
@@ -92,7 +92,7 @@ trait TGluonW {
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def redeemProtons(protonsAmount: Long, walletAddress: Address): Seq[Tx]
+  def redeemProtons(protonsAmount: Long, walletAddress: Address): Seq[TTx]
 
   /**
     * Redeem Protons to Erg rate
@@ -107,7 +107,7 @@ trait TGluonW {
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[Tx]
+  def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[TTx]
 
   /**
     * Mint Neutrons with Erg rate
@@ -122,7 +122,7 @@ trait TGluonW {
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  def mintProtons(ergAmount: Long, walletAddress: Address): Seq[Tx]
+  def mintProtons(ergAmount: Long, walletAddress: Address): Seq[TTx]
 
   /**
     * Mint Protons with Erg rate
@@ -135,7 +135,7 @@ trait TGluonW {
 trait TxConverter {
 
   def convert(
-    txs: Seq[Tx],
+    txs: Seq[TTx],
     address: Address,
     message: String = ""
   ): Seq[ErgoPayResponse] =
@@ -157,7 +157,7 @@ class GluonW @Inject() (
 
   def getPriceFromAlgorithm(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
+    algorithmFunc: (GluonWBox, OracleBox, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -174,7 +174,7 @@ class GluonW @Inject() (
 
   def getPriceAndGluonWBoxFromAlgorithm(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
+    algorithmFunc: (GluonWBox, OracleBox, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -192,13 +192,13 @@ class GluonW @Inject() (
   def getPriceAndGluonWBoxFromAlgorithmWithGluonWBox(
     assetAmount: Long,
     gluonWBox: GluonWBox,
-    algorithmFunc: (GluonWBox, GoldOracleBox, Long) => (
+    algorithmFunc: (GluonWBox, OracleBox, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
   ): (GluonWBox, Seq[AssetPrice]) = {
     // 1. Get the Oracle Box
-    val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+    val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
     // 2. Use Algorithm to calculate rate
     algorithmFunc(gluonWBox, neutronOracleBox, assetAmount)
@@ -213,7 +213,7 @@ class GluonW @Inject() (
     * @return Tx that will give the user the amount of Neutrons and
     *         Protons they deserve
     */
-  override def fission(ergAmount: Long, walletAddress: Address): Seq[Tx] =
+  override def fission(ergAmount: Long, walletAddress: Address): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
       // 1. Get the box from the user
       val userBoxes: java.util.List[InputBox] =
@@ -223,7 +223,7 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
       // 4. Create FissionTx
       val fissionTx: FissionTx = FissionTx(
@@ -245,7 +245,7 @@ class GluonW @Inject() (
     */
   override def fissionPrice(ergAmount: Long): Seq[AssetPrice] =
     // Use Algorithm to calculate Fission rate
-    getPriceFromAlgorithm(ergAmount, algorithm.calculateFissionPrice)
+    getPriceFromAlgorithm(ergAmount, algorithm.fissionPrice)
 
   /**
     * Transmute Neutrons to Protons
@@ -259,7 +259,7 @@ class GluonW @Inject() (
   override def transmuteNeutronsToProtons(
     neutronsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx] =
+  ): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
       // 1. Get the box from the user
       val userBoxes: List[InputBox] =
@@ -275,7 +275,7 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
       // 4. Create BetaDecayPlusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
@@ -299,7 +299,7 @@ class GluonW @Inject() (
     neutronsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayPlus rate
-    getPriceFromAlgorithm(neutronsAmount, algorithm.calculateBetaDecayPlusPrice)
+    getPriceFromAlgorithm(neutronsAmount, algorithm.betaDecayPlusPrice)
 
   /**
     * Transmute Protons to Protons
@@ -312,7 +312,7 @@ class GluonW @Inject() (
   override def transmuteProtonsToNeutrons(
     protonsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx] =
+  ): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
       // 1. Get the box from the user
       val userBoxes: List[InputBox] =
@@ -328,7 +328,7 @@ class GluonW @Inject() (
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
 
       // 3. Get the Oracle Box
-      val neutronOracleBox: GoldOracleBox = gluonWBoxExplorer.getGoldOracleBox
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
       // 4. Create BetaDecayMinusTx
       val betaDecayPlusTx: BetaDecayMinusTx = BetaDecayMinusTx(
@@ -352,7 +352,7 @@ class GluonW @Inject() (
     protonsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayMinus rate
-    getPriceFromAlgorithm(protonsAmount, algorithm.calculateBetaDecayMinusPrice)
+    getPriceFromAlgorithm(protonsAmount, algorithm.betaDecayMinusPrice)
 
   /**
     * Redeem Neutrons to Erg
@@ -367,7 +367,7 @@ class GluonW @Inject() (
   override def redeemNeutrons(
     neutronsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx] =
+  ): Seq[TTx] =
     // 1. Get the box from the user
     // 2. Get the Latest GluonWBox
     // 3. Get the Oracle Box
@@ -391,7 +391,7 @@ class GluonW @Inject() (
     val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
       getPriceAndGluonWBoxFromAlgorithm(
         neutronsAmount,
-        algorithm.calculateBetaDecayMinusPrice
+        algorithm.betaDecayMinusPrice
       )
     ???
   }
@@ -409,7 +409,7 @@ class GluonW @Inject() (
   override def redeemProtons(
     protonsAmount: Long,
     walletAddress: Address
-  ): Seq[Tx] =
+  ): Seq[TTx] =
     // 1. Get the box from the user
     // 2. Get the Latest GluonWBox
     // 3. Get the Oracle Box
@@ -441,7 +441,7 @@ class GluonW @Inject() (
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[Tx] =
+  override def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[TTx] =
     // 1. Get the box from the user
     // 2. Get the Latest GluonWBox
     // 3. Get the Oracle Box

@@ -1,10 +1,10 @@
 package gluonw.common
 
-import commons.configs.GetOracleConfig
+import commons.configs.{GetOracleConfig, TOracleConfig}
 import commons.node.{Client, MainNodeInfo}
 import edge.errors.ParseException
 import edge.explorer.Explorer
-import gluonw.boxes.{GluonWBox, GoldOracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.contracts.GluonWBoxContract
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import play.api.libs.json.JsResultException
@@ -31,15 +31,20 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
       }
     }
 
-  override def getGoldOracleBox: GoldOracleBox =
+  override def getOracleBox: OracleBox =
     client.getClient.execute { (ctx: BlockchainContext) =>
       try {
-        val oracleAddress: Address = GetOracleConfig.get()
+        val oracleConfig: TOracleConfig = GetOracleConfig.get()
+
+//        val oracleBoxesJson: Json =
+//          getUnspentTokenBoxes(oracleConfig.nft.getId.toString)
+
+//        val address: Address = Address.create(oracleBoxesJson.hcursor.downField("items").asInstanceOf[List[Json]].head.hcursor.downField("address").asInstanceOf[String])
 
         val oracleBoxes: Seq[InputBox] =
-          client.getAllUnspentBox(oracleAddress)
+          client.getAllUnspentBox(Address.create(oracleConfig.address))
 
-        GoldOracleBox.from(oracleBoxes.head)
+        OracleBox.from(oracleBoxes.head)
       } catch {
         case e: ParseException    => throw ParseException(e.getMessage)
         case e: JsResultException => throw e
@@ -50,5 +55,5 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
 
 abstract class IGluonWBoxExplorer extends Explorer(nodeInfo = MainNodeInfo()) {
   def getGluonWBox: GluonWBox
-  def getGoldOracleBox: GoldOracleBox
+  def getOracleBox: OracleBox
 }

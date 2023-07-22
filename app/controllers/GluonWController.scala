@@ -1,8 +1,9 @@
 package controllers
 
 import commons.node.Client
+import edge.errors.ExceptionThrowable
 import edge.pay.ErgoPayResponse
-import errors.ExceptionThrowable
+import edge.txs.TTx
 import gluonw.common.{GluonW, GluonWBoxExplorer, TxConverter}
 import io.circe.Json
 import io.circe.syntax.EncoderOps
@@ -10,7 +11,6 @@ import org.ergoplatform.appkit.Address
 import play.api.Logger
 import play.api.libs.circe.Circe
 import play.api.mvc._
-import txs.Tx
 
 import javax.inject.Inject
 
@@ -20,16 +20,16 @@ import javax.inject.Inject
 trait TGluonWController {
 
   /**
-    * Price of gold against erg
+    * Price of neutrons against erg
     * @return
     */
-  def goldPrice(): Action[AnyContent]
+  def neutronPrice(): Action[AnyContent]
 
   /**
-    * Price of Rsv against erg
+    * Price of protons against erg
     * @return
     */
-  def rsvPrice(): Action[AnyContent]
+  def protonPrice(): Action[AnyContent]
 
   /**
     * Erg to Neutrons and Protons
@@ -141,18 +141,19 @@ class GluonWController @Inject() (
     with TGluonWController
     with TxConverter {
   private val logger: Logger = Logger(this.getClass)
+  client.setClient()
 
   def TxCall(
     request: Request[Json],
     assetAmount: Long,
-    txFunc: (Long, Address) => Seq[Tx]
+    txFunc: (Long, Address) => Seq[TTx]
   ): Json = {
     // Get the wallet address from the request body
     val walletAddress: Address =
       Address.create(getRequestBodyAsString(request, "walletAddress"))
 
     // Set up fission tx and get response
-    val fissionTxs: Seq[Tx] = txFunc(assetAmount, walletAddress)
+    val fissionTxs: Seq[TTx] = txFunc(assetAmount, walletAddress)
     // Send ergoPayResponse back
     val ergoPayResponses: Seq[ErgoPayResponse] =
       convert(fissionTxs, walletAddress)
@@ -160,16 +161,15 @@ class GluonWController @Inject() (
     Json.fromValues(ergoPayResponses.map(r => r.asJson))
   }
 
-  override def goldPrice(): Action[AnyContent] =
+  override def neutronPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
-        gluonWBoxExplorer.getGluonWBox
-          .getNeutronsPrice(gluonWBoxExplorer.getGoldOracleBox)
-          .toJson
+        gluonWBoxExplorer.getOracleBox
+          .toJson()
       ).as("application/json")
     }
 
-  override def rsvPrice(): Action[AnyContent] =
+  override def protonPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         gluonWBoxExplorer.getGluonWBox.getProtonsPrice.toJson

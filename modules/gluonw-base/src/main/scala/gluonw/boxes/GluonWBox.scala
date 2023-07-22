@@ -41,11 +41,13 @@ case class GluonWBox(
 
   def Protons: ErgoToken = tokens.tail.tail.head
 
-  def getNeutronsPrice(goldOracleBox: GoldOracleBox): AssetPrice = AssetPrice(
+  def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = AssetPrice(
     name = GluonWAsset.SIGGOLD.toString,
-    price = goldOracleBox.getGoldPrice,
+    price = oracleBox.getPrice,
     id = GluonWTokens.sigGoldId
   )
+
+  def getProtonsPrice: AssetPrice = ???
 
   def neutronsTotalSupply: Long = totalSupplyRegister.value._1
   def protonsTotalSupply: Long = totalSupplyRegister.value._2
@@ -100,9 +102,10 @@ case class GluonWBox(
     )
 }
 
-case class GoldOracleBox(
+case class OracleBox(
   value: Long,
-  goldPriceRegister: LongRegister,
+  priceRegister: LongRegister,
+  epochIdRegister: LongRegister,
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -111,30 +114,38 @@ case class GoldOracleBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
-  def getGoldPrice: Long = goldPriceRegister.value
+  def getPrice: Long = priceRegister.value
 
-  override def R4: Option[Register[_]] = Option(goldPriceRegister)
+  def getEpochId: Long = epochIdRegister.value
+
+  override def R4: Option[Register[_]] = Option(priceRegister)
+
+  override def R5: Option[Register[_]] = Option(epochIdRegister)
 
   override def toJson(): Json =
     Json.fromFields(
       List(
         ("name", Json.fromString("SigGold")),
         ("tokenId", Json.fromString(tokens.tail.head.getId.toString)),
-        ("priceInNanoErgPerKg", Json.fromLong(getGoldPrice))
+        ("epochId", Json.fromLong(getEpochId)),
+        ("priceInNanoErgPerKg", Json.fromLong(getPrice))
       )
     )
 }
 
-object GoldOracleBox extends BoxWrapperHelper {
+object OracleBox extends BoxWrapperHelper {
 
-  override def from(inputBox: InputBox): GoldOracleBox =
-    GoldOracleBox(
+  override def from(inputBox: InputBox): OracleBox =
+    OracleBox(
       value = inputBox.getValue,
       id = inputBox.getId,
       tokens = inputBox.getTokens.asScala.toSeq,
       box = Option(Box(inputBox)),
-      goldPriceRegister = new LongRegister(
-        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
+      priceRegister = new LongRegister(
+        inputBox.getRegisters.get(2).getValue.asInstanceOf[Long]
+      ),
+      epochIdRegister = new LongRegister(
+        inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
       )
     )
 }

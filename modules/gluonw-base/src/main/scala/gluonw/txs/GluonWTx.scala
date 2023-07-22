@@ -2,7 +2,7 @@ package gluonw.txs
 
 import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
-import gluonw.boxes.{GluonWBox, GoldOracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.common.TGluonWAlgorithm
 import org.ergoplatform.appkit.{
   Address,
@@ -11,9 +11,9 @@ import org.ergoplatform.appkit.{
   ErgoToken,
   InputBox
 }
-import edge.txs.Tx
+import edge.txs.TTx
 
-abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends Tx
+abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends TTx
 
 case class FissionTx(
   inputBoxes: Seq[InputBox],
@@ -30,8 +30,8 @@ case class FissionTx(
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
 
-    implicit val neutronOracleBox: GoldOracleBox =
-      GoldOracleBox.from(dataInputs.head)
+    implicit val neutronOracleBox: OracleBox =
+      OracleBox.from(dataInputs.head)
 
     val outGluonWBox: GluonWBox =
       algorithm.fission(inGluonWBox, ergToExchange)
@@ -77,8 +77,8 @@ case class FusionTx(
     val userBox: FundsToAddressBox =
       FundsToAddressBox.from(inputBoxes.tail.head)
 
-    implicit val neutronOracleBox: GoldOracleBox =
-      GoldOracleBox.from(dataInputs.head)
+    implicit val neutronOracleBox: OracleBox =
+      OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
       algorithm.fusion(inGluonWBox, ergToRetrieve)
 
@@ -112,7 +112,7 @@ case class FusionTx(
 }
 
 /**
-  * Transmute Gold to Rsv
+  * Transmute Protons to Neutrons
   */
 case class BetaDecayPlusTx(
   inputBoxes: Seq[InputBox],
@@ -127,8 +127,8 @@ case class BetaDecayPlusTx(
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
 
-    implicit val neutronOracleBox: GoldOracleBox =
-      GoldOracleBox.from(dataInputs.head)
+    implicit val neutronOracleBox: OracleBox =
+      OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
       algorithm.betaDecayPlus(inGluonWBox, neutronsToTransmute)
 
@@ -160,7 +160,7 @@ case class BetaDecayPlusTx(
 }
 
 /**
-  * Transmute Rsv to Gold
+  * Transmute Neutrons to Protons
   */
 case class BetaDecayMinusTx(
   inputBoxes: Seq[InputBox],
@@ -175,8 +175,8 @@ case class BetaDecayMinusTx(
     val userBox: FundsToAddressBox =
       ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
 
-    implicit val neutronOracleBox: GoldOracleBox =
-      GoldOracleBox.from(dataInputs.head)
+    implicit val neutronOracleBox: OracleBox =
+      OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
       algorithm.betaDecayMinus(inGluonWBox, protonsToTransmute)
 
