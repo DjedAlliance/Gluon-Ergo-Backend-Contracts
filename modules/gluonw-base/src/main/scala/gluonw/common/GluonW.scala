@@ -267,7 +267,7 @@ class GluonW @Inject() (
           walletAddress,
           amount = ErgCommons.MinMinerFee,
           tokensToSpend = Seq(
-            GluonWTokens.get(GluonWAsset.SIGGOLD.toString, neutronsAmount)
+            GluonWTokens.get(GluonWAsset.NEUTRON.toString, neutronsAmount)
           ).asJava
         )
 
@@ -320,7 +320,7 @@ class GluonW @Inject() (
           walletAddress,
           amount = ErgCommons.MinMinerFee,
           tokensToSpend = Seq(
-            GluonWTokens.get(GluonWAsset.SIGGOLDRSV.toString, protonsAmount)
+            GluonWTokens.get(GluonWAsset.PROTON.toString, protonsAmount)
           ).asJava
         )
 
@@ -357,8 +357,8 @@ class GluonW @Inject() (
   /**
     * Redeem Neutrons to Erg
     *
-    * Redeeming Erg with purely sigGold requires decaying some of the sigGold
-    * to sigGoldRsv and then consecutively carrying out a fusion tx
+    * Redeeming Erg with purely neutron requires decaying some of the neutron
+    * to proton and then consecutively carrying out a fusion tx
     * BetaDecay- -> Fusion
     * @param neutronsAmount    Amount of Neutrons to be redeemed
     * @param walletAddress Wallet Address of the user
@@ -399,8 +399,8 @@ class GluonW @Inject() (
   /**
     * Redeem Protons to Erg
     *
-    * Redeeming Erg with purely sigGoldRsv requires decaying some of the sigGoldRsv
-    * to sigGold and then consecutively carrying out a fusion tx
+    * Redeeming Erg with purely proton requires decaying some of the proton
+    * to neutron and then consecutively carrying out a fusion tx
     * BetaDecay+ -> Fusion
     * @param protonsAmount     Amount of Protons to be redeemed
     * @param walletAddress Wallet Address of the user

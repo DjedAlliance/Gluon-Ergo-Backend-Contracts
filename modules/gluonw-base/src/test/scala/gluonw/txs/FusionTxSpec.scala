@@ -7,8 +7,6 @@ class FusionTxSpec extends GluonWBase {
   // a. Looping through multiple FusionTx and
   // getting the right amount back
   // b. Chained Tx through multiple FusionTx
-
-
   // 2. FusionTx Failures
   // a. Trying to give more Neutrons
   // b. Trying to give more Protons

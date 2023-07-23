@@ -10,8 +10,6 @@ class BetaDecayMinusSpec extends GluonWBase {
   // a. Looping through multiple BetaDecayMinusTx and
   // getting the right value
   // b. Chained Tx through multiple BetaDecayMinusTx
-
-
   // 2. BetaDecayMinusTx Failures
   // a. Get more protons for the neutrons given
   // b. Get less protons for the neutrons given

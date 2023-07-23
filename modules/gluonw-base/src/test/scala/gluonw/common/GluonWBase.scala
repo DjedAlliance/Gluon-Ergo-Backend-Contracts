@@ -5,7 +5,15 @@ import edge.node.{BaseClient, DefaultNodeInfo}
 import edge.tokens.Tokens
 import gluonw.boxes.GluonWBox
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{Address, ErgoContract, ErgoProver, ErgoToken, InputBox, NetworkType, Parameters}
+import org.ergoplatform.appkit.{
+  Address,
+  ErgoContract,
+  ErgoProver,
+  ErgoToken,
+  InputBox,
+  NetworkType,
+  Parameters
+}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

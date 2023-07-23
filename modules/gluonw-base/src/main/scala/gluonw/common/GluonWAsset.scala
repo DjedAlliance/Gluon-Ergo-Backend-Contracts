@@ -5,34 +5,34 @@ import org.ergoplatform.appkit.{ErgoId, ErgoToken}
 
 object GluonWAsset extends Enumeration {
   type Asset = Value
-  val ERG, SIGGOLD, SIGGOLDRSV, NFT = Value
+  val ERG, NEUTRON, PROTON, NFT = Value
 }
 
 object GluonWTokens extends TGluonWTokens {
 
   override val gluonWBoxNFTId: ErgoId =
     GluonWTokenConfig.getTokens().gluonWBoxNFTId
-  override val sigGoldId: ErgoId = GluonWTokenConfig.getTokens().sigGoldId
+  override val neutronId: ErgoId = GluonWTokenConfig.getTokens().neutronId
 
-  override val sigGoldRsvId: ErgoId =
-    GluonWTokenConfig.getTokens().sigGoldRsvId
+  override val protonId: ErgoId =
+    GluonWTokenConfig.getTokens().protonId
 
   def getId(asset: String): ErgoId =
     asset match {
-      case "SIGGOLD" =>
-        GluonWTokens.sigGoldId
-      case "SIGGOLDRSV" =>
-        GluonWTokens.sigGoldRsvId
+      case "NEUTRON" =>
+        GluonWTokens.neutronId
+      case "PROTON" =>
+        GluonWTokens.protonId
       case "NFT" =>
         GluonWTokens.gluonWBoxNFTId
     }
 
   def get(asset: String, amount: Long): ErgoToken =
     asset match {
-      case "SIGGOLD" =>
-        new ErgoToken(GluonWTokens.sigGoldId, amount)
-      case "SIGGOLDRSV" =>
-        new ErgoToken(GluonWTokens.sigGoldRsvId, amount)
+      case "NEUTRON" =>
+        new ErgoToken(GluonWTokens.neutronId, amount)
+      case "PROTON" =>
+        new ErgoToken(GluonWTokens.protonId, amount)
       case "NFT" =>
         new ErgoToken(GluonWTokens.gluonWBoxNFTId, amount)
     }

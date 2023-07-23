@@ -14,22 +14,21 @@ object GluonWTokenConfig {
     GluonWConfigTokens(
       gluonWBoxNFTId =
         ErgoId.create(readKey(s"tokens.${networkTypeString}.gluonWNft")),
-      sigGoldId =
-        ErgoId.create(readKey(s"tokens.${networkTypeString}.sigGold")),
-      sigGoldRsvId =
-        ErgoId.create(readKey(s"tokens.${networkTypeString}.sigGoldRsv"))
+      neutronId =
+        ErgoId.create(readKey(s"tokens.${networkTypeString}.neutron")),
+      protonId = ErgoId.create(readKey(s"tokens.${networkTypeString}.proton"))
     )
   }
 }
 
 case class GluonWConfigTokens(
   override val gluonWBoxNFTId: ErgoId,
-  override val sigGoldId: ErgoId,
-  override val sigGoldRsvId: ErgoId
+  override val neutronId: ErgoId,
+  override val protonId: ErgoId
 ) extends TGluonWTokens
 
 trait TGluonWTokens {
-  val sigGoldId: ErgoId
-  val sigGoldRsvId: ErgoId
+  val neutronId: ErgoId
+  val protonId: ErgoId
   val gluonWBoxNFTId: ErgoId
 }

@@ -55,15 +55,15 @@ object BoxCreation extends App {
 //        case "mint" => sigGoldNFTMintTx
       case "merge" => {
         val nftToken = new ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)
-        val sigGoldToken = new ErgoToken(GluonWTokens.sigGoldId, totalSupply)
+        val sigGoldToken = new ErgoToken(GluonWTokens.neutronId, totalSupply)
         val sigGoldRsvToken =
-          new ErgoToken(GluonWTokens.sigGoldRsvId, totalSupply)
+          new ErgoToken(GluonWTokens.protonId, totalSupply)
         val gluonWBox: GluonWBox = GluonWBox(
           value = ErgCommons.MinBoxFee,
           tokens = Seq(
             new ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
-            new ErgoToken(GluonWTokens.sigGoldId, totalSupply),
-            new ErgoToken(GluonWTokens.sigGoldRsvId, totalSupply)
+            new ErgoToken(GluonWTokens.neutronId, totalSupply),
+            new ErgoToken(GluonWTokens.protonId, totalSupply)
           )
         )
 

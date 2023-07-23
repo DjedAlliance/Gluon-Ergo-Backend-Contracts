@@ -27,7 +27,7 @@ case class GluonWBox(
     (100000000L, 100000000L)
   ),
   tokenIdRegister: CollBytePairRegister = new CollBytePairRegister(
-    (GluonWTokens.sigGoldId.getBytes, GluonWTokens.sigGoldRsvId.getBytes)
+    (GluonWTokens.neutronId.getBytes, GluonWTokens.protonId.getBytes)
   ),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
@@ -42,9 +42,9 @@ case class GluonWBox(
   def Protons: ErgoToken = tokens.tail.tail.head
 
   def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = AssetPrice(
-    name = GluonWAsset.SIGGOLD.toString,
+    name = GluonWAsset.NEUTRON.toString,
     price = oracleBox.getPrice,
-    id = GluonWTokens.sigGoldId
+    id = GluonWTokens.neutronId
   )
 
   def getProtonsPrice: AssetPrice = ???
@@ -52,10 +52,10 @@ case class GluonWBox(
   def neutronsTotalSupply: Long = totalSupplyRegister.value._1
   def protonsTotalSupply: Long = totalSupplyRegister.value._2
 
-  def getNeutronsCirculatingSupply: Long =
+  def neutronsCirculatingSupply: Long =
     neutronsTotalSupply - Neutrons.getValue
 
-  def getProtonsCirculatingSupply: Long =
+  def protonsCirculatingSupply: Long =
     protonsTotalSupply - Protons.getValue
 
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
@@ -78,7 +78,7 @@ case class GluonWBox(
                     ("tokenId", Json.fromString(Neutrons.getId.toString)),
                     (
                       "circulatingSupply",
-                      Json.fromLong(getNeutronsCirculatingSupply)
+                      Json.fromLong(neutronsCirculatingSupply)
                     )
                   )
                 )
@@ -90,7 +90,7 @@ case class GluonWBox(
                     ("tokenId", Json.fromString(Protons.getId.toString)),
                     (
                       "circulatingSupply",
-                      Json.fromLong(getProtonsCirculatingSupply)
+                      Json.fromLong(protonsCirculatingSupply)
                     )
                   )
                 )
@@ -145,7 +145,7 @@ object OracleBox extends BoxWrapperHelper {
         inputBox.getRegisters.get(2).getValue.asInstanceOf[Long]
       ),
       epochIdRegister = new LongRegister(
-        inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
+        inputBox.getRegisters.get(1).getValue.asInstanceOf[Int].toLong
       )
     )
 }

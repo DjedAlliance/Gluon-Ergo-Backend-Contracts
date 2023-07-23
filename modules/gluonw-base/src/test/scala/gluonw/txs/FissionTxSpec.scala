@@ -7,8 +7,6 @@ class FissionTxSpec extends GluonWBase {
   // a. Looping through multiple FissionTx and
   // getting the right value
   // b. Chained Tx through multiple FissionTx
-
-
   // 2. FissionTx Failures
   // a. Trying to get more Neutrons
   // b. Trying to get more Protons
