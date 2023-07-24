@@ -4,14 +4,9 @@ import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
 import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.common.TGluonWAlgorithm
-import org.ergoplatform.appkit.{
-  Address,
-  BlockchainContext,
-  ErgoId,
-  ErgoToken,
-  InputBox
-}
+import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.TTx
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends TTx
 

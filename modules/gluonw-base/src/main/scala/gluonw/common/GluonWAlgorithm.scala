@@ -1,9 +1,8 @@
 package gluonw.common
 
-import edge.commons.ErgCommons
-import gluonw.boxes.{GluonWBox, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import io.circe.Json
-import org.ergoplatform.appkit.{ErgoId, ErgoToken}
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 /**
   * AssetPrice
@@ -39,7 +38,8 @@ trait TGluonWConstants {
   val precision: Long
 }
 
-case class GluonWConstants() extends TGluonWConstants {
+case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
+    extends TGluonWConstants {
   override def qStar: Long = (0.0066 * precision).toLong
 
   override def fusionRatio(
@@ -57,12 +57,6 @@ case class GluonWConstants() extends TGluonWConstants {
   override def phiFusion: Long = (0.01 * precision).toLong
 
   override def varPhiBeta: Long = (0.02 * precision).toLong
-
-  /**
-    * Gold rate is 1kg per 1nanoErg therefore has to be
-    * divided by 1,000,000,000
-    */
-  override val precision: Long = 1 * 1000 * 1000 * 1000
 }
 
 /**
@@ -77,13 +71,9 @@ case class GluonWConstants() extends TGluonWConstants {
   */
 trait TGluonWAlgorithm {
 
-  def fission(inputGluonWBox: GluonWBox, ergAmount: Long)(
-    implicit oracleBox: OracleBox
-  ): GluonWBox
+  def fission(inputGluonWBox: GluonWBox, ergAmount: Long): GluonWBox
 
-  def fusion(inputGluonWBox: GluonWBox, ergRedeemed: Long)(
-    implicit oracleBox: OracleBox
-  ): GluonWBox
+  def fusion(inputGluonWBox: GluonWBox, ergRedeemed: Long): GluonWBox
 
   def betaDecayPlus(inputGluonWBox: GluonWBox, neutronsAmount: Long)(
     implicit oracleBox: OracleBox
@@ -95,13 +85,11 @@ trait TGluonWAlgorithm {
 
   def fissionPrice(
     inputGluonWBox: GluonWBox,
-    oracleBox: OracleBox,
     ergAmount: Long
   ): (GluonWBox, Seq[AssetPrice])
 
   def fusionPrice(
     inputGluonWBox: GluonWBox,
-    oracleBox: OracleBox,
     ergRedeemed: Long
   ): (GluonWBox, Seq[AssetPrice])
 
@@ -118,11 +106,122 @@ trait TGluonWAlgorithm {
   ): (GluonWBox, Seq[AssetPrice])
 }
 
+/**
+  * @param sProtons Protons Circulating Supply
+  * @param sNeutrons Neutrons Circulating Supply
+  * @param rErg Erg fissioned amount
+  */
+case class GluonWCalculator(
+  sProtons: Long,
+  sNeutrons: Long,
+  rErg: Long,
+  gluonWConstants: TGluonWConstants
+) {
+
+  def fission(ergToFission: Long): GluonWBoxOutputAssetAmount = {
+    val outNeutronsAmount: Long =
+      ergToFission * sNeutrons / rErg * (gluonWConstants.precision - gluonWConstants.phiFission) / gluonWConstants.precision
+    val outProtonsAmount: Long =
+      ergToFission * sProtons / rErg * (gluonWConstants.precision - gluonWConstants.phiFission) / gluonWConstants.precision
+
+    GluonWBoxOutputAssetAmount(
+      ergAmount = -ergToFission,
+      neutronsAmount = outNeutronsAmount,
+      protonsAmount = outProtonsAmount
+    )
+  }
+
+  def fusion(ergFusioned: Long): GluonWBoxOutputAssetAmount = {
+    val inNeutronsAmount: Long =
+      ergFusioned * sNeutrons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion)
+    val inProtonsAmount: Long =
+      ergFusioned * sProtons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion)
+
+    GluonWBoxOutputAssetAmount(
+      ergAmount = ergFusioned,
+      neutronsAmount = -inNeutronsAmount,
+      protonsAmount = -inProtonsAmount
+    )
+  }
+
+  def betaDecayPlus(
+    protonsToDecay: Long
+  )(goldPrice: Long): GluonWBoxOutputAssetAmount = {
+    val fusionRatio: Long =
+      gluonWConstants.fusionRatio(sNeutrons, goldPrice, rErg)
+
+    val outNeutronsAmount: Long =
+      protonsToDecay * (gluonWConstants.precision - gluonWConstants.varPhiBeta) *
+        (1 - fusionRatio) / fusionRatio * (sNeutrons / sProtons)
+
+    GluonWBoxOutputAssetAmount(
+      ergAmount = 0,
+      neutronsAmount = outNeutronsAmount,
+      protonsAmount = -protonsToDecay
+    )
+  }
+
+  def betaDecayMinus(
+    neutronsToDecay: Long
+  )(goldPrice: Long): GluonWBoxOutputAssetAmount = {
+    val fusionRatio: Long =
+      gluonWConstants.fusionRatio(sNeutrons, goldPrice, rErg)
+
+    val outProtonsAmount: Long =
+      neutronsToDecay * (gluonWConstants.precision - gluonWConstants.varPhiBeta) *
+        fusionRatio / (1 - fusionRatio) * (sProtons / sNeutrons)
+
+    GluonWBoxOutputAssetAmount(
+      ergAmount = 0,
+      neutronsAmount = -neutronsToDecay,
+      protonsAmount = outProtonsAmount
+    )
+  }
+}
+
+/**
+  * @param ergAmount Amount of Ergs
+  * @param neutronsAmount Amount of Neutrons
+  * @param protonsAmount Amount of Protons
+  */
+case class GluonWBoxOutputAssetAmount(
+  ergAmount: Long,
+  neutronsAmount: Long,
+  protonsAmount: Long
+)
+
 case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     extends TGluonWAlgorithm {
 
-  override def fission(inputGluonWBox: GluonWBox, ergAmount: Long)(
-    implicit oracleBox: OracleBox
+  def outputGluonWBox(
+    inputGluonWBox: GluonWBox,
+    gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount
+  ): GluonWBox = {
+    val tokens: Seq[ErgoToken] = inputGluonWBox.tokens.map { token =>
+      token.getId match {
+        case GluonWTokens.neutronId =>
+          new ErgoToken(
+            token.getId,
+            token.getValue + gluonWBoxOutputAssetAmount.neutronsAmount
+          )
+        case GluonWTokens.protonId =>
+          new ErgoToken(
+            token.getId,
+            token.getValue + gluonWBoxOutputAssetAmount.protonsAmount
+          )
+        case _ => token
+      }
+    }
+
+    inputGluonWBox.copy(
+      value = inputGluonWBox.value + gluonWBoxOutputAssetAmount.ergAmount,
+      tokens = tokens
+    )
+  }
+
+  override def fission(
+    inputGluonWBox: GluonWBox,
+    ergAmount: Long
   ): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
@@ -131,58 +230,37 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
 
     val ergToChange: Long = ergAmount
 
-    val outNeutronsAmount: Long =
-      ergToChange * (sNeutrons / rErg) * (1 - gluonWConstants.phiFission)
-    val outProtonsAmount: Long =
-      ergToChange * (sProtons / rErg) * (1 - gluonWConstants.phiFission)
+    val gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount =
+      GluonWCalculator(
+        sNeutrons = sNeutrons,
+        sProtons = sProtons,
+        rErg = rErg,
+        gluonWConstants = gluonWConstants
+      ).fission(ergToChange)
 
-    val tokens: Seq[ErgoToken] = inputGluonWBox.tokens.map { token =>
-      token.getId match {
-        case GluonWTokens.neutronId =>
-          new ErgoToken(token.getId, token.getValue - outNeutronsAmount)
-        case GluonWTokens.protonId =>
-          new ErgoToken(token.getId, token.getValue - outProtonsAmount)
-        case _ => token
-      }
-    }
-
-    inputGluonWBox.copy(
-      value = inputGluonWBox.value + ergToChange,
-      tokens = tokens
-    )
+    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }
 
-  override def fusion(inputGluonWBox: GluonWBox, ergRedeemed: Long)(
-    implicit oracleBox: OracleBox
+  override def fusion(
+    inputGluonWBox: GluonWBox,
+    ergRedeemed: Long
   ): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
 
     val rErg: Long = inputGluonWBox.value
-    val phiFusion: Long = gluonWConstants.phiFusion
 
     val ergToChange: Long = ergRedeemed
 
-    val inNeutronsAmount: Long =
-      ergToChange * sNeutrons / rErg / (1 - phiFusion)
-    val inProtonsAmount: Long =
-      ergToChange * sProtons / rErg / (1 - phiFusion)
+    val gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount =
+      GluonWCalculator(
+        sNeutrons = sNeutrons,
+        sProtons = sProtons,
+        rErg = rErg,
+        gluonWConstants = gluonWConstants
+      ).fusion(ergToChange)
 
-    val tokens: Seq[ErgoToken] = inputGluonWBox.tokens.map { token =>
-      token.getId match {
-        case GluonWTokens.neutronId =>
-          new ErgoToken(token.getId, token.getValue + inNeutronsAmount)
-        case GluonWTokens.protonId =>
-          new ErgoToken(token.getId, token.getValue + inProtonsAmount)
-        case _ => token
-      }
-    }
-
-    // In fusion, the erg is removed
-    inputGluonWBox.copy(
-      value = inputGluonWBox.value - ergToChange,
-      tokens = tokens
-    )
+    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }
 
   override def betaDecayPlus(
@@ -193,28 +271,16 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
 
     val rErg: Long = inputGluonWBox.value
-    val varPhiBeta: Long = gluonWConstants.varPhiBeta
 
-    val fusionRatio: Long =
-      gluonWConstants.fusionRatio(sNeutrons, oracleBox.getPrice, rErg)
+    val gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount =
+      GluonWCalculator(
+        sNeutrons = sNeutrons,
+        sProtons = sProtons,
+        rErg = rErg,
+        gluonWConstants = gluonWConstants
+      ).betaDecayPlus(protonsAmount)(oracleBox.getPrice)
 
-    val outNeutronsAmount: Long = protonsAmount * (1 - varPhiBeta) *
-      (1 - fusionRatio) / fusionRatio * (sNeutrons / sProtons)
-
-    val tokens: Seq[ErgoToken] = inputGluonWBox.tokens.map { token =>
-      token.getId match {
-        case GluonWTokens.neutronId =>
-          new ErgoToken(token.getId, token.getValue - outNeutronsAmount)
-        case GluonWTokens.protonId =>
-          new ErgoToken(token.getId, token.getValue + protonsAmount)
-        case _ => token
-      }
-    }
-
-    inputGluonWBox.copy(
-      value = inputGluonWBox.value,
-      tokens = tokens
-    )
+    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }
 
   override def betaDecayMinus(
@@ -225,37 +291,24 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
 
     val rErg: Long = inputGluonWBox.value
-    val varPhiBeta: Long = gluonWConstants.varPhiBeta
 
-    val fusionRatio: Long =
-      gluonWConstants.fusionRatio(sNeutrons, oracleBox.getPrice, rErg)
+    val gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount =
+      GluonWCalculator(
+        sNeutrons = sNeutrons,
+        sProtons = sProtons,
+        rErg = rErg,
+        gluonWConstants = gluonWConstants
+      ).betaDecayMinus(neutronsAmount)(oracleBox.getPrice)
 
-    val outProtonsAmount: Long = neutronsAmount * (1 - varPhiBeta) *
-      fusionRatio / (1 - fusionRatio) * (sProtons / sNeutrons)
-
-    val tokens: Seq[ErgoToken] = inputGluonWBox.tokens.map { token =>
-      token.getId match {
-        case GluonWTokens.neutronId =>
-          new ErgoToken(token.getId, token.getValue + neutronsAmount)
-        case GluonWTokens.protonId =>
-          new ErgoToken(token.getId, token.getValue - outProtonsAmount)
-        case _ => token
-      }
-    }
-
-    inputGluonWBox.copy(
-      value = inputGluonWBox.value,
-      tokens = tokens
-    )
+    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }
 
   override def fissionPrice(
     inputGluonWBox: GluonWBox,
-    oracleBox: OracleBox,
     ergAmount: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      fission(inputGluonWBox, ergAmount)(oracleBox)
+      fission(inputGluonWBox, ergAmount)
 
     (
       outGluonWBox,
@@ -277,17 +330,15 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   /**
     *
     * @param inputGluonWBox GluonWBox to undergo tx
-    * @param oracleBox Oracle box that provides the price of the assets
     * @param ergRedeemed erg to be redeemed. This is a positive amount
     * @return
     */
   override def fusionPrice(
     inputGluonWBox: GluonWBox,
-    oracleBox: OracleBox,
     ergRedeemed: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      fission(inputGluonWBox, ergRedeemed)(oracleBox)
+      fusion(inputGluonWBox, ergRedeemed)
 
     (
       outGluonWBox,
@@ -309,10 +360,10 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   override def betaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    neutronsAmount: Long
+    protonsAmount: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      fission(inputGluonWBox, neutronsAmount)(oracleBox)
+      betaDecayPlus(inputGluonWBox, protonsAmount)(oracleBox)
 
     (
       outGluonWBox,
@@ -329,10 +380,10 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   override def betaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    protonsAmount: Long
+    neutronsAmount: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      fission(inputGluonWBox, protonsAmount)(oracleBox)
+      betaDecayMinus(inputGluonWBox, neutronsAmount)(oracleBox)
 
     (
       outGluonWBox,

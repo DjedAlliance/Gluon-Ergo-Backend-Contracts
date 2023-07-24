@@ -1,6 +1,6 @@
 package gluonw.common
 
-import commons.configs.{GetOracleConfig, TOracleConfig}
+import commons.configs.{OracleConfig, TOracleConfig}
 import commons.node.{Client, MainNodeInfo}
 import edge.errors.ParseException
 import edge.explorer.Explorer
@@ -34,7 +34,7 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
   override def getOracleBox: OracleBox =
     client.getClient.execute { (ctx: BlockchainContext) =>
       try {
-        val oracleConfig: TOracleConfig = GetOracleConfig.get()
+        val oracleConfig: TOracleConfig = OracleConfig.get()
 
 //        val oracleBoxesJson: Json =
 //          getUnspentTokenBoxes(oracleConfig.nft.getId.toString)
@@ -44,7 +44,9 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
         val oracleBoxes: Seq[InputBox] =
           client.getAllUnspentBox(Address.create(oracleConfig.address))
 
-        OracleBox.from(oracleBoxes.head)
+        val priceOracleBoxes: Seq[InputBox] =
+          oracleBoxes.filter(_.getRegisters.size() == 3)
+        OracleBox.from(priceOracleBoxes.head)
       } catch {
         case e: ParseException    => throw ParseException(e.getMessage)
         case e: JsResultException => throw e

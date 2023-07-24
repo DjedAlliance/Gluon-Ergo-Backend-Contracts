@@ -1,7 +1,7 @@
 package gluonw.common
 
 import commons.configs.{GluonWTokenConfig, TGluonWTokens}
-import org.ergoplatform.appkit.{ErgoId, ErgoToken}
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 object GluonWAsset extends Enumeration {
   type Asset = Value

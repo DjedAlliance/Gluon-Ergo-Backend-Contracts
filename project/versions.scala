@@ -1,9 +1,9 @@
 object versions {
   // Ergo
-  val SigmaStateVersion = "4.0.3"
+  val SigmaStateVersion = "5.0.8"
   val ErgoContractsVersion = "1.0.0"
-  val ErgoAppKitVersion = "5.0.1"
-  val ScryptoVersion = "2.1.10"
+  val ErgoAppKitVersion = "5.0.3"
+  val ScryptoVersion = "2.3.0"
   val EdgeVersion = "0.1.7-SNAPSHOT"
 
   // API
@@ -16,16 +16,8 @@ object versions {
   // Play
   val PlayCirceVersion = "2712.0"
   val AnormVersion = "2.6.10"
-  val PlaySlickVersion = "4.0.0"
-  val SlickVersion = "3.3.0"
+  val PlaySlickVersion = "4.0.2"
   val ScalaJHttpVersion = "2.4.2"
-
-  // Cats
-  val CatsVersion = "2.0.0"
-
-  // DB
-  val PostgresqlVersion = "42.2.24"
-  val NewTypeVersion = "0.4.4"
 
   // Test
   val ScalaTestVersion = "3.2.2"

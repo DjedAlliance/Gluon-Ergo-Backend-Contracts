@@ -1,32 +1,29 @@
 package gluonw.tools
 
 import edge.commons.ErgCommons
-import commons.node.{Client, TestClient}
+import commons.node.TestClient
 import edge.boxes.BoxWrapper
 import edge.node.BaseClient
 import edge.txs.Tx
-import gluonw.common.{GluonWAsset, GluonWTokens}
+import gluonw.common.GluonWTokens
 import org.ergoplatform.appkit.{
   Address,
   BlockchainContext,
   Eip4Token,
-  ErgoId,
   ErgoProver,
-  ErgoToken,
   InputBox,
   OutBox,
   Parameters,
-  SecretString,
   SignedTransaction,
-  UnsignedTransaction,
   UnsignedTransactionBuilder
 }
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
 import edge.utils.ContractUtils
 import gluonw.boxes.GluonWBox
+import org.ergoplatform.sdk.{ErgoToken, SecretString}
 
 import java.util.stream.Collectors
-import scala.collection.convert.ImplicitConversions.`iterable AsScalaIterable`
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object BoxCreation extends App {
 
@@ -111,12 +108,13 @@ object BoxCreation extends App {
       val directBox = client
         .getCoveringBoxesFor(ownerAddress, ErgCommons.MinMinerFee * 10)
         .getBoxes
-      System.out.println("boxId: " + directBox.get(0).getId)
+        .asScala
+        .toSeq
 
       val txB: UnsignedTransactionBuilder = ctx.newTxBuilder()
 
       def eip4Token: Eip4Token = new Eip4Token(
-        directBox.get(0).getId.toString,
+        directBox.head.getId.toString,
         amount,
         tokenName,
         tokenDesc,
@@ -130,10 +128,8 @@ object BoxCreation extends App {
         .contract(ContractUtils.sendToPK(ownerAddress))
         .build()
 
-      val inputBoxes = directBox
-
       val tx = txB
-        .addInputs(inputBoxes.toSeq: _*)
+        .addInputs(directBox: _*)
         .addOutputs(tokenBox)
         .fee(Parameters.MinFee)
         .sendChangeTo(ownerAddress)
@@ -170,31 +166,26 @@ object BoxCreation extends App {
         .build()
 
       val spendingBoxes =
-        ctx.getDataSource.getUnspentBoxesFor(ownerAddress, 0, 500)
+        ctx.getDataSource.getUnspentBoxesFor(ownerAddress, 0, 500).asScala.toSeq
 
-      val spendingBoxesWithTokens: java.util.List[InputBox] = spendingBoxes
-        .stream()
+      val spendingBoxesWithTokens: Seq[InputBox] = spendingBoxes
         .filter(!_.getTokens.isEmpty)
-        .collect(Collectors.toList())
 
       // Put the boxes with the seqId tokens tokens together in a sequence
       val boxesToMerge: Seq[InputBox] = spendingBoxesWithTokens.filter {
         spendingBox =>
-          val hasTokens: Boolean = spendingBox.getTokens.exists(token =>
-            tokensToMerge.exists(_.getId.equals(token.getId))
-          )
+          val hasTokens: Boolean =
+            spendingBox.getTokens.asScala.toSeq.exists(token =>
+              tokensToMerge.exists(_.getId.equals(token.getId))
+            )
           hasTokens
       }.toSeq
 
       // Merge the boxes together into the box expected.
-      val inputBoxes = List(
-        boxesToMerge: _*
-      )
-
       val tx: Tx = Tx(
-        inputBoxes = inputBoxes.toSeq,
+        inputBoxes = boxesToMerge.toSeq,
         changeAddress = ownerAddress,
-        outBoxes = outBox
+        outBoxes = outBox.toSeq
       )(ctx)
 
       val signed: SignedTransaction = tx.signTxWithProver(prover)

@@ -19,10 +19,7 @@ object utils {
     "-language:implicitConversions",
     "-feature",
     "-unchecked",
-    "-Xfuture",
-    "-Yno-adapted-args",
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard",
-    "-Ypartial-unification"
+    "-Ywarn-value-discard"
   )
 }

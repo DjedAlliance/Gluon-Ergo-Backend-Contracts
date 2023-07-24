@@ -7,10 +7,10 @@ import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.{TTx, Tx}
+import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
 import javax.inject.Inject
-import scala.collection.convert.ImplicitConversions.`iterable AsScalaIterable`
-import scala.jdk.CollectionConverters.seqAsJavaListConverter
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 trait TGluonW {
 
@@ -157,7 +157,7 @@ class GluonW @Inject() (
 
   def getPriceFromAlgorithm(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    algorithmFunc: (GluonWBox, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -174,7 +174,7 @@ class GluonW @Inject() (
 
   def getPriceAndGluonWBoxFromAlgorithm(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    algorithmFunc: (GluonWBox, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -190,6 +190,51 @@ class GluonW @Inject() (
   }
 
   def getPriceAndGluonWBoxFromAlgorithmWithGluonWBox(
+    assetAmount: Long,
+    gluonWBox: GluonWBox,
+    algorithmFunc: (GluonWBox, Long) => (
+      GluonWBox,
+      Seq[AssetPrice]
+    )
+  ): (GluonWBox, Seq[AssetPrice]) =
+    // 2. Use Algorithm to calculate rate
+    algorithmFunc(gluonWBox, assetAmount)
+
+  def getPriceFromAlgorithmWithOracleBox(
+    assetAmount: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+      GluonWBox,
+      Seq[AssetPrice]
+    )
+  ): Seq[AssetPrice] = {
+    // 1. Get the Latest GluonWBox
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+
+    getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
+      assetAmount,
+      gluonWBox,
+      algorithmFunc
+    )._2
+  }
+
+  def getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
+    assetAmount: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+      GluonWBox,
+      Seq[AssetPrice]
+    )
+  ): (GluonWBox, Seq[AssetPrice]) = {
+    // 1. Get the Latest GluonWBox
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+
+    getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
+      assetAmount,
+      gluonWBox,
+      algorithmFunc
+    )
+  }
+
+  def getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
     assetAmount: Long,
     gluonWBox: GluonWBox,
     algorithmFunc: (GluonWBox, OracleBox, Long) => (
@@ -299,7 +344,10 @@ class GluonW @Inject() (
     neutronsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayPlus rate
-    getPriceFromAlgorithm(neutronsAmount, algorithm.betaDecayPlusPrice)
+    getPriceFromAlgorithmWithOracleBox(
+      neutronsAmount,
+      algorithm.betaDecayPlusPrice
+    )
 
   /**
     * Transmute Protons to Protons
@@ -352,10 +400,14 @@ class GluonW @Inject() (
     protonsAmount: Long
   ): Seq[AssetPrice] =
     // Use Algorithm to calculate BetaDecayMinus rate
-    getPriceFromAlgorithm(protonsAmount, algorithm.betaDecayMinusPrice)
+    getPriceFromAlgorithmWithOracleBox(
+      protonsAmount,
+      algorithm.betaDecayMinusPrice
+    )
 
   /**
     * Redeem Neutrons to Erg
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Redeeming Erg with purely neutron requires decaying some of the neutron
     * to proton and then consecutively carrying out a fusion tx
@@ -379,6 +431,7 @@ class GluonW @Inject() (
 
   /**
     * Redeem Neutrons to Erg rate
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * BetaDecay- -> Fusion
     * @param neutronsAmount Amount of Neutrons to be redeemed
@@ -389,7 +442,7 @@ class GluonW @Inject() (
     // This has to be done in reverse, for example,
     // 1. Calculate how much of equilibrium to get the value
     val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
-      getPriceAndGluonWBoxFromAlgorithm(
+      getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
         neutronsAmount,
         algorithm.betaDecayMinusPrice
       )
@@ -398,6 +451,7 @@ class GluonW @Inject() (
 
   /**
     * Redeem Protons to Erg
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Redeeming Erg with purely proton requires decaying some of the proton
     * to neutron and then consecutively carrying out a fusion tx
@@ -421,6 +475,7 @@ class GluonW @Inject() (
 
   /**
     * Redeem Protons to Erg rate
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * @param protonsAmount Amount of Protons to be redeemed
     * @return
@@ -433,6 +488,7 @@ class GluonW @Inject() (
 
   /**
     * Mint Neutrons with Erg
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Minting pure Neutrons with Erg requires a fission tx to retrieve both
     * Neutrons and Protons, and then converting the Protons into Neutrons
@@ -452,6 +508,7 @@ class GluonW @Inject() (
 
   /**
     * Mint Neutrons with Erg rate
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Fission -> BetaDecay-
     * @param ergAmount Amount of Ergs to be transacted
@@ -466,6 +523,7 @@ class GluonW @Inject() (
 
   /**
     * Mint Protons with Erg
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Fission -> BetaDecay+
     * @param ergAmount     Amount of Ergs to be transacted
@@ -486,6 +544,7 @@ class GluonW @Inject() (
 
   /**
     * Mint Protons with Erg rate
+    * @todo v2: Implement mint and redeem protons and neutrons directly with Erg
     *
     * Minting pure Protons with Erg requires a fission tx to retrieve both
     * Protons and Neutrons, and then converting the Neutrons into Protons

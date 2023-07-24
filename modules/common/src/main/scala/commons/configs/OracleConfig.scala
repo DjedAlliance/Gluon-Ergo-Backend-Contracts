@@ -1,7 +1,8 @@
 package commons.configs
 
 import commons.configs.NodeConfig.networkType
-import org.ergoplatform.appkit.{Address, ErgoId, ErgoToken, NetworkType}
+import org.ergoplatform.appkit.NetworkType
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 object MainNetOracleConfig extends ConfigHelper with TOracleConfig {
 
@@ -34,7 +35,7 @@ trait TOracleConfig {
   val nft: ErgoToken
 }
 
-object GetOracleConfig {
+object OracleConfig {
 
   def get(
     isMainNet: Boolean = (networkType == NetworkType.MAINNET)

@@ -2,7 +2,8 @@ package commons.configs
 
 import commons.configs.Configs.readKey
 import commons.configs.NodeConfig.networkType
-import org.ergoplatform.appkit.{ErgoId, NetworkType}
+import org.ergoplatform.appkit.NetworkType
+import org.ergoplatform.sdk.ErgoId
 
 object GluonWTokenConfig {
 

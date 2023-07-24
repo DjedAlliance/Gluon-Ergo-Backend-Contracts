@@ -1,5 +1,6 @@
 package gluonw.boxes
 
+import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.registers.{
   CollBytePairRegister,
@@ -11,20 +12,32 @@ import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
 import org.ergoplatform.appkit.{
+  Address,
   BlockchainContext,
   ErgoContract,
-  ErgoId,
-  ErgoToken,
-  InputBox
+  InputBox,
+  Parameters
 }
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
 
-import scala.jdk.CollectionConverters.iterableAsScalaIterableConverter
+import scala.jdk.CollectionConverters.ListHasAsScala
+
+object GluonWBoxConstants {
+  val PRECISION: Long = 1_000_000_000L
+  val TOTAL_CIRCULATING_SUPPLY: Long = 100_000_000L * PRECISION
+  val PROTONS_TOTAL_CIRCULATING_SUPPLY: Long = TOTAL_CIRCULATING_SUPPLY
+  val NEUTRONS_TOTAL_CIRCULATING_SUPPLY: Long = TOTAL_CIRCULATING_SUPPLY
+  val STARTING_ERG_AMOUNT: Long = Parameters.MinFee
+}
 
 case class GluonWBox(
   value: Long,
   totalSupplyRegister: LongPairRegister = new LongPairRegister(
-    (100000000L, 100000000L)
+    (
+      GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY,
+      GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY
+    )
   ),
   tokenIdRegister: CollBytePairRegister = new CollBytePairRegister(
     (GluonWTokens.neutronId.getBytes, GluonWTokens.protonId.getBytes)
@@ -57,6 +70,8 @@ case class GluonWBox(
 
   def protonsCirculatingSupply: Long =
     protonsTotalSupply - Protons.getValue
+
+  def ergFissioned: Long = value - GluonWBoxConstants.STARTING_ERG_AMOUNT
 
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
@@ -112,7 +127,7 @@ case class OracleBox(
 ) extends BoxWrapperJson {
 
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
-    GluonWBoxContract.getContract().contract.ergoContract
+    Address.create(OracleConfig.get().address).toErgoContract
 
   def getPrice: Long = priceRegister.value
 
@@ -172,4 +187,18 @@ object GluonWBox extends BoxWrapperHelper {
       )
     )
   }
+
+  def create(
+    neutronAmount: Long = GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY,
+    protonAmount: Long = GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY,
+    ergAmount: Long = GluonWBoxConstants.STARTING_ERG_AMOUNT
+  ): GluonWBox =
+    GluonWBox(
+      value = ergAmount,
+      tokens = Seq(
+        ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
+        ErgoToken(GluonWTokens.neutronId, protonAmount),
+        ErgoToken(GluonWTokens.protonId, neutronAmount)
+      )
+    )
 }

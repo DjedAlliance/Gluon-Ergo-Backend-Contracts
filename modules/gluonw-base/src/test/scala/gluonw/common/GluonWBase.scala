@@ -2,18 +2,19 @@ package gluonw.common
 
 import edge.commons.ErgCommons
 import edge.node.{BaseClient, DefaultNodeInfo}
+import edge.registers.LongRegister
 import edge.tokens.Tokens
-import gluonw.boxes.GluonWBox
+import gluonw.boxes.{GluonWBox, OracleBox}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{
   Address,
   ErgoContract,
   ErgoProver,
-  ErgoToken,
   InputBox,
   NetworkType,
   Parameters
 }
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -118,5 +119,26 @@ trait GluonWBase extends UnitSpec {
       }
     }
 
-  def createGluonWBox(): GluonWBox = ???
+  def createGluonWBox: GluonWBox = GluonWBox.create()
+
+  def createTestOracleBox: OracleBox =
+    OracleBox(
+      value = 10000000L,
+      epochIdRegister = new LongRegister(1396),
+      priceRegister = new LongRegister(52594551964068L),
+      tokens = Seq(
+        new ErgoToken(
+          ErgoId.create(
+            "001e182cc3f04aec4486c7a5018d198e9591a7cfb0b372f5f95fa3e5ddbd24d3"
+          ),
+          1
+        ),
+        new ErgoToken(
+          ErgoId.create(
+            "56aeed3ba3f677ffb5462b0b1f83da3e1d06c8946ba978ef7e706221bac5e982"
+          ),
+          295
+        )
+      )
+    )
 }

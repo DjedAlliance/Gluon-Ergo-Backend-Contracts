@@ -46,14 +46,14 @@ trait TGluonWController {
   def fissionPrice(ergAmount: Long): Action[AnyContent]
 
   /**
-    * Neutrons to Rsv
+    * Neutrons to Protons
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
   def transmuteNeutronsToProtons(goldAmount: Long): Action[Json]
 
   /**
-    * Neutrons to Rsv rate
+    * Neutrons to Protons rate
     * @param goldAmount the amount of sigGold to be converted
     * @return
     */
@@ -207,7 +207,7 @@ class GluonWController @Inject() (
     }
 
   /**
-    * Neutrons to Rsv
+    * Neutrons to Protons
     *
     * @param goldAmount the amount of sigGold to be converted
     * @return
@@ -219,7 +219,7 @@ class GluonWController @Inject() (
     }
 
   /**
-    * Neutrons to Rsv rate
+    * Neutrons to Protons rate
     *
     * @param goldAmount the amount of sigGold to be converted
     * @return
