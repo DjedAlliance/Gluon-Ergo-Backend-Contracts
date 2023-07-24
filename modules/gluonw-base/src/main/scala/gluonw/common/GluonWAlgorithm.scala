@@ -133,9 +133,9 @@ case class GluonWCalculator(
 
   def fusion(ergFusioned: Long): GluonWBoxOutputAssetAmount = {
     val inNeutronsAmount: Long =
-      ergFusioned * sNeutrons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion)
+      ergFusioned * sNeutrons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion) / gluonWConstants.precision
     val inProtonsAmount: Long =
-      ergFusioned * sProtons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion)
+      ergFusioned * sProtons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion) / gluonWConstants.precision
 
     GluonWBoxOutputAssetAmount(
       ergAmount = ergFusioned,
