@@ -2,9 +2,9 @@ package gluonw.common
 
 import edge.commons.ErgCommons
 import edge.node.{BaseClient, DefaultNodeInfo}
-import edge.registers.LongRegister
+import edge.registers.{IntRegister, LongRegister, StringRegister}
 import edge.tokens.Tokens
-import gluonw.boxes.{GluonWBox, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{
   Address,
@@ -89,34 +89,32 @@ trait GluonWBase extends UnitSpec {
     * @return InputBox generated using dummy tx
     */
   def createPaymentBox(
-    contract: ErgoContract,
+    contract: ErgoContract = trueAddress.toErgoContract,
     value: Long = minFee,
-    tokenValue: Long = 0L
+    neutronsValue: Long = 0L,
+    protonsValue: Long = 0L
   ): InputBox =
     client.getClient.execute { ctx =>
-      val txB = ctx.newTxBuilder()
-
-      val token: ErgoToken =
-        if (tokenValue > 0)
-          new ErgoToken(Tokens.sigUSD, tokenValue)
+      val neutrons: ErgoToken =
+        if (neutronsValue > 0)
+          ErgoToken(GluonWTokens.neutronId, neutronsValue)
         else null
 
-      if (token == null) {
-        txB
-          .outBoxBuilder()
-          .contract(contract)
-          .value(value)
-          .build()
-          .convertToInputWith(dummyTxId, 0)
-      } else {
-        txB
-          .outBoxBuilder()
-          .contract(contract)
-          .tokens(token)
-          .value(value)
-          .build()
-          .convertToInputWith(dummyTxId, 0)
-      }
+      val protons: ErgoToken =
+        if (neutronsValue > 0)
+          ErgoToken(GluonWTokens.protonId, protonsValue)
+        else null
+
+      val tokens: Seq[ErgoToken] = Seq(neutrons, protons)
+
+      ctx
+        .newTxBuilder()
+        .outBoxBuilder()
+        .contract(contract)
+        .value(value)
+        .tokens(tokens: _*)
+        .build()
+        .convertToInputWith(dummyTxId, 0)
     }
 
   def createGluonWBox: GluonWBox = GluonWBox.create()
@@ -124,8 +122,9 @@ trait GluonWBase extends UnitSpec {
   def createTestOracleBox: OracleBox =
     OracleBox(
       value = 10000000L,
-      epochIdRegister = new LongRegister(1396),
+      epochIdRegister = new IntRegister(1396),
       priceRegister = new LongRegister(52594551964068L),
+      groupElementRegister = new StringRegister("random string"),
       tokens = Seq(
         new ErgoToken(
           ErgoId.create(
@@ -141,4 +140,24 @@ trait GluonWBase extends UnitSpec {
         )
       )
     )
+
+  def genesisGluonWBox: GluonWBox = GluonWBox.create(
+    protonAmount =
+      GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY - (1 * GluonWBoxConstants.PRECISION).toLong,
+    neutronAmount =
+      GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY - (1 * GluonWBoxConstants.PRECISION).toLong,
+    ergAmount = 6000 * Parameters.OneErg
+  )
+
+  def getManipulatedToken(
+    tokens: Seq[ErgoToken],
+    tokenIdToChange: ErgoId,
+    amountToChange: Long
+  ): Seq[ErgoToken] =
+    tokens.map { token =>
+      if (token.getId.equals(tokenIdToChange)) {
+        ErgoToken(token.getId, token.value + amountToChange)
+      } else token
+    }
+
 }

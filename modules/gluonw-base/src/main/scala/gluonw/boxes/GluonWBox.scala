@@ -4,9 +4,11 @@ import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.registers.{
   CollBytePairRegister,
+  IntRegister,
   LongPairRegister,
   LongRegister,
-  Register
+  Register,
+  StringRegister
 }
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
@@ -120,7 +122,8 @@ case class GluonWBox(
 case class OracleBox(
   value: Long,
   priceRegister: LongRegister,
-  epochIdRegister: LongRegister,
+  epochIdRegister: IntRegister,
+  groupElementRegister: StringRegister = new StringRegister(""),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -133,7 +136,8 @@ case class OracleBox(
 
   def getEpochId: Long = epochIdRegister.value
 
-  override def R4: Option[Register[_]] = Option(priceRegister)
+  override def R4: Option[Register[_]] = Option(groupElementRegister)
+  override def R6: Option[Register[_]] = Option(priceRegister)
 
   override def R5: Option[Register[_]] = Option(epochIdRegister)
 
@@ -159,8 +163,11 @@ object OracleBox extends BoxWrapperHelper {
       priceRegister = new LongRegister(
         inputBox.getRegisters.get(2).getValue.asInstanceOf[Long]
       ),
-      epochIdRegister = new LongRegister(
-        inputBox.getRegisters.get(1).getValue.asInstanceOf[Int].toLong
+      epochIdRegister = new IntRegister(
+        inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
+      ),
+      groupElementRegister = new StringRegister(
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]]
       )
     )
 }
@@ -170,7 +177,7 @@ object GluonWBox extends BoxWrapperHelper {
   override def from(inputBox: InputBox): GluonWBox = {
     val tokenIdRegisterTuple: (Coll[Byte], Coll[Byte]) =
       inputBox.getRegisters
-        .get(0)
+        .get(1)
         .getValue
         .asInstanceOf[(Coll[Byte], Coll[Byte])]
 

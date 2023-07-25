@@ -48,7 +48,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     fissionedErg: Long
   ): Long = {
     val rightHandMinVal: Long =
-      neutronsInCirculation * phiFission / fissionedErg
+      neutronsInCirculation * (phiFission / fissionedErg)
     Math.min(qStar, rightHandMinVal)
   }
 
@@ -120,9 +120,9 @@ case class GluonWCalculator(
 
   def fission(ergToFission: Long): GluonWBoxOutputAssetAmount = {
     val outNeutronsAmount: Long =
-      ergToFission * sNeutrons / rErg * (gluonWConstants.precision - gluonWConstants.phiFission) / gluonWConstants.precision
+      ergToFission * sNeutrons * (gluonWConstants.precision - gluonWConstants.phiFission) / (rErg)
     val outProtonsAmount: Long =
-      ergToFission * sProtons / rErg * (gluonWConstants.precision - gluonWConstants.phiFission) / gluonWConstants.precision
+      ergToFission * sProtons * (gluonWConstants.precision - gluonWConstants.phiFission) / (rErg)
 
     GluonWBoxOutputAssetAmount(
       ergAmount = -ergToFission,
@@ -133,9 +133,9 @@ case class GluonWCalculator(
 
   def fusion(ergFusioned: Long): GluonWBoxOutputAssetAmount = {
     val inNeutronsAmount: Long =
-      ergFusioned * sNeutrons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion) / gluonWConstants.precision
+      ergFusioned * sNeutrons * gluonWConstants.precision / (rErg * (gluonWConstants.precision - gluonWConstants.phiFusion))
     val inProtonsAmount: Long =
-      ergFusioned * sProtons / rErg / (gluonWConstants.precision - gluonWConstants.phiFusion) / gluonWConstants.precision
+      ergFusioned * sProtons * gluonWConstants.precision / (rErg * (gluonWConstants.precision - gluonWConstants.phiFusion))
 
     GluonWBoxOutputAssetAmount(
       ergAmount = ergFusioned,
@@ -150,13 +150,17 @@ case class GluonWCalculator(
     val fusionRatio: Long =
       gluonWConstants.fusionRatio(sNeutrons, goldPrice, rErg)
 
-    val outNeutronsAmount: Long =
-      protonsToDecay * (gluonWConstants.precision - gluonWConstants.varPhiBeta) *
-        (1 - fusionRatio) / fusionRatio * (sNeutrons / sProtons)
+    val oneMinusPhiBeta: Long =
+      gluonWConstants.precision - gluonWConstants.varPhiBeta
+    val oneMinusFusionRatio: Long = gluonWConstants.precision - fusionRatio
+    val minusesMultiplied: Long =
+      oneMinusPhiBeta * oneMinusFusionRatio / gluonWConstants.precision
+    val outNeutronsAmount: BigInt =
+      (((protonsToDecay * minusesMultiplied) / fusionRatio) * sNeutrons) / sProtons
 
     GluonWBoxOutputAssetAmount(
       ergAmount = 0,
-      neutronsAmount = outNeutronsAmount,
+      neutronsAmount = outNeutronsAmount.toLong,
       protonsAmount = -protonsToDecay
     )
   }
@@ -169,7 +173,7 @@ case class GluonWCalculator(
 
     val outProtonsAmount: Long =
       neutronsToDecay * (gluonWConstants.precision - gluonWConstants.varPhiBeta) *
-        fusionRatio / (1 - fusionRatio) * (sProtons / sNeutrons)
+        fusionRatio / (gluonWConstants.precision - fusionRatio) * (sProtons / sNeutrons)
 
     GluonWBoxOutputAssetAmount(
       ergAmount = 0,

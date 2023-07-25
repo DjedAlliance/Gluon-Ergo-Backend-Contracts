@@ -111,7 +111,7 @@ case class FusionTx(
   */
 case class BetaDecayPlusTx(
   inputBoxes: Seq[InputBox],
-  neutronsToTransmute: Long,
+  protonsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
 )(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
@@ -125,7 +125,7 @@ case class BetaDecayPlusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayPlus(inGluonWBox, neutronsToTransmute)
+      algorithm.betaDecayPlus(inGluonWBox, protonsToTransmute)
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -159,7 +159,7 @@ case class BetaDecayPlusTx(
   */
 case class BetaDecayMinusTx(
   inputBoxes: Seq[InputBox],
-  protonsToTransmute: Long,
+  neutronsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
 )(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
@@ -173,23 +173,29 @@ case class BetaDecayMinusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayMinus(inGluonWBox, protonsToTransmute)
+      algorithm.betaDecayMinus(inGluonWBox, neutronsToTransmute)
 
     val neutronsGained: Long =
-      inGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue
+      outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
     val protonsCost: Long =
       outGluonWBox.Protons.getValue - inGluonWBox.Protons.getValue
     val ergsCost: Long = outGluonWBox.value - inGluonWBox.value
 
-    val outUserTokens: Seq[ErgoToken] = userBox.tokens.map { token =>
+    val outUserTokens: Seq[ErgoToken] = userBox.tokens.flatMap { token =>
       val neutronsId: ErgoId = inGluonWBox.Neutrons.getId
       val protonsId: ErgoId = inGluonWBox.Protons.getId
       if (token.getId.equals(neutronsId)) {
-        new ErgoToken(neutronsId, token.getValue + neutronsGained)
+        val totalNeutrons: Long = token.getValue + neutronsGained
+        if (totalNeutrons != 0)
+          Option(ErgoToken(neutronsId, totalNeutrons))
+        else None
       } else if (token.getId.equals(protonsId)) {
-        new ErgoToken(protonsId, token.getValue - protonsCost)
+        val totalProtons: Long = token.getValue + protonsCost
+        if (totalProtons != 0)
+          Option(ErgoToken(protonsId, token.getValue + protonsCost))
+        else None
       } else {
-        token
+        Option(token)
       }
     }
 
