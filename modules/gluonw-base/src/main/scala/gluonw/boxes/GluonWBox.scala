@@ -4,12 +4,10 @@ import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.registers.{
   CollBytePairRegister,
-  GroupElementRegister,
   IntRegister,
   LongPairRegister,
   LongRegister,
-  Register,
-  StringRegister
+  Register
 }
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
@@ -18,13 +16,11 @@ import org.ergoplatform.appkit.{
   Address,
   BlockchainContext,
   ErgoContract,
-  ErgoValue,
   InputBox,
   Parameters
 }
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
-import special.sigma.GroupElement
 
 import scala.jdk.CollectionConverters.ListHasAsScala
 
@@ -33,7 +29,9 @@ object GluonWBoxConstants {
   val TOTAL_CIRCULATING_SUPPLY: Long = 100_000_000L * PRECISION
   val PROTONS_TOTAL_CIRCULATING_SUPPLY: Long = TOTAL_CIRCULATING_SUPPLY
   val NEUTRONS_TOTAL_CIRCULATING_SUPPLY: Long = TOTAL_CIRCULATING_SUPPLY
-  val STARTING_ERG_AMOUNT: Long = Parameters.MinFee
+  // This is the required fee for the box to be in existence. It's the minimum
+  // amount a box require to have to exist on the ergo blockchain
+  val GLUONWBOX_BOX_EXISTENCE_FEE: Long = Parameters.MinFee
 }
 
 case class GluonWBox(
@@ -65,6 +63,7 @@ case class GluonWBox(
     id = GluonWTokens.neutronId
   )
 
+  // @todo kii: Implement this
   def getProtonsPrice: AssetPrice = ???
 
   def neutronsTotalSupply: Long = totalSupplyRegister.value._1
@@ -76,7 +75,7 @@ case class GluonWBox(
   def protonsCirculatingSupply: Long =
     protonsTotalSupply - Protons.getValue
 
-  def ergFissioned: Long = value - GluonWBoxConstants.STARTING_ERG_AMOUNT
+  def ergFissioned: Long = value - GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE
 
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
@@ -204,7 +203,7 @@ object GluonWBox extends BoxWrapperHelper {
   def create(
     neutronAmount: Long = GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY,
     protonAmount: Long = GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY,
-    ergAmount: Long = GluonWBoxConstants.STARTING_ERG_AMOUNT
+    ergAmount: Long = GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE
   ): GluonWBox =
     GluonWBox(
       value = ergAmount,
