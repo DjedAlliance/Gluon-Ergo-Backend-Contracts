@@ -4,6 +4,7 @@ import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.registers.{
   CollBytePairRegister,
+  GroupElementRegister,
   IntRegister,
   LongPairRegister,
   LongRegister,
@@ -17,11 +18,13 @@ import org.ergoplatform.appkit.{
   Address,
   BlockchainContext,
   ErgoContract,
+  ErgoValue,
   InputBox,
   Parameters
 }
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
+import special.sigma.GroupElement
 
 import scala.jdk.CollectionConverters.ListHasAsScala
 
@@ -123,7 +126,7 @@ case class OracleBox(
   value: Long,
   priceRegister: LongRegister,
   epochIdRegister: IntRegister,
-  groupElementRegister: StringRegister = new StringRegister(""),
+  groupElementRegister: LongRegister,
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -134,7 +137,7 @@ case class OracleBox(
 
   def getPrice: Long = priceRegister.value
 
-  def getEpochId: Long = epochIdRegister.value
+  def getEpochId: Int = epochIdRegister.value
 
   override def R4: Option[Register[_]] = Option(groupElementRegister)
   override def R6: Option[Register[_]] = Option(priceRegister)
@@ -166,8 +169,11 @@ object OracleBox extends BoxWrapperHelper {
       epochIdRegister = new IntRegister(
         inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
       ),
-      groupElementRegister = new StringRegister(
-        inputBox.getRegisters.get(0).getValue.asInstanceOf[Coll[Byte]]
+      // We can't figure out how to serialize a groupElement data,
+      // and since we don't need this, we're just going to put in
+      // dummy data
+      groupElementRegister = new LongRegister(
+        1L
       )
     )
 }

@@ -2,8 +2,12 @@ package gluonw.common
 
 import edge.commons.ErgCommons
 import edge.node.{BaseClient, DefaultNodeInfo}
-import edge.registers.{IntRegister, LongRegister, StringRegister}
-import edge.tokens.Tokens
+import edge.registers.{
+  GroupElementRegister,
+  IntRegister,
+  LongRegister,
+  StringRegister
+}
 import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{
@@ -15,8 +19,21 @@ import org.ergoplatform.appkit.{
   Parameters
 }
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
+import org.ergoplatform.settings.ErgoAlgos
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import scorex.util.serialization.Reader
+import sigmastate.SGroupElement
+import sigmastate.Values.Constant
+import sigmastate.lang.DeserializationSigmaBuilder
+import sigmastate.serialization.{
+  ConstantSerializer,
+  ConstantStore,
+  DataSerializer,
+  SigmaSerializer
+}
+import sigmastate.utils.SigmaByteReader
+import special.sigma.GroupElement
 
 abstract class UnitSpec extends AnyWordSpec with Matchers {}
 
@@ -90,49 +107,65 @@ trait GluonWBase extends UnitSpec {
     */
   def createPaymentBox(
     contract: ErgoContract = trueAddress.toErgoContract,
-    value: Long = minFee,
+    value: Long = minFee * 2,
     neutronsValue: Long = 0L,
     protonsValue: Long = 0L
   ): InputBox =
     client.getClient.execute { ctx =>
-      val neutrons: ErgoToken =
+      val neutrons: Option[ErgoToken] =
         if (neutronsValue > 0)
-          ErgoToken(GluonWTokens.neutronId, neutronsValue)
-        else null
+          Option(ErgoToken(GluonWTokens.neutronId, neutronsValue))
+        else None
 
-      val protons: ErgoToken =
-        if (neutronsValue > 0)
-          ErgoToken(GluonWTokens.protonId, protonsValue)
-        else null
+      val protons: Option[ErgoToken] =
+        if (protonsValue > 0)
+          Option(ErgoToken(GluonWTokens.protonId, protonsValue))
+        else None
 
-      val tokens: Seq[ErgoToken] = Seq(neutrons, protons)
+      val tokens: Seq[ErgoToken] = Seq(neutrons, protons).flatten
 
-      ctx
-        .newTxBuilder()
-        .outBoxBuilder()
-        .contract(contract)
-        .value(value)
-        .tokens(tokens: _*)
-        .build()
-        .convertToInputWith(dummyTxId, 0)
+      if (tokens.isEmpty) {
+        ctx
+          .newTxBuilder()
+          .outBoxBuilder()
+          .contract(contract)
+          .value(value)
+          .build()
+          .convertToInputWith(dummyTxId, 0)
+      } else {
+        ctx
+          .newTxBuilder()
+          .outBoxBuilder()
+          .contract(contract)
+          .value(value)
+          .tokens(tokens: _*)
+          .build()
+          .convertToInputWith(dummyTxId, 0)
+      }
     }
 
   def createGluonWBox: GluonWBox = GluonWBox.create()
 
-  def createTestOracleBox: OracleBox =
+  def createTestOracleBox: OracleBox = {
+    val groupElementByteArray: String =
+      "0702585f76d59500ba217152083e11aeabafd3ad7678e093ab26ab25d623ffcefe09"
+//    val S = ConstantSerializer(DeserializationSigmaBuilder)
+//    val c = S.deserialize(SigmaSerializer.startReader(groupElementByteArray.getBytes()))
     OracleBox(
       value = 10000000L,
       epochIdRegister = new IntRegister(1396),
       priceRegister = new LongRegister(52594551964068L),
-      groupElementRegister = new StringRegister("random string"),
+      groupElementRegister = new LongRegister(
+        1L
+      ),
       tokens = Seq(
-        new ErgoToken(
+        ErgoToken(
           ErgoId.create(
             "001e182cc3f04aec4486c7a5018d198e9591a7cfb0b372f5f95fa3e5ddbd24d3"
           ),
           1
         ),
-        new ErgoToken(
+        ErgoToken(
           ErgoId.create(
             "56aeed3ba3f677ffb5462b0b1f83da3e1d06c8946ba978ef7e706221bac5e982"
           ),
@@ -140,13 +173,18 @@ trait GluonWBase extends UnitSpec {
         )
       )
     )
+  }
 
-  def genesisGluonWBox: GluonWBox = GluonWBox.create(
+  def genesisGluonWBox(
+    ergAmount: Long = 200_000L,
+    neutronAmount: Long = 1_000L,
+    protonAmount: Long = 1_000L
+  ): GluonWBox = GluonWBox.create(
     protonAmount =
-      GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY - (1 * GluonWBoxConstants.PRECISION).toLong,
+      GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY - (protonAmount * GluonWBoxConstants.PRECISION).toLong,
     neutronAmount =
-      GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY - (1 * GluonWBoxConstants.PRECISION).toLong,
-    ergAmount = 6000 * Parameters.OneErg
+      GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY - (neutronAmount * GluonWBoxConstants.PRECISION).toLong,
+    ergAmount = ergAmount * Parameters.OneErg + Parameters.MinFee
   )
 
   def getManipulatedToken(

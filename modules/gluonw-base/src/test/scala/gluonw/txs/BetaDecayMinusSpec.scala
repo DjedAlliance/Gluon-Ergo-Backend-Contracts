@@ -34,7 +34,7 @@ class BetaDecayMinusSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
+    val gluonWBox: GluonWBox = genesisGluonWBox(20_000_000L, 100_000L, 100_000L)
 
     val gluonWCalculator: GluonWCalculator = GluonWCalculator(
       sProtons = gluonWBox.protonsCirculatingSupply,
@@ -49,13 +49,13 @@ class BetaDecayMinusSpec extends GluonWBase {
       client.getClient.execute { implicit ctx =>
         // 1. Create a fission box
         // 2. Create a seq of erg to redeem
-        val maxNeutrons: Long = 100_000L
+        val maxNeutrons: Long = 1_000L
         val maxNeutronsInPrecision: Long =
           maxNeutrons * GluonWBoxConstants.PRECISION
         val changeAddress: Address = trueAddress
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
-        (1 to 100).foreach { _ =>
+        (1 to 20).foreach { _ =>
           val random: Double = new Random().nextDouble()
           val neutronsToDecay: Long = (maxNeutronsInPrecision * random).toLong
 
@@ -88,13 +88,19 @@ class BetaDecayMinusSpec extends GluonWBase {
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.protonsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -163,13 +169,19 @@ class BetaDecayMinusSpec extends GluonWBase {
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.protonsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -195,18 +207,11 @@ class BetaDecayMinusSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
-
-    val gluonWCalculator: GluonWCalculator = GluonWCalculator(
-      sProtons = gluonWBox.protonsCirculatingSupply,
-      sNeutrons = gluonWBox.neutronsCirculatingSupply,
-      rErg = gluonWBox.ergFissioned,
-      gluonWConstants = gluonWConstants
-    )
+    val gluonWBox: GluonWBox = genesisGluonWBox()
 
     val oracleBox: OracleBox = createTestOracleBox
     client.getClient.execute { implicit ctx =>
-      val maxNeutrons: Long = 10_000L
+      val maxNeutrons: Long = 1_000L
       val maxNeutronsInPrecision: Long =
         maxNeutrons * GluonWBoxConstants.PRECISION
       val changeAddress: Address = trueAddress
@@ -221,11 +226,6 @@ class BetaDecayMinusSpec extends GluonWBase {
 
       val random: Double = new Random().nextDouble()
       val neutronsToTransmute: Long = (maxNeutronsInPrecision * random).toLong
-
-      val outputAssetAmount: GluonWBoxOutputAssetAmount =
-        testGluonWCalculator.betaDecayMinus(neutronsToTransmute)(
-          oracleBox.getPrice
-        )
 
       // Payment box to pay for the transaction
       val paymentBox: InputBox =

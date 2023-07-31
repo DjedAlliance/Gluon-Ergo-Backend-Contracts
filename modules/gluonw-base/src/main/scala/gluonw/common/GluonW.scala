@@ -323,14 +323,14 @@ class GluonW @Inject() (
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
       // 4. Create BetaDecayPlusTx
-      val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
+      val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
         neutronsToTransmute = neutronsAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm)
 
-      Seq(betaDecayPlusTx)
+      Seq(betaDecayMinusTx)
     }
 
   /**
@@ -379,7 +379,7 @@ class GluonW @Inject() (
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
       // 4. Create BetaDecayMinusTx
-      val betaDecayPlusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+      val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,

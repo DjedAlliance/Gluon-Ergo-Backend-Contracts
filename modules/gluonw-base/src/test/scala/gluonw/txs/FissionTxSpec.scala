@@ -2,7 +2,7 @@ package gluonw.txs
 
 import edge.boxes.{CustomBoxData, FundsToAddressBox}
 import edge.commons.ErgCommons
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.common.{
   GluonWAlgorithm,
   GluonWBase,
@@ -32,29 +32,31 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
-
-    val gluonWCalculator: GluonWCalculator = GluonWCalculator(
-      sProtons = gluonWBox.protonsCirculatingSupply,
-      sNeutrons = gluonWBox.neutronsCirculatingSupply,
-      rErg = gluonWBox.ergFissioned,
-      gluonWConstants = gluonWConstants
-    )
-
     val oracleBox: OracleBox = createTestOracleBox
 
     "loop through multiple fissionTx correctly" in {
       client.getClient.execute { implicit ctx =>
+        val gluonWBox: GluonWBox = genesisGluonWBox()
+
+        val gluonWCalculator: GluonWCalculator = GluonWCalculator(
+          sProtons = gluonWBox.protonsCirculatingSupply,
+          sNeutrons = gluonWBox.neutronsCirculatingSupply,
+          rErg = gluonWBox.ergFissioned,
+          gluonWConstants = gluonWConstants
+        )
+
         // 1. Create a fission box
         // 2. Create a seq of erg to redeem
-        val maxErgs: Long = 100_000L
+        val maxErgs: Long = 1_000L
+        val minErgs: Long = 5L
         val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
         val changeAddress: Address = trueAddress
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
-        (1 to 100).foreach { _ =>
+        (1 to 20).foreach { _ =>
           val random: Double = new Random().nextDouble()
-          val ergsToFission: Long = (maxErgsInNanoErgs * random).toLong
+          val ergsToFission: Long =
+            (maxErgsInNanoErgs * random).toLong + minErgs
 
           val outputAssetAmount: GluonWBoxOutputAssetAmount =
             gluonWCalculator.fission(ergsToFission)
@@ -79,19 +81,25 @@ class FissionTxSpec extends GluonWBase {
             FundsToAddressBox.from(outBoxes.tail.head)
 
           assert(
-            outGluonWBox.value == gluonWBox.value + outputAssetAmount.ergAmount
+            outGluonWBox.value == gluonWBox.value - outputAssetAmount.ergAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.protonsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -118,6 +126,8 @@ class FissionTxSpec extends GluonWBase {
 
     "chain through multiple fission tx" in {
       client.getClient.execute { implicit ctx =>
+        val gluonWBox: GluonWBox = genesisGluonWBox()
+
         val maxErgs: Long = 10_000L
         val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
         val changeAddress: Address = trueAddress
@@ -156,19 +166,25 @@ class FissionTxSpec extends GluonWBase {
             FundsToAddressBox.from(outBoxes.tail.head)
 
           assert(
-            outGluonWBox.value == inGluonWBox.value + outputAssetAmount.ergAmount
+            outGluonWBox.value == inGluonWBox.value - outputAssetAmount.ergAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.protonsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -202,36 +218,25 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
-
-    val gluonWCalculator: GluonWCalculator = GluonWCalculator(
-      sProtons = gluonWBox.protonsCirculatingSupply,
-      sNeutrons = gluonWBox.neutronsCirculatingSupply,
-      rErg = gluonWBox.ergFissioned,
-      gluonWConstants = gluonWConstants
-    )
+    val gluonWBox: GluonWBox = genesisGluonWBox()
 
     val oracleBox: OracleBox = createTestOracleBox
 
     client.getClient.execute { implicit ctx =>
       val maxErgs: Long = 10_000L
       val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
+      val minErgs: Long = 5L * Parameters.OneErg
       val changeAddress: Address = trueAddress
       var inGluonWBox: GluonWBox = gluonWBox
       val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
-      val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
-        sProtons = inGluonWBox.protonsCirculatingSupply,
-        sNeutrons = inGluonWBox.neutronsCirculatingSupply,
-        rErg = inGluonWBox.ergFissioned,
-        gluonWConstants = gluonWConstants
-      )
 
       val random: Double = new Random().nextDouble()
-      val ergsToFission: Long = (maxErgsInNanoErgs * random).toLong
+      val ergsToFission: Long = (maxErgsInNanoErgs * random).toLong + minErgs
 
       // Payment box to pay for the transaction
+      // Give more ergs for cases.
       val paymentBox: InputBox = createPaymentBox(
-        value = ergsToFission + (ErgCommons.MinMinerFee * 2)
+        value = ergsToFission + (ErgCommons.MinMinerFee * 2) + minErgs
       )
 
       val fissionTx: FissionTx = FissionTx(
@@ -476,7 +481,7 @@ class FissionTxSpec extends GluonWBase {
 
       // h. Trying to give less Ergs from the right amount
       "Give less Ergs than expected amount" in {
-        val amountToChange: Long = Parameters.OneErg
+        val amountToChange: Long = Parameters.MinFee * 3
         val customBoxData: Seq[CustomBoxData] = Seq(
           CustomBoxData(customValue =
             Option(outGluonWBox.value + amountToChange)

@@ -102,28 +102,40 @@
         IN_GLUONW_BOX.value > OUT_GLUONW_BOX.value
     ))
 
+    // Transmute Protons to Neutrons
+    // Remove Protons from Circulation
+    // Increase Neutrons in Circulation
+    //
+    // TotalInCirculation = TotalSupply - TokensAmountInBox
+    // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
         // Check Neutrons increment in OutBox
-        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
-
-        // Check Protons reduction in OutBox
-        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
-
-        // Check Erg value increment in OutBox
-        IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value
-    ))
-
-    val isBetaDecayMinusTx: Boolean = allOf(Coll(
-        __checkGluonWBoxNFT,
-        // Check Neutrons decrement in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check Protons increment in OutBox
+        // Check Protons reduction in OutBox
         IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value increment in OutBox
-        IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value
+        IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
+    ))
+
+    // Transmute Neutrons to Protons
+    // Remove Neutrons from Circulation
+    // Increase Protons in Circulation
+    //
+    // TotalInCirculation = TotalSupply - TokensAmountInBox
+    // Therefore an increase in circulation means TokensAmountInBox is lesser
+    val isBetaDecayMinusTx: Boolean = allOf(Coll(
+        __checkGluonWBoxNFT,
+        // Check Neutrons decrement in OutBox
+        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
+
+        // Check Protons increment in OutBox
+        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
+
+        // Check Erg value increment in OutBox
+        IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
     ))
 
     // ===== (END) Tx Definition ===== //
@@ -133,25 +145,25 @@
     val _neutronsInCirculation: Long = NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2
     // Variable in Paper: S protons
     val _protonsInCirculation: Long = PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2
-    val SNeutrons: Long = _neutronsInCirculation
-    val SProtons: Long = _protonsInCirculation
+    val SNeutrons: BigInt = _neutronsInCirculation.toBigInt
+    val SProtons: BigInt = _protonsInCirculation.toBigInt
 
     // Variable in Paper: R
     // As the box that come into existence would have a minimum fee, we have to reduce the
     // value of fissionedErg by minimum value of erg for a box
     val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee
-    val RErg: Long = _fissionedErg
+    val RErg: BigInt = _fissionedErg.toBigInt
     // Price of Gold
-    val Pt: Long = CONTEXT.dataInputs(0).R4[Long].get
+    val Pt: BigInt = CONTEXT.dataInputs(0).R6[Long].get.toBigInt / 1000
 
-    // We're using 10,000 because there are constants that goes up to 0.66
-    val precision: Long = 10000
+    // We're using 1,000,000,000 because the precision is based on nanoErgs
+    val precision: BigInt = (1000 * 1000 * 1000).toBigInt
 
     // q* = 0.66
     // @todo kii, reason about replacing 1 with precision at all parts using 1.
-    val qStar = 66 / precision
-    val rightHandMin = SNeutrons * Pt / RErg
-    val fusionRatio: Long = min(qStar, rightHandMin)
+    val qStar: BigInt = (66 * precision / 100)
+    val rightHandMin: BigInt = SNeutrons * Pt / RErg
+    val fusionRatio: BigInt = min(qStar, rightHandMin)
 
     // ===== (END) Variable Declarations ===== //
 
@@ -163,21 +175,21 @@
         // ===== FISSION Tx ===== //
         // Equation: M [Ergs] = (M (1 - PhiT) (S Protons / R)) [Protons] + (M (1 - PhiT) (S Neutrons / R)) [Neutrons]
 
-        val M: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
+        val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
 
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during fission. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
-        val PhiT: Long = 10 / precision
+        val PhiT: BigInt = (precision / 100).toBigInt
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
-        val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
+        val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+        val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
+        val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
 
-        val NeutronsExpectedValue: Long = M * (1 - PhiT) * (SNeutrons / RErg)
-        val ProtonsExpectedValue: Long = M * (1 - PhiT) * (SProtons / RErg)
-        val ErgsExpectedValue: Long = M
+        val NeutronsExpectedValue: BigInt = (M * SNeutrons * (precision - PhiT) / RErg) / precision
+        val ProtonsExpectedValue: BigInt = (M * SProtons * (precision - PhiT) / RErg) / precision
+        val ErgsExpectedValue: BigInt = M
 
         // ### The 2 conditions to ensure that the values out is right ### //
         val __outNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -199,22 +211,26 @@
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during fission. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
-        val PhiFusion: Long = 10 / precision
+        val PhiFusion: BigInt = (precision / 100).toBigInt
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
-        val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
+        val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+        val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
+        val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
 
         // M(1 - phiFusion) = Ergs
         // therefore, M = Ergs / (1 - phiFusion)
-        val M: Long = ErgsActualValue * (precision / (precision - PhiFusion))
+        val M: BigInt = ErgsActualValue * (precision / (precision - PhiFusion))
 
 
-        val NeutronsExpectedValue: Long = M * (SNeutrons / RErg)
-        val ProtonsExpectedValue: Long = M * (SProtons / RErg)
+        val inProtonsNumerator: BigInt = M * SProtons * precision
+        val inNeutronsNumerator: BigInt = M * SNeutrons * precision
+        val denominator: BigInt = RErg * (precision - PhiFusion)
+
+        val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
+        val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
         // This is technically always true. We can take this off, but I don't want to.
-        val ErgsExpectedValue: Long = ErgsActualValue
+        val ErgsExpectedValue: BigInt = ErgsActualValue
 
         // ### The 2 conditions to ensure that the values out is right ### //
         val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -230,39 +246,46 @@
     }
     else if (isBetaDecayPlusTx)
     {
-        // ===== BetaDecayPlus Tx ===== //
-        // Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S proton)) / q(R, S proton)) * (S protons / S neutrons) [Protons]
+        //===== BetaDecayPlus Tx ===== //
+        //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S proton)) / q(R, S proton)) * (S protons / S neutrons) [Protons]
 
-        val M: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
+        val M: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
 
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
-        val VarPhiBeta: Long = 20 / precision
+        val VarPhiBeta: BigInt = (2 * precision / 100).toBigInt
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
-        val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
+        val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+        val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
+        val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
         // ** Fusion Ratio **
         // min(q*, (SNeutrons * Pt / R))
         // where q* is a constant, Pt is the price of gold in Ergs.
-        val NeutronsExpectedValue: Long = M * (1 - VarPhiBeta) *
-            ((1 - fusionRatio) / fusionRatio) *
-            (SNeutrons / SProtons)
-        val ProtonsExpectedValue: Long = M
-        val ErgsExpectedValue: Long = IN_GLUONW_BOX.value + VarPhiBeta
+        val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
+        val oneMinusFusionRatio: BigInt = precision - fusionRatio
+        val minusesMultiplied: BigInt =
+            oneMinusPhiBeta * oneMinusFusionRatio / precision
+        val outNeutronsAmount: BigInt =
+            (((M * minusesMultiplied) / fusionRatio) * SNeutrons) / SProtons
+
+        val outProtonsAmount: BigInt = M
+
+        val NeutronsExpectedValue: BigInt = outNeutronsAmount
+        val ProtonsExpectedValue: BigInt = outProtonsAmount
+        val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
         // ### The 2 conditions to ensure that the values out is right ### //
-        val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
-        val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
+        val __neutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
+        val __protonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
         val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
         sigmaProp(allOf(Coll(
             __checkGluonWBoxNFT,
-            __inNeutronsValueValid,
-            __outProtonsValueValid,
+            __neutronsValueValid,
+            __protonsValueValid,
             __ergsValueValid
         )))
     }
@@ -270,37 +293,42 @@
     {
         // ===== BetaDecayMinus Tx ===== //
         // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
-
-        val M: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
+        val M: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
 
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
-        val VarPhiBeta: Long = 20 / precision
+        val VarPhiBeta: BigInt = (2 * precision / 100).toBigInt
 
         // The protons and neutrons are lesser in outbox than inputbox
-        val NeutronsActualValue: Long = IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2
-        val ProtonsActualValue: Long = IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2
-        val ErgsActualValue: Long = OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value
+        val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+        val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
+        val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
         // ** Fusion Ratio **
         // min(q*, (SNeutrons * Pt / R))
         // where q* is a constant, Pt is the price of gold in Ergs.
-        val NeutronsExpectedValue: Long = M
-        val ProtonsExpectedValue: Long = M * (1 - VarPhiBeta) *
-            (fusionRatio / (1 - fusionRatio)) *
-            (SProtons / SNeutrons)
-        val ErgsExpectedValue: Long = IN_GLUONW_BOX.value + VarPhiBeta
+        val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
+        val oneMinusFusionRatio: BigInt = precision - fusionRatio
+        val neutronsToDecayMultiplyOneMinusPhiBeta: BigInt =
+            M * oneMinusPhiBeta / precision
+        val outProtonsAmount: BigInt =
+            ((neutronsToDecayMultiplyOneMinusPhiBeta * SProtons / SNeutrons) * fusionRatio) / oneMinusFusionRatio
+        val outNeutronsAmount: BigInt = M
+
+        val NeutronsExpectedValue: BigInt = outNeutronsAmount
+        val ProtonsExpectedValue: BigInt = outProtonsAmount
+        val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
         // ### The 2 conditions to ensure that the values out is right ### //
-        val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
-        val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
+        val __neutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
+        val __protonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
         val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
         sigmaProp(allOf(Coll(
             __checkGluonWBoxNFT,
-            __inNeutronsValueValid,
-            __outProtonsValueValid,
+            __neutronsValueValid,
+            __protonsValueValid,
             __ergsValueValid
         )))
     } else {

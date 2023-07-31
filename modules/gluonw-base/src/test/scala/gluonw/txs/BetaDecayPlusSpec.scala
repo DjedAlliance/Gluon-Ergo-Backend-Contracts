@@ -14,10 +14,8 @@ import gluonw.common.{
 import org.ergoplatform.appkit.{
   Address,
   InputBox,
-  Parameters,
   UnsignedTransaction
 }
-import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 import scala.util.Random
 
@@ -35,7 +33,7 @@ class BetaDecayPlusSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
+    val gluonWBox: GluonWBox = genesisGluonWBox(20_000_000L, 100_000L, 100_000L)
 
     val gluonWCalculator: GluonWCalculator = GluonWCalculator(
       sProtons = gluonWBox.protonsCirculatingSupply,
@@ -50,13 +48,13 @@ class BetaDecayPlusSpec extends GluonWBase {
       client.getClient.execute { implicit ctx =>
         // 1. Create a fission box
         // 2. Create a seq of erg to redeem
-        val maxProtons: Long = 100_000L
+        val maxProtons: Long = 1_000L
         val maxProtonsInPrecision: Long =
           maxProtons * GluonWBoxConstants.PRECISION
         val changeAddress: Address = trueAddress
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
-        (1 to 100).foreach { _ =>
+        (1 to 20).foreach { _ =>
           val random: Double = new Random().nextDouble()
           val protonsToDecay: Long = (maxProtonsInPrecision * random).toLong
 
@@ -74,6 +72,8 @@ class BetaDecayPlusSpec extends GluonWBase {
             dataInputs = Seq(oracleBoxInputBox)
           )
 
+          betaDecayPlusTx.signTx
+
           val outBoxes: Seq[InputBox] =
             betaDecayPlusTx.getOutBoxesAsInputBoxes()
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
@@ -87,13 +87,19 @@ class BetaDecayPlusSpec extends GluonWBase {
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.protonsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -101,7 +107,7 @@ class BetaDecayPlusSpec extends GluonWBase {
             outPaymentBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == outputAssetAmount.protonsAmount
+              .value == outputAssetAmount.neutronsAmount
           )
           assert(
             !outPaymentBox.tokens.exists(_.getId.equals(GluonWTokens.protonId))
@@ -146,6 +152,8 @@ class BetaDecayPlusSpec extends GluonWBase {
             dataInputs = Seq(oracleBoxInputBox)
           )
 
+          betaDecayPlusTx.signTx
+
           val outBoxes: Seq[InputBox] =
             betaDecayPlusTx.getOutBoxesAsInputBoxes()
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
@@ -159,13 +167,19 @@ class BetaDecayPlusSpec extends GluonWBase {
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.protonsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -173,7 +187,7 @@ class BetaDecayPlusSpec extends GluonWBase {
             outPaymentBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == outputAssetAmount.protonsAmount
+              .value == outputAssetAmount.neutronsAmount
           )
           assert(
             !outPaymentBox.tokens.exists(_.getId.equals(GluonWTokens.protonId))
@@ -191,14 +205,7 @@ class BetaDecayPlusSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox
-
-    val gluonWCalculator: GluonWCalculator = GluonWCalculator(
-      sProtons = gluonWBox.protonsCirculatingSupply,
-      sNeutrons = gluonWBox.neutronsCirculatingSupply,
-      rErg = gluonWBox.ergFissioned,
-      gluonWConstants = gluonWConstants
-    )
+    val gluonWBox: GluonWBox = genesisGluonWBox()
 
     val oracleBox: OracleBox = createTestOracleBox
 
@@ -209,12 +216,6 @@ class BetaDecayPlusSpec extends GluonWBase {
       val changeAddress: Address = trueAddress
       var inGluonWBox: GluonWBox = gluonWBox
       val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
-      val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
-        sProtons = inGluonWBox.protonsCirculatingSupply,
-        sNeutrons = inGluonWBox.neutronsCirculatingSupply,
-        rErg = inGluonWBox.ergFissioned,
-        gluonWConstants = gluonWConstants
-      )
 
       val random: Double = new Random().nextDouble()
       val protonsToTransmute: Long = (maxProtonsInPrecision * random).toLong

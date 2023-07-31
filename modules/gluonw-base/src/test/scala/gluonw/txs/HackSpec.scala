@@ -14,7 +14,7 @@ class HackSpec extends GluonWBase {
 
   "Hack fails when" should {
     client.getClient.execute { implicit ctx =>
-      val gluonWBox: GluonWBox = genesisGluonWBox
+      val gluonWBox: GluonWBox = genesisGluonWBox()
       val changeAddress: Address = trueAddress
       val oracleBox: OracleBox = createTestOracleBox
 

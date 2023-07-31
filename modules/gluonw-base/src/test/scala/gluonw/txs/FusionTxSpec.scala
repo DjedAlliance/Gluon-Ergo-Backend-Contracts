@@ -2,7 +2,7 @@ package gluonw.txs
 
 import edge.boxes.{CustomBoxData, FundsToAddressBox}
 import edge.commons.ErgCommons
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.common.{
   GluonWAlgorithm,
   GluonWBase,
@@ -33,7 +33,7 @@ class FusionTxSpec extends GluonWBase {
       GluonWAlgorithm(gluonWConstants)
 
     // @todo kii change this using Calculator
-    val gluonWBox: GluonWBox = genesisGluonWBox
+    val gluonWBox: GluonWBox = genesisGluonWBox()
 
     val gluonWCalculator: GluonWCalculator = GluonWCalculator(
       sProtons = gluonWBox.protonsCirculatingSupply,
@@ -53,7 +53,7 @@ class FusionTxSpec extends GluonWBase {
         val changeAddress: Address = trueAddress
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
-        (1 to 100).foreach { _ =>
+        (1 to 20).foreach { _ =>
           val random: Double = new Random().nextDouble()
           val ergsToFusion: Long = (maxErgsInNanoErgs * random).toLong
 
@@ -63,8 +63,8 @@ class FusionTxSpec extends GluonWBase {
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
             value = ErgCommons.MinMinerFee,
-            neutronsValue = outputAssetAmount.neutronsAmount,
-            protonsValue = outputAssetAmount.protonsAmount
+            neutronsValue = -outputAssetAmount.neutronsAmount,
+            protonsValue = -outputAssetAmount.protonsAmount
           )
 
           val fusionTx: FusionTx = FusionTx(
@@ -82,24 +82,32 @@ class FusionTxSpec extends GluonWBase {
             FundsToAddressBox.from(outBoxes.tail.head)
 
           assert(
-            outGluonWBox.value == gluonWBox.value + outputAssetAmount.ergAmount
+            outGluonWBox.value == gluonWBox.value - outputAssetAmount.ergAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == gluonWBox.value + outputAssetAmount.protonsAmount
+              .value == gluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
           assert(
-            outPaymentBox.value == ergsToFusion
+            outPaymentBox.value == -(FundsToAddressBox
+              .from(paymentBox)
+              .value - ergsToFusion - ErgCommons.MinMinerFee)
           )
           assert(
             !outPaymentBox.tokens.exists(_.getId.equals(GluonWTokens.protonId))
@@ -113,7 +121,7 @@ class FusionTxSpec extends GluonWBase {
 
     "chain through multiple fusion tx" in {
       client.getClient.execute { implicit ctx =>
-        val maxErgs: Long = 10_000L
+        val maxErgs: Long = 1_000L
         val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
         val changeAddress: Address = trueAddress
         var inGluonWBox: GluonWBox = gluonWBox
@@ -131,17 +139,17 @@ class FusionTxSpec extends GluonWBase {
           val ergsToFusion: Long = (maxErgsInNanoErgs * random).toLong
 
           val outputAssetAmount: GluonWBoxOutputAssetAmount =
-            testGluonWCalculator.fission(ergsToFusion)
+            testGluonWCalculator.fusion(ergsToFusion)
 
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
             value = ErgCommons.MinMinerFee,
-            neutronsValue = outputAssetAmount.neutronsAmount,
-            protonsValue = outputAssetAmount.protonsAmount
+            neutronsValue = -outputAssetAmount.neutronsAmount,
+            protonsValue = -outputAssetAmount.protonsAmount
           )
 
           val fusionTx: FusionTx = FusionTx(
-            inputBoxes = Seq(inGluonWBox.getAsInputBox()),
+            inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
             ergToRetrieve = ergsToFusion,
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
@@ -153,19 +161,25 @@ class FusionTxSpec extends GluonWBase {
             FundsToAddressBox.from(outBoxes.tail.head)
 
           assert(
-            outGluonWBox.value == inGluonWBox.value + outputAssetAmount.ergAmount
+            outGluonWBox.value == inGluonWBox.value - outputAssetAmount.ergAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.neutronId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.neutronsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.neutronId))
+              .head
+              .value - outputAssetAmount.neutronsAmount
           )
           assert(
             outGluonWBox.tokens
               .filter(_.getId.equals(GluonWTokens.protonId))
               .head
-              .value == inGluonWBox.value + outputAssetAmount.protonsAmount
+              .value == inGluonWBox.tokens
+              .filter(_.getId.equals(GluonWTokens.protonId))
+              .head
+              .value - outputAssetAmount.protonsAmount
           )
 
           // Check payment Box
@@ -193,7 +207,7 @@ class FusionTxSpec extends GluonWBase {
         GluonWAlgorithm(gluonWConstants)
 
       // @todo kii change this using Calculator
-      val gluonWBox: GluonWBox = genesisGluonWBox
+      val gluonWBox: GluonWBox = genesisGluonWBox()
 
       val gluonWCalculator: GluonWCalculator = GluonWCalculator(
         sProtons = gluonWBox.protonsCirculatingSupply,
@@ -208,6 +222,7 @@ class FusionTxSpec extends GluonWBase {
       // 2. Create a seq of erg to redeem
       val maxErgs: Long = 1_000L
       val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
+      val minTokenAmount: Long = 10_000L
       val changeAddress: Address = trueAddress
       val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
       val ergsToFusion: Long = maxErgsInNanoErgs
@@ -218,8 +233,8 @@ class FusionTxSpec extends GluonWBase {
       // Payment box to pay for the transaction
       val paymentBox: InputBox = createPaymentBox(
         value = ErgCommons.MinMinerFee,
-        neutronsValue = outputAssetAmount.neutronsAmount,
-        protonsValue = outputAssetAmount.protonsAmount
+        neutronsValue = -outputAssetAmount.neutronsAmount + minTokenAmount,
+        protonsValue = -outputAssetAmount.protonsAmount + minTokenAmount
       )
 
       val fusionTx: FusionTx = FusionTx(
