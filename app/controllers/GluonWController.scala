@@ -47,35 +47,35 @@ trait TGluonWController {
 
   /**
     * Neutrons to Protons
-    * @param goldAmount the amount of sigGold to be converted
+    * @param neutronsAmount the amount of neutrons to be converted
     * @return
     */
-  def transmuteNeutronsToProtons(goldAmount: Long): Action[Json]
+  def transmuteNeutronsToProtons(neutronsAmount: Long): Action[Json]
 
   /**
     * Neutrons to Protons rate
-    * @param goldAmount the amount of sigGold to be converted
+    * @param neutronsAmount the amount of neutrons to be converted
     * @return
     */
-  def transmuteNeutronsToProtonsPrice(goldAmount: Long): Action[AnyContent]
+  def transmuteNeutronsToProtonsPrice(neutronsAmount: Long): Action[AnyContent]
 
   /**
     * Protons to Neutrons
-    * @param rsvAmount the amount of Protons to be converted
+    * @param protonsAmount the amount of Protons to be converted
     * @return
     */
-  def transmuteProtonsToNeutrons(rsvAmount: Long): Action[Json]
+  def transmuteProtonsToNeutrons(protonsAmount: Long): Action[Json]
 
   /**
     * Protons to Neutrons rate
-    * @param rsvAmount the amount of Protons to be converted
+    * @param protonsAmount the amount of Protons to be converted
     * @return
     */
-  def transmuteProtonsToNeutronsPrice(rsvAmount: Long): Action[AnyContent]
+  def transmuteProtonsToNeutronsPrice(protonsAmount: Long): Action[AnyContent]
 
   /**
     * Mint Neutrons
-    * @param ergAmount the Erg amount to convert to sigGold
+    * @param ergAmount the Erg amount to convert to neutrons
     * @return
     */
   def mintNeutrons(ergAmount: Long): Action[Json]
@@ -89,17 +89,17 @@ trait TGluonWController {
 
   /**
     * Redeem Neutrons for Erg
-    * @param goldAmount the amount of Neutrons to be redeemed
+    * @param neutronsAmount the amount of Neutrons to be redeemed
     * @return
     */
-  def redeemNeutrons(goldAmount: Long): Action[Json]
+  def redeemNeutrons(neutronsAmount: Long): Action[Json]
 
   /**
     * Redeem Neutrons for Erg rate
-    * @param goldAmount the amount of Neutrons to be redeemed
+    * @param neutronsAmount the amount of Neutrons to be redeemed
     * @return
     */
-  def redeemNeutronsPrice(goldAmount: Long): Action[AnyContent]
+  def redeemNeutronsPrice(neutronsAmount: Long): Action[AnyContent]
 
   /**
     * Mint Protons
@@ -117,17 +117,17 @@ trait TGluonWController {
 
   /**
     * Redeem Protons for Erg
-    * @param rsvAmount the amount of Protons to be redeemed
+    * @param protonsAmount the amount of Protons to be redeemed
     * @return
     */
-  def redeemProtons(rsvAmount: Long): Action[Json]
+  def redeemProtons(protonsAmount: Long): Action[Json]
 
   /**
     * Redeem Protons for Erg rate
-    * @param rsvAmount the amount of Protons to be redeemed
+    * @param protonsAmount the amount of Protons to be redeemed
     * @return
     */
-  def redeemProtonsPrice(rsvAmount: Long): Action[AnyContent]
+  def redeemProtonsPrice(protonsAmount: Long): Action[AnyContent]
 }
 
 class GluonWController @Inject() (
@@ -209,28 +209,28 @@ class GluonWController @Inject() (
   /**
     * Neutrons to Protons
     *
-    * @param goldAmount the amount of sigGold to be converted
+    * @param neutronsAmount the amount of neutrons to be converted
     * @return
     */
-  override def transmuteNeutronsToProtons(goldAmount: Long): Action[Json] =
+  override def transmuteNeutronsToProtons(neutronsAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, goldAmount, gluonW.transmuteNeutronsToProtons))
+      Ok(TxCall(request, neutronsAmount, gluonW.transmuteNeutronsToProtons))
         .as("application/json")
     }
 
   /**
     * Neutrons to Protons rate
     *
-    * @param goldAmount the amount of sigGold to be converted
+    * @param neutronsAmount the amount of neutrons to be converted
     * @return
     */
   override def transmuteNeutronsToProtonsPrice(
-    goldAmount: Long
+    neutronsAmount: Long
   ): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(
       Json.fromValues(
         gluonW
-          .transmuteNeutronsToProtonsPrice(goldAmount)
+          .transmuteNeutronsToProtonsPrice(neutronsAmount)
           .map(rate => rate.toJson)
       )
     ).as("application/json")
@@ -239,29 +239,29 @@ class GluonWController @Inject() (
   /**
     * Protons to Neutrons
     *
-    * @param rsvAmount the amount of Protons to be converted
+    * @param protonsAmount the amount of Protons to be converted
     * @return
     */
-  override def transmuteProtonsToNeutrons(rsvAmount: Long): Action[Json] =
+  override def transmuteProtonsToNeutrons(protonsAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, rsvAmount, gluonW.transmuteProtonsToNeutrons))
+      Ok(TxCall(request, protonsAmount, gluonW.transmuteProtonsToNeutrons))
         .as("application/json")
     }
 
   /**
     * Protons to Neutrons rate
     *
-    * @param rsvAmount the amount of Protons to be converted
+    * @param protonsAmount the amount of Protons to be converted
     * @return
     */
   override def transmuteProtonsToNeutronsPrice(
-    rsvAmount: Long
+    protonsAmount: Long
   ): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
           gluonW
-            .transmuteProtonsToNeutronsPrice(rsvAmount)
+            .transmuteProtonsToNeutronsPrice(protonsAmount)
             .map(rate => rate.toJson)
         )
       ).as("application/json")
@@ -270,7 +270,7 @@ class GluonWController @Inject() (
   /**
     * Mint Neutrons
     *
-    * @param ergAmount the Erg amount to convert to sigGold
+    * @param ergAmount the Erg amount to convert to neutrons
     * @return
     */
   override def mintNeutrons(ergAmount: Long): Action[Json] =
@@ -296,26 +296,26 @@ class GluonWController @Inject() (
   /**
     * Redeem Neutrons for Erg
     *
-    * @param goldAmount the amount of Neutrons to be redeemed
+    * @param neutronsAmount the amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemNeutrons(goldAmount: Long): Action[Json] =
+  override def redeemNeutrons(neutronsAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, goldAmount, gluonW.redeemNeutrons))
+      Ok(TxCall(request, neutronsAmount, gluonW.redeemNeutrons))
         .as("application/json")
     }
 
   /**
     * Redeem Neutrons for Erg rate
     *
-    * @param goldAmount the amount of Neutrons to be redeemed
+    * @param neutronsAmount the amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemNeutronsPrice(goldAmount: Long): Action[AnyContent] =
+  override def redeemNeutronsPrice(neutronsAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemNeutronsPrice(goldAmount).map(rate => rate.toJson)
+          gluonW.redeemNeutronsPrice(neutronsAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
@@ -350,26 +350,26 @@ class GluonWController @Inject() (
   /**
     * Redeem Protons for Erg
     *
-    * @param rsvAmount the amount of Protons to be redeemed
+    * @param protonsAmount the amount of Protons to be redeemed
     * @return
     */
-  override def redeemProtons(rsvAmount: Long): Action[Json] =
+  override def redeemProtons(protonsAmount: Long): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, rsvAmount, gluonW.redeemProtons))
+      Ok(TxCall(request, protonsAmount, gluonW.redeemProtons))
         .as("application/json")
     }
 
   /**
     * Redeem Protons for Erg rate
     *
-    * @param rsvAmount the amount of Protons to be redeemed
+    * @param protonsAmount the amount of Protons to be redeemed
     * @return
     */
-  override def redeemProtonsPrice(rsvAmount: Long): Action[AnyContent] =
+  override def redeemProtonsPrice(protonsAmount: Long): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         Json.fromValues(
-          gluonW.redeemProtonsPrice(rsvAmount).map(rate => rate.toJson)
+          gluonW.redeemProtonsPrice(protonsAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }
