@@ -146,18 +146,11 @@ trait GluonWBase extends UnitSpec {
 
   def createGluonWBox: GluonWBox = GluonWBox.create()
 
-  def createTestOracleBox: OracleBox = {
-    val groupElementByteArray: String =
-      "0702585f76d59500ba217152083e11aeabafd3ad7678e093ab26ab25d623ffcefe09"
-//    val S = ConstantSerializer(DeserializationSigmaBuilder)
-//    val c = S.deserialize(SigmaSerializer.startReader(groupElementByteArray.getBytes()))
+  def createTestOracleBox: OracleBox =
     OracleBox(
       value = 10000000L,
       epochIdRegister = new IntRegister(1396),
       priceRegister = new LongRegister(52594551964068L),
-      groupElementRegister = new LongRegister(
-        1L
-      ),
       tokens = Seq(
         ErgoToken(
           ErgoId.create(
@@ -173,18 +166,17 @@ trait GluonWBase extends UnitSpec {
         )
       )
     )
-  }
 
   def genesisGluonWBox(
-    ergAmount: Long = 200_000L,
-    neutronAmount: Long = 1_000L,
-    protonAmount: Long = 1_000L
+    ergAmount: Double = 200_000L,
+    neutronAmount: Double = 1_000L,
+    protonAmount: Double = 1_000L
   ): GluonWBox = GluonWBox.create(
     protonAmount =
       GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY - (protonAmount * GluonWBoxConstants.PRECISION).toLong,
     neutronAmount =
       GluonWBoxConstants.NEUTRONS_TOTAL_CIRCULATING_SUPPLY - (neutronAmount * GluonWBoxConstants.PRECISION).toLong,
-    ergAmount = ergAmount * Parameters.OneErg + Parameters.MinFee
+    ergAmount = (ergAmount * Parameters.OneErg + Parameters.MinFee).toLong
   )
 
   def getManipulatedToken(

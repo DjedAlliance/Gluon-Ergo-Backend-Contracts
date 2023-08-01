@@ -1,29 +1,24 @@
 package gluonw.tools
 
+import commons.configs.NodeConfig
 import edge.commons.ErgCommons
-import commons.node.TestClient
-import edge.boxes.BoxWrapper
+import commons.node.{Client, TestClient}
 import edge.node.BaseClient
-import edge.txs.Tx
+import edge.tools.BoxTools.{mergeBox, mintTokens}
 import gluonw.common.GluonWTokens
 import org.ergoplatform.appkit.{
   Address,
   BlockchainContext,
-  Eip4Token,
-  ErgoProver,
+  BoxOperations,
   InputBox,
   OutBox,
   Parameters,
-  SignedTransaction,
-  UnsignedTransactionBuilder
+  SignedTransaction
 }
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
-import edge.utils.ContractUtils
-import gluonw.boxes.GluonWBox
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants}
 import org.ergoplatform.sdk.{ErgoToken, SecretString}
-
-import java.util.stream.Collectors
-import scala.jdk.CollectionConverters.CollectionHasAsScala
+import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
 object BoxCreation extends App {
 
@@ -34,33 +29,67 @@ object BoxCreation extends App {
   client.setClient()
 
   val tokens: Seq[(String, (String, Long))] = Seq(
-    ("SIGGoldNFT", ("SigGold NFTby DJed Alliance", 1L)),
-    ("SIGGold", ("SigGold by DJed Alliance", 100000000L)),
-    ("SIGGoldRsv", ("SigGoldRsv by DJed Alliance", 100000000L))
+    ("GluonW NFT", ("GluonW NFTby DJed Alliance", 1L)),
+    (
+      "GluonW Neutrons",
+      (
+        "GluonW Neutrons by DJed Alliance",
+        GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
+      )
+    ),
+    (
+      "GluonW Protons",
+      (
+        "GluonW Protons by DJed Alliance",
+        GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
+      )
+    )
   )
 
   val txJson: Seq[Unit] = client.getClient.execute { (ctx: BlockchainContext) =>
     val runTx = "merge"
 
     System.out.println(s"Running $runTx tx")
-//      val sigGoldMintTx = mintTokens(tokens(1)._1, tokens(1)._2._1, tokens(1)._2._2)(client, conf, nodeConf)
-//      val sigGoldRsvMintTx = mintTokens(tokens(2)._1, tokens(2)._2._1, tokens(2)._2._2)(client, conf, nodeConf)
-//      val sigGoldNFTMintTx = mintTokens(tokens.head._1, tokens.head._2._1, tokens.head._2._2)(client, conf, nodeConf)
-    val totalSupply: Long = 100000000L
+    val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
 
     val signedTxs: Seq[SignedTransaction] = runTx match {
-//        case "mint" => sigGoldNFTMintTx
+      case "mint" => {
+        val sigGoldMintTx = mintTokens(
+          tokens(1)._1,
+          tokens(1)._2._1,
+          tokens(1)._2._2
+        )(client, conf, nodeConf)
+        val sigGoldRsvMintTx = mintTokens(
+          tokens(2)._1,
+          tokens(2)._2._1,
+          tokens(2)._2._2
+        )(client, conf, nodeConf)
+        val sigGoldNFTMintTx = mintTokens(
+          tokens.head._1,
+          tokens.head._2._1,
+          tokens.head._2._2
+        )(client, conf, nodeConf)
+
+        sigGoldNFTMintTx
+      }
       case "merge" => {
-        val nftToken = new ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)
-        val sigGoldToken = new ErgoToken(GluonWTokens.neutronId, totalSupply)
+        val nftToken = ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)
+        val sigGoldToken = ErgoToken(GluonWTokens.neutronId, totalSupply)
         val sigGoldRsvToken =
-          new ErgoToken(GluonWTokens.protonId, totalSupply)
+          ErgoToken(GluonWTokens.protonId, totalSupply)
         val gluonWBox: GluonWBox = GluonWBox(
-          value = ErgCommons.MinBoxFee,
+          value =
+            20 * Parameters.OneErg + GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE,
           tokens = Seq(
-            new ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
-            new ErgoToken(GluonWTokens.neutronId, totalSupply),
-            new ErgoToken(GluonWTokens.protonId, totalSupply)
+            ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
+            ErgoToken(
+              GluonWTokens.neutronId,
+              totalSupply - (GluonWBoxConstants.PRECISION / 10)
+            ),
+            ErgoToken(
+              GluonWTokens.protonId,
+              totalSupply - (GluonWBoxConstants.PRECISION / 10)
+            )
           )
         )
 
@@ -79,117 +108,4 @@ object BoxCreation extends App {
   }
 
   System.out.println("Completed Transaction")
-
-  def mintTokens(
-    tokenName: String,
-    tokenDesc: String,
-    amount: Long = 1L,
-    decimals: Int = 0
-  )(
-    client: BaseClient,
-    config: ErgoToolConfig,
-    nodeConfig: ErgoNodeConfig
-  ): Seq[SignedTransaction] =
-    client.getClient.execute { ctx =>
-      val addressIndex: Int = config.getParameters.get("addressIndex").toInt
-
-      val prover: ErgoProver = ctx
-        .newProverBuilder()
-        .withMnemonic(
-          SecretString.create(nodeConfig.getWallet.getMnemonic),
-          SecretString.create(""),
-          false
-        )
-        .withEip3Secret(addressIndex)
-        .build()
-
-      val ownerAddress: Address = prover.getEip3Addresses.get(0)
-
-      val directBox = client
-        .getCoveringBoxesFor(ownerAddress, ErgCommons.MinMinerFee * 10)
-        .getBoxes
-        .asScala
-        .toSeq
-
-      val txB: UnsignedTransactionBuilder = ctx.newTxBuilder()
-
-      def eip4Token: Eip4Token = new Eip4Token(
-        directBox.head.getId.toString,
-        amount,
-        tokenName,
-        tokenDesc,
-        decimals
-      )
-
-      val tokenBox: OutBox = txB
-        .outBoxBuilder()
-        .value(ErgCommons.MinBoxFee)
-        .mintToken(eip4Token)
-        .contract(ContractUtils.sendToPK(ownerAddress))
-        .build()
-
-      val tx = txB
-        .addInputs(directBox: _*)
-        .addOutputs(tokenBox)
-        .fee(Parameters.MinFee)
-        .sendChangeTo(ownerAddress)
-        .build()
-
-      val signed: SignedTransaction = prover.sign(tx)
-
-      Seq(signed)
-    }
-
-  def mergeBox(tokensToMerge: Seq[ErgoToken], outBox: Seq[BoxWrapper])(
-    client: BaseClient,
-    config: ErgoToolConfig,
-    nodeConfig: ErgoNodeConfig
-  ): Seq[SignedTransaction] =
-    client.getClient.execute { ctx =>
-      val addressIndex: Int = config.getParameters.get("addressIndex").toInt
-      val ownerAddress: Address = Address.createEip3Address(
-        0,
-        nodeConfig.getNetworkType,
-        SecretString.create(nodeConfig.getWallet.getMnemonic),
-        SecretString.create(""),
-        false
-      )
-
-      val prover: ErgoProver = ctx
-        .newProverBuilder()
-        .withMnemonic(
-          SecretString.create(nodeConfig.getWallet.getMnemonic),
-          SecretString.create(""),
-          false
-        )
-        .withEip3Secret(addressIndex)
-        .build()
-
-      val spendingBoxes =
-        ctx.getDataSource.getUnspentBoxesFor(ownerAddress, 0, 500).asScala.toSeq
-
-      val spendingBoxesWithTokens: Seq[InputBox] = spendingBoxes
-        .filter(!_.getTokens.isEmpty)
-
-      // Put the boxes with the seqId tokens tokens together in a sequence
-      val boxesToMerge: Seq[InputBox] = spendingBoxesWithTokens.filter {
-        spendingBox =>
-          val hasTokens: Boolean =
-            spendingBox.getTokens.asScala.toSeq.exists(token =>
-              tokensToMerge.exists(_.getId.equals(token.getId))
-            )
-          hasTokens
-      }.toSeq
-
-      // Merge the boxes together into the box expected.
-      val tx: Tx = Tx(
-        inputBoxes = boxesToMerge.toSeq,
-        changeAddress = ownerAddress,
-        outBoxes = outBox.toSeq
-      )(ctx)
-
-      val signed: SignedTransaction = tx.signTxWithProver(prover)
-
-      Seq(signed)
-    }
 }

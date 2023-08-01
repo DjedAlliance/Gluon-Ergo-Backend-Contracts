@@ -389,9 +389,9 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       outGluonWBox,
       Seq(
         AssetPrice(
-          name = GluonWAsset.PROTON.toString,
-          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
-          GluonWTokens.protonId
+          name = GluonWAsset.NEUTRON.toString,
+          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
+          GluonWTokens.neutronId
         )
       )
     )
@@ -409,9 +409,9 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       outGluonWBox,
       Seq(
         AssetPrice(
-          name = GluonWAsset.NEUTRON.toString,
-          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
-          GluonWTokens.neutronId
+          name = GluonWAsset.PROTON.toString,
+          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
+          GluonWTokens.protonId
         )
       )
     )

@@ -11,11 +11,7 @@ import gluonw.common.{
   GluonWTokens,
   TGluonWConstants
 }
-import org.ergoplatform.appkit.{
-  Address,
-  InputBox,
-  UnsignedTransaction
-}
+import org.ergoplatform.appkit.{Address, InputBox, UnsignedTransaction}
 
 import scala.util.Random
 

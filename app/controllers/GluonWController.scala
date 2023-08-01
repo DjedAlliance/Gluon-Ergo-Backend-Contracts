@@ -4,6 +4,7 @@ import commons.node.Client
 import edge.errors.ExceptionThrowable
 import edge.pay.ErgoPayResponse
 import edge.txs.TTx
+import gluonw.boxes.OracleBox
 import gluonw.common.{GluonW, GluonWBoxExplorer, TxConverter}
 import io.circe.Json
 import io.circe.syntax.EncoderOps
@@ -171,8 +172,9 @@ class GluonWController @Inject() (
 
   override def protonPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
+      val oracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
       Ok(
-        gluonWBoxExplorer.getGluonWBox.getProtonsPrice.toJson
+        gluonWBoxExplorer.getGluonWBox.getProtonsPrice(oracleBox).toJson
       ).as("application/json")
     }
 

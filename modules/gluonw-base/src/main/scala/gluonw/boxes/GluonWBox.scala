@@ -53,18 +53,26 @@ case class GluonWBox(
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     GluonWBoxContract.getContract().contract.ergoContract
 
-  def Neutrons: ErgoToken = tokens.tail.head
+  def Neutrons: ErgoToken =
+    tokens.filter(_.getId.equals(GluonWTokens.neutronId)).head
 
-  def Protons: ErgoToken = tokens.tail.tail.head
+  def Protons: ErgoToken =
+    tokens.filter(_.getId.equals(GluonWTokens.protonId)).head
 
-  def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = AssetPrice(
-    name = GluonWAsset.NEUTRON.toString,
-    price = oracleBox.getPrice,
-    id = GluonWTokens.neutronId
-  )
+  def getProtonsPrice(oracleBox: OracleBox): AssetPrice = {
+    val rErg: BigInt = BigInt(ergFissioned)
+    val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
+    val sProtons: BigInt = BigInt(protonsCirculatingSupply)
 
-  // @todo kii: Implement this
-  def getProtonsPrice: AssetPrice = ???
+    val price: Long =
+      ((rErg - ((sNeutrons * BigInt(oracleBox.getPrice / 1000)) / GluonWBoxConstants.PRECISION)) * GluonWBoxConstants.PRECISION / sProtons).toLong
+
+    AssetPrice(
+      name = GluonWAsset.PROTON.toString,
+      price = price,
+      id = GluonWTokens.protonId
+    )
+  }
 
   def neutronsTotalSupply: Long = totalSupplyRegister.value._1
   def protonsTotalSupply: Long = totalSupplyRegister.value._2
@@ -75,7 +83,8 @@ case class GluonWBox(
   def protonsCirculatingSupply: Long =
     protonsTotalSupply - Protons.getValue
 
-  def ergFissioned: Long = value - GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE
+  def ergFissioned: Long =
+    value - GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE
 
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
@@ -125,7 +134,6 @@ case class OracleBox(
   value: Long,
   priceRegister: LongRegister,
   epochIdRegister: IntRegister,
-  groupElementRegister: LongRegister,
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -138,8 +146,7 @@ case class OracleBox(
 
   def getEpochId: Int = epochIdRegister.value
 
-  override def R4: Option[Register[_]] = Option(groupElementRegister)
-  override def R6: Option[Register[_]] = Option(priceRegister)
+  override def R4: Option[Register[_]] = Option(priceRegister)
 
   override def R5: Option[Register[_]] = Option(epochIdRegister)
 
@@ -148,7 +155,7 @@ case class OracleBox(
       List(
         ("name", Json.fromString("SigGold")),
         ("tokenId", Json.fromString(tokens.tail.head.getId.toString)),
-        ("epochId", Json.fromLong(getEpochId)),
+        ("epochId", Json.fromLong(getEpochId.toLong)),
         ("priceInNanoErgPerKg", Json.fromLong(getPrice))
       )
     )
@@ -163,16 +170,10 @@ object OracleBox extends BoxWrapperHelper {
       tokens = inputBox.getTokens.asScala.toSeq,
       box = Option(Box(inputBox)),
       priceRegister = new LongRegister(
-        inputBox.getRegisters.get(2).getValue.asInstanceOf[Long]
+        inputBox.getRegisters.get(0).getValue.asInstanceOf[Long]
       ),
       epochIdRegister = new IntRegister(
         inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
-      ),
-      // We can't figure out how to serialize a groupElement data,
-      // and since we don't need this, we're just going to put in
-      // dummy data
-      groupElementRegister = new LongRegister(
-        1L
       )
     )
 }
@@ -209,8 +210,8 @@ object GluonWBox extends BoxWrapperHelper {
       value = ergAmount,
       tokens = Seq(
         ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
-        ErgoToken(GluonWTokens.neutronId, protonAmount),
-        ErgoToken(GluonWTokens.protonId, neutronAmount)
+        ErgoToken(GluonWTokens.neutronId, neutronAmount),
+        ErgoToken(GluonWTokens.protonId, protonAmount)
       )
     )
 }
