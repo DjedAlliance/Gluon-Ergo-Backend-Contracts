@@ -11,27 +11,15 @@ object dependencies {
   )
 
   val Edge: List[ModuleID] = List(
-    "io.github.ergo-lend" % "edge_2.12" % EdgeVersion
+    "io.github.ergo-lend" %% "edge" % EdgeVersion
   )
 
   val Circe: List[ModuleID] = List(
     "com.dripower" %% "play-circe" % PlayCirceVersion
   )
 
-  val PostgresDB: List[ModuleID] = List(
-    jdbc,
-    "org.postgresql"     % "postgresql"      % PostgresqlVersion,
-    "com.typesafe.slick" %% "slick"          % SlickVersion,
-    "com.typesafe.slick" %% "slick-hikaricp" % SlickVersion
-  )
-
-  val Cats: List[ModuleID] = List(
-    "org.typelevel" %% "cats-core" % CatsVersion
-  )
-
   val PlayApi: List[ModuleID] = List(
-    "org.playframework.anorm" %% "anorm"      % AnormVersion,
-    "com.typesafe.play"       %% "play-slick" % PlaySlickVersion
+    "org.playframework.anorm" %% "anorm" % AnormVersion
   )
 
   val HttpDep: List[ModuleID] = List(

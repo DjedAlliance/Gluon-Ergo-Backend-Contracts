@@ -5,11 +5,11 @@ name := """gluonw"""
 organization := "io.ergo"
 
 version := "1.0"
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.9"
 
 lazy val commonSettings = List(
   scalacOptions ++= commonScalacOptions,
-  scalaVersion := "2.12.15",
+  scalaVersion := "2.13.9",
   organization := "io.ergo",
   version := "0.1",
   resolvers ++= Seq(
@@ -62,8 +62,7 @@ lazy val common = utils
   .settings(commonSettings)
   .settings(
     libraryDependencies ++=
-      Ergo ++
-        Testing ++
+      Testing ++
         HttpDep ++
         DependencyInjection ++
         Edge

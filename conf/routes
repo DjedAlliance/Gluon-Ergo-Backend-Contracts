@@ -4,22 +4,22 @@
 
 # https://www.playframework.com/documentation/latest/ScalaRouting
 
-GET /api/v1/gold/price                                  controllers.GluonWController.goldPrice()
-GET /api/v1/rsv/price                                  controllers.GluonWController.rsvPrice()
-GET /api/v1/fission/:ergAmount                          controllers.GluonWController.fissionRate(ergAmount: Long)
-PUT /api/v1/fission/:ergAmount                          controllers.GluonWController.fission(ergAmount: Long)
+GET /api/v1/neutrons/price                                  controllers.GluonWController.neutronPrice()
+GET /api/v1/protons/price                                   controllers.GluonWController.protonPrice()
+GET /api/v1/fission/:ergAmount                              controllers.GluonWController.fissionPrice(ergAmount: Long)
+PUT /api/v1/fission/:ergAmount                              controllers.GluonWController.fission(ergAmount: Long)
 
-GET /api/v1/transmute/toRsv/:goldAmount                 controllers.GluonWController.transmuteSigGoldToSigGoldRsvRate(goldAmount: Long)
-PUT /api/v1/transmute/toRsv/:goldAmount                 controllers.GluonWController.transmuteSigGoldToSigGoldRsv(goldAmount: Long)
-GET /api/v1/transmute/toGold/:rsvAmount                 controllers.GluonWController.transmuteSigGoldRsvToSigGoldRate(rsvAmount: Long)
-PUT /api/v1/transmute/toGold/:rsvAmount                 controllers.GluonWController.transmuteSigGoldRsvToSigGold(rsvAmount: Long)
+GET /api/v1/transmute/toProtons/:neutronsAmount               controllers.GluonWController.transmuteNeutronsToProtonsPrice(neutronsAmount: Long)
+PUT /api/v1/transmute/toProtons/:neutronsAmount               controllers.GluonWController.transmuteNeutronsToProtons(neutronsAmount: Long)
+GET /api/v1/transmute/toNeutrons/:protonsAmount               controllers.GluonWController.transmuteProtonsToNeutronsPrice(protonsAmount: Long)
+PUT /api/v1/transmute/toNeutrons/:protonsAmount               controllers.GluonWController.transmuteProtonsToNeutrons(protonsAmount: Long)
 
-GET /api/v1/mint/gold/:ergAmount                        controllers.GluonWController.mintSigGoldRate(ergAmount: Long)
-PUT /api/v1/mint/gold/:ergAmount                        controllers.GluonWController.mintSigGold(ergAmount: Long)
-GET /api/v1/mint/rsv/:ergAmount                         controllers.GluonWController.mintSigGoldRsvRate(ergAmount: Long)
-PUT /api/v1/mint/rsv/:ergAmount                         controllers.GluonWController.mintSigGoldRsv(ergAmount: Long)
+GET /api/v1/mint/neutrons/:ergAmount                         controllers.GluonWController.mintNeutronsPrice(ergAmount: Long)
+PUT /api/v1/mint/neutrons/:ergAmount                         controllers.GluonWController.mintNeutrons(ergAmount: Long)
+GET /api/v1/mint/protons/:ergAmount                          controllers.GluonWController.mintProtonsPrice(ergAmount: Long)
+PUT /api/v1/mint/protons/:ergAmount                          controllers.GluonWController.mintProtons(ergAmount: Long)
 
-GET /api/v1/redeem/gold/:goldAmount                     controllers.GluonWController.redeemSigGoldRate(goldAmount: Long)
-PUT /api/v1/redeem/gold/:goldAmount                     controllers.GluonWController.redeemSigGold(goldAmount: Long)
-GET /api/v1/redeem/rsv/:rsvAmount                       controllers.GluonWController.redeemSigGoldRsvRate(rsvAmount: Long)
-PUT /api/v1/redeem/rsv/:rsvAmount                       controllers.GluonWController.redeemSigGoldRsv(rsvAmount: Long)
+GET /api/v1/redeem/neutrons/:neutronsAmount                   controllers.GluonWController.redeemNeutronsPrice(neutronsAmount: Long)
+PUT /api/v1/redeem/neutrons/:neutronsAmount                   controllers.GluonWController.redeemNeutrons(neutronsAmount: Long)
+GET /api/v1/redeem/protons/:protonsAmount                     controllers.GluonWController.redeemProtonsPrice(protonsAmount: Long)
+PUT /api/v1/redeem/protons/:protonsAmount                     controllers.GluonWController.redeemProtons(protonsAmount: Long)

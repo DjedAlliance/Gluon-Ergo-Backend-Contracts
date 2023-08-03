@@ -1,25 +1,48 @@
 package commons.configs
 
 import commons.configs.NodeConfig.networkType
-import org.ergoplatform.appkit.{Address, NetworkType}
+import org.ergoplatform.appkit.NetworkType
+import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
-object OracleConfig extends ConfigHelper {
+object MainNetOracleConfig extends ConfigHelper with TOracleConfig {
 
-  lazy val mainNetOracleAddress: String =
+  val address: String =
     readKey(s"oracle.MAINNET.address").replaceAll("/$", "")
 
-  lazy val testNetOracleAddress: String =
-    readKey(s"oracle.TESTNET.address").replaceAll("/$", "")
+  val nft: ErgoToken = new ErgoToken(
+    ErgoId.create(
+      readKey(s"oracle.MAINNET.nft").replaceAll("/$", "")
+    ),
+    1
+  )
 }
 
-object GetOracleConfig {
+object TestNetOracleConfig extends ConfigHelper with TOracleConfig {
+
+  val address: String =
+    readKey(s"oracle.TESTNET.address").replaceAll("/$", "")
+
+  val nft: ErgoToken = new ErgoToken(
+    ErgoId.create(
+      readKey(s"oracle.TESTNET.nft").replaceAll("/$", "")
+    ),
+    1
+  )
+}
+
+trait TOracleConfig {
+  val address: String
+  val nft: ErgoToken
+}
+
+object OracleConfig {
 
   def get(
     isMainNet: Boolean = (networkType == NetworkType.MAINNET)
-  ): Address =
+  ): TOracleConfig =
     if (isMainNet) {
-      Address.create(OracleConfig.mainNetOracleAddress)
+      MainNetOracleConfig
     } else {
-      Address.create(OracleConfig.testNetOracleAddress)
+      TestNetOracleConfig
     }
 }
