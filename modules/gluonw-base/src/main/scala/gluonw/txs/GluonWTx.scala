@@ -99,7 +99,7 @@ case class FissionTx(
 
     var outUserTokens: Seq[ErgoToken] = userBox.tokens
     if (isNeutronsExist) {
-      outUserTokens = userBox.tokens.map { token =>
+      outUserTokens = outUserTokens.map { token =>
         if (token.getId.equals(neutronsId)) {
           ErgoToken(neutronsId, token.getValue + neutronsGained)
         } else {
@@ -111,7 +111,7 @@ case class FissionTx(
     }
 
     if (isProtonsExist) {
-      outUserTokens = userBox.tokens.map { token =>
+      outUserTokens = outUserTokens.map { token =>
         if (token.getId.equals(protonsId)) {
           ErgoToken(protonsId, token.getValue + protonsGained)
         } else {

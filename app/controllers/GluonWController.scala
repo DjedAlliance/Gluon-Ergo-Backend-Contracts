@@ -154,10 +154,12 @@ class GluonWController @Inject() (
       Address.create(getRequestBodyAsString(request, "walletAddress"))
 
     // Set up fission tx and get response
-    val fissionTxs: Seq[TTx] = txFunc(assetAmount, walletAddress)
+    val txs: Seq[TTx] = txFunc(assetAmount, walletAddress)
+
+    txs.map(tx => println(tx.visualizeTx))
     // Send ergoPayResponse back
     val ergoPayResponses: Seq[ErgoPayResponse] =
-      convert(fissionTxs, walletAddress)
+      convert(txs, walletAddress)
 
     Json.fromValues(ergoPayResponses.map(r => r.asJson))
   }
