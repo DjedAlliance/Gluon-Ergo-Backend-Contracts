@@ -153,7 +153,7 @@ case class OracleBox(
   override def toJson(): Json =
     Json.fromFields(
       List(
-        ("name", Json.fromString("SigGold")),
+        ("name", Json.fromString(GluonWAsset.NEUTRON.toString)),
         ("tokenId", Json.fromString(tokens.tail.head.getId.toString)),
         ("epochId", Json.fromLong(getEpochId.toLong)),
         ("priceInNanoErgPerKg", Json.fromLong(getPrice))
