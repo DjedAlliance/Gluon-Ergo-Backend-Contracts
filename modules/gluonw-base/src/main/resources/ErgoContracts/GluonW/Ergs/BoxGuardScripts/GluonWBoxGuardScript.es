@@ -154,7 +154,7 @@
     val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee
     val RErg: BigInt = _fissionedErg.toBigInt
     // Price of Gold
-    val Pt: BigInt = CONTEXT.dataInputs(0).R6[Long].get.toBigInt / 1000
+    val Pt: BigInt = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000
 
     // We're using 1,000,000,000 because the precision is based on nanoErgs
     val precision: BigInt = (1000 * 1000 * 1000).toBigInt

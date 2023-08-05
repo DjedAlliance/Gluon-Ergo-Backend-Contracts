@@ -4,22 +4,22 @@
 
 # https://www.playframework.com/documentation/latest/ScalaRouting
 
-GET /api/v1/neutrons/price                                  controllers.GluonWController.neutronPrice()
-GET /api/v1/protons/price                                   controllers.GluonWController.protonPrice()
-GET /api/v1/fission/:ergAmount                              controllers.GluonWController.fissionPrice(ergAmount: Long)
-PUT /api/v1/fission/:ergAmount                              controllers.GluonWController.fission(ergAmount: Long)
+GET /api/v1/neutrons/price                                          controllers.GluonWController.neutronPrice()
+GET /api/v1/protons/price                                           controllers.GluonWController.protonPrice()
+GET /api/v1/fission/:ergAmount                                      controllers.GluonWController.fissionPrice(ergAmount: Long)
+PUT /api/v1/fission/:ergAmount/:isEIP12                             controllers.GluonWController.fission(ergAmount: Long, isEIP12: Boolean)
 
-GET /api/v1/transmute/toProtons/:neutronsAmount               controllers.GluonWController.transmuteNeutronsToProtonsPrice(neutronsAmount: Long)
-PUT /api/v1/transmute/toProtons/:neutronsAmount               controllers.GluonWController.transmuteNeutronsToProtons(neutronsAmount: Long)
-GET /api/v1/transmute/toNeutrons/:protonsAmount               controllers.GluonWController.transmuteProtonsToNeutronsPrice(protonsAmount: Long)
-PUT /api/v1/transmute/toNeutrons/:protonsAmount               controllers.GluonWController.transmuteProtonsToNeutrons(protonsAmount: Long)
+GET /api/v1/transmute/toProtons/:neutronsAmount                     controllers.GluonWController.transmuteNeutronsToProtonsPrice(neutronsAmount: Long)
+PUT /api/v1/transmute/toProtons/:neutronsAmount/:isEIP12            controllers.GluonWController.transmuteNeutronsToProtons(neutronsAmount: Long, isEIP12: Boolean)
+GET /api/v1/transmute/toNeutrons/:protonsAmount                     controllers.GluonWController.transmuteProtonsToNeutronsPrice(protonsAmount: Long)
+PUT /api/v1/transmute/toNeutrons/:protonsAmount/:isEIP12            controllers.GluonWController.transmuteProtonsToNeutrons(protonsAmount: Long, isEIP12: Boolean)
 
-GET /api/v1/mint/neutrons/:ergAmount                         controllers.GluonWController.mintNeutronsPrice(ergAmount: Long)
-PUT /api/v1/mint/neutrons/:ergAmount                         controllers.GluonWController.mintNeutrons(ergAmount: Long)
-GET /api/v1/mint/protons/:ergAmount                          controllers.GluonWController.mintProtonsPrice(ergAmount: Long)
-PUT /api/v1/mint/protons/:ergAmount                          controllers.GluonWController.mintProtons(ergAmount: Long)
+GET /api/v1/mint/neutrons/:ergAmount                                controllers.GluonWController.mintNeutronsPrice(ergAmount: Long)
+PUT /api/v1/mint/neutrons/:ergAmount/:isEIP12                       controllers.GluonWController.mintNeutrons(ergAmount: Long, isEIP12: Boolean)
+GET /api/v1/mint/protons/:ergAmount                                 controllers.GluonWController.mintProtonsPrice(ergAmount: Long)
+PUT /api/v1/mint/protons/:ergAmount/:isEIP12                        controllers.GluonWController.mintProtons(ergAmount: Long, isEIP12: Boolean)
 
-GET /api/v1/redeem/neutrons/:neutronsAmount                   controllers.GluonWController.redeemNeutronsPrice(neutronsAmount: Long)
-PUT /api/v1/redeem/neutrons/:neutronsAmount                   controllers.GluonWController.redeemNeutrons(neutronsAmount: Long)
-GET /api/v1/redeem/protons/:protonsAmount                     controllers.GluonWController.redeemProtonsPrice(protonsAmount: Long)
-PUT /api/v1/redeem/protons/:protonsAmount                     controllers.GluonWController.redeemProtons(protonsAmount: Long)
+GET /api/v1/redeem/neutrons/:neutronsAmount                         controllers.GluonWController.redeemNeutronsPrice(neutronsAmount: Long)
+PUT /api/v1/redeem/neutrons/:neutronsAmount/:isEIP12                controllers.GluonWController.redeemNeutrons(neutronsAmount: Long, isEIP12: Boolean)
+GET /api/v1/redeem/protons/:protonsAmount                           controllers.GluonWController.redeemProtonsPrice(protonsAmount: Long)
+PUT /api/v1/redeem/protons/:protonsAmount/:isEIP12                  controllers.GluonWController.redeemProtons(protonsAmount: Long, isEIP12: Boolean)
