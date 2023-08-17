@@ -190,4 +190,10 @@ trait GluonWBase extends UnitSpec {
       } else token
     }
 
+  def getFissionOrFusionFees(
+    amount: Long
+  )(gluonWFeesCalculator: GluonWFeesCalculator): Long =
+    gluonWFeesCalculator
+      .getFeesOutBox(gluonWFeesCalculator.getFissionOrFusionFees(amount))
+      .foldLeft(0L)((acc, box) => acc + box.value)
 }

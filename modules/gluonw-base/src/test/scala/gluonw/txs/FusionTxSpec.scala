@@ -9,6 +9,7 @@ import gluonw.common.{
   GluonWBoxOutputAssetAmount,
   GluonWCalculator,
   GluonWConstants,
+  GluonWFeesCalculator,
   GluonWTokens,
   TGluonWConstants
 }
@@ -32,9 +33,7 @@ class FusionTxSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    // @todo kii change this using Calculator
     val gluonWBox: GluonWBox = genesisGluonWBox()
-
     val gluonWCalculator: GluonWCalculator = GluonWCalculator(
       sProtons = gluonWBox.protonsCirculatingSupply,
       sNeutrons = gluonWBox.neutronsCirculatingSupply,
@@ -46,6 +45,9 @@ class FusionTxSpec extends GluonWBase {
 
     "loop through multiple fusionTx correctly" in {
       client.getClient.execute { implicit ctx =>
+        implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+          GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
         // 1. Create a fission box
         // 2. Create a seq of erg to redeem
         val maxErgs: Long = 100_000L
@@ -62,7 +64,7 @@ class FusionTxSpec extends GluonWBase {
 
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
-            value = ErgCommons.MinMinerFee,
+            value = (ErgCommons.MinMinerFee * 2) + (ergsToFusion / 10),
             neutronsValue = -outputAssetAmount.neutronsAmount,
             protonsValue = -outputAssetAmount.protonsAmount
           )
@@ -105,9 +107,11 @@ class FusionTxSpec extends GluonWBase {
 
           // Check payment Box
           assert(
-            outPaymentBox.value == -(FundsToAddressBox
+            outPaymentBox.value == (FundsToAddressBox
               .from(paymentBox)
-              .value - ergsToFusion - ErgCommons.MinMinerFee)
+              .value + ergsToFusion - ErgCommons.MinMinerFee) - getFissionOrFusionFees(
+              ergsToFusion
+            )(gluonWFeesCalculator)
           )
           assert(
             !outPaymentBox.tokens.exists(_.getId.equals(GluonWTokens.protonId))
@@ -128,6 +132,8 @@ class FusionTxSpec extends GluonWBase {
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
         (1 to 10).foreach { _ =>
+          implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+            GluonWFeesCalculator()(inGluonWBox, gluonWConstants)
           val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
             sProtons = inGluonWBox.protonsCirculatingSupply,
             sNeutrons = inGluonWBox.neutronsCirculatingSupply,
@@ -143,7 +149,7 @@ class FusionTxSpec extends GluonWBase {
 
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
-            value = ErgCommons.MinMinerFee,
+            value = (ErgCommons.MinMinerFee * 2) + (ergsToFusion / 10),
             neutronsValue = -outputAssetAmount.neutronsAmount,
             protonsValue = -outputAssetAmount.protonsAmount
           )
@@ -154,6 +160,8 @@ class FusionTxSpec extends GluonWBase {
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
           )
+
+          fusionTx.signTx
 
           val outBoxes: Seq[InputBox] = fusionTx.getOutBoxesAsInputBoxes()
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
@@ -184,7 +192,9 @@ class FusionTxSpec extends GluonWBase {
 
           // Check payment Box
           assert(
-            outPaymentBox.value == ergsToFusion
+            outPaymentBox.value == paymentBox.getValue + ergsToFusion - Parameters.MinFee - getFissionOrFusionFees(
+              ergsToFusion
+            )(gluonWFeesCalculator)
           )
           assert(
             !outPaymentBox.tokens.exists(_.getId.equals(GluonWTokens.protonId))
@@ -208,6 +218,8 @@ class FusionTxSpec extends GluonWBase {
 
       // @todo kii change this using Calculator
       val gluonWBox: GluonWBox = genesisGluonWBox()
+      implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
       val gluonWCalculator: GluonWCalculator = GluonWCalculator(
         sProtons = gluonWBox.protonsCirculatingSupply,
@@ -232,7 +244,7 @@ class FusionTxSpec extends GluonWBase {
 
       // Payment box to pay for the transaction
       val paymentBox: InputBox = createPaymentBox(
-        value = ErgCommons.MinMinerFee,
+        value = (ErgCommons.MinMinerFee * 2) + (ergsToFusion / 10),
         neutronsValue = -outputAssetAmount.neutronsAmount + minTokenAmount,
         protonsValue = -outputAssetAmount.protonsAmount + minTokenAmount
       )

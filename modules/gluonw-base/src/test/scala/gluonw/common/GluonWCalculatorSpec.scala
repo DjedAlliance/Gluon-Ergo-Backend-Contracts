@@ -55,7 +55,9 @@ class GluonWCalculatorSpec extends GluonWBase {
     "request for right amount of Neutron for BetaDecayPlus" in {
       val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
       val outputAssetAmount: GluonWBoxOutputAssetAmount =
-        gluonWCalculator.betaDecayPlus(protonToDecay)(oracleBox.getPrice)
+        gluonWCalculator.betaDecayPlus(protonToDecay)(
+          oracleBox.getPricePerGrams
+        )
 
       val neutronsAtPrecision: Float =
         outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
@@ -68,7 +70,9 @@ class GluonWCalculatorSpec extends GluonWBase {
     "request for right amount of Protons for BetaDecayMinus" in {
       val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
       val outputAssetAmount: GluonWBoxOutputAssetAmount =
-        gluonWCalculator.betaDecayMinus(neutronToDecay)(oracleBox.getPrice)
+        gluonWCalculator.betaDecayMinus(neutronToDecay)(
+          oracleBox.getPricePerGrams
+        )
 
       val protonsAtPrecision: Float =
         outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
@@ -208,13 +212,13 @@ class GluonWCalculatorSpec extends GluonWBase {
               simGluonWCalculator.fusion(amountAndOperationAndResult._1)
             case Operations.BETA_DECAY_PLUS =>
               simGluonWCalculator.betaDecayPlus(amountAndOperationAndResult._1)(
-                oracleBox.getPrice
+                oracleBox.getPricePerGrams
               )
             case Operations.BETA_DECAY_MINUS =>
               simGluonWCalculator.betaDecayMinus(
                 amountAndOperationAndResult._1
               )(
-                oracleBox.getPrice
+                oracleBox.getPricePerGrams
               )
           }
 

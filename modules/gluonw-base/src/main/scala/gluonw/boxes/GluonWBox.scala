@@ -13,7 +13,6 @@ import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
 import org.ergoplatform.appkit.{
-  Address,
   BlockchainContext,
   ErgoContract,
   InputBox,
@@ -32,6 +31,7 @@ object GluonWBoxConstants {
   // This is the required fee for the box to be in existence. It's the minimum
   // amount a box require to have to exist on the ergo blockchain
   val GLUONWBOX_BOX_EXISTENCE_FEE: Long = Parameters.MinFee
+  val GLUONWBOX_MAX_FEE: Long = 2_500_000L * Parameters.OneErg
 }
 
 case class GluonWBox(
@@ -44,6 +44,10 @@ case class GluonWBox(
   ),
   tokenIdRegister: CollBytePairRegister = new CollBytePairRegister(
     (GluonWTokens.neutronId.getBytes, GluonWTokens.protonId.getBytes)
+  ),
+  feeRegister: LongPairRegister = new LongPairRegister(
+    0L,
+    GluonWBoxConstants.GLUONWBOX_MAX_FEE
   ),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
@@ -59,13 +63,17 @@ case class GluonWBox(
   def Protons: ErgoToken =
     tokens.filter(_.getId.equals(GluonWTokens.protonId)).head
 
+  def DevFeeRepaid: Long = feeRegister.value._1
+
+  def MaxFeeThreshold: Long = feeRegister.value._2
+
   def getProtonsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
     val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
     val sProtons: BigInt = BigInt(protonsCirculatingSupply)
 
     val price: Long =
-      ((rErg - ((sNeutrons * BigInt(oracleBox.getPrice / 1000)) / GluonWBoxConstants.PRECISION)) * GluonWBoxConstants.PRECISION / sProtons).toLong
+      ((rErg - ((sNeutrons * BigInt(oracleBox.getPricePerGrams)) / GluonWBoxConstants.PRECISION)) * GluonWBoxConstants.PRECISION / sProtons).toLong
 
     AssetPrice(
       name = GluonWAsset.PROTON.toString,
@@ -89,6 +97,8 @@ case class GluonWBox(
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
   override def R5: Option[Register[_]] = Option(tokenIdRegister)
+
+  override def R6: Option[Register[_]] = Option(feeRegister)
 
   // @todo kii: do we need to Implement Neutrons and protons asset price?
   override def toJson(): Json =
@@ -140,9 +150,10 @@ case class OracleBox(
 ) extends BoxWrapperJson {
 
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
-    Address.create(OracleConfig.get().address).toErgoContract
+    OracleConfig.get().address.toErgoContract
 
   def getPrice: Long = priceRegister.value
+  def getPricePerGrams: Long = priceRegister.value / 1000
 
   def getEpochId: Int = epochIdRegister.value
 
@@ -187,6 +198,15 @@ object GluonWBox extends BoxWrapperHelper {
         .getValue
         .asInstanceOf[(Coll[Byte], Coll[Byte])]
 
+    val feeRegisterTuple: (Long, Long) = if (inputBox.getRegisters.size() > 2) {
+      inputBox.getRegisters
+        .get(2)
+        .getValue
+        .asInstanceOf[(Long, Long)]
+    } else {
+      (0, 0)
+    }
+
     GluonWBox(
       value = inputBox.getValue,
       id = inputBox.getId,
@@ -197,7 +217,8 @@ object GluonWBox extends BoxWrapperHelper {
       ),
       tokenIdRegister = new CollBytePairRegister(
         (tokenIdRegisterTuple._1.toArray, tokenIdRegisterTuple._2.toArray)
-      )
+      ),
+      feeRegister = new LongPairRegister(feeRegisterTuple)
     )
   }
 

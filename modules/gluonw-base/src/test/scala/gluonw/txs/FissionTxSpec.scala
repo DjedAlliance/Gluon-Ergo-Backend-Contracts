@@ -9,6 +9,7 @@ import gluonw.common.{
   GluonWBoxOutputAssetAmount,
   GluonWCalculator,
   GluonWConstants,
+  GluonWFeesCalculator,
   GluonWTokens,
   TGluonWConstants
 }
@@ -33,17 +34,18 @@ class FissionTxSpec extends GluonWBase {
       GluonWAlgorithm(gluonWConstants)
 
     val oracleBox: OracleBox = createTestOracleBox
-
+    val gluonWBox: GluonWBox = genesisGluonWBox()
     "loop through multiple fissionTx correctly" in {
       client.getClient.execute { implicit ctx =>
-        val gluonWBox: GluonWBox = genesisGluonWBox()
-
         val gluonWCalculator: GluonWCalculator = GluonWCalculator(
           sProtons = gluonWBox.protonsCirculatingSupply,
           sNeutrons = gluonWBox.neutronsCirculatingSupply,
           rErg = gluonWBox.ergFissioned,
           gluonWConstants = gluonWConstants
         )
+
+        implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+          GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
         // 1. Create a fission box
         // 2. Create a seq of erg to redeem
@@ -63,7 +65,8 @@ class FissionTxSpec extends GluonWBase {
 
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
-            value = ergsToFission + (ErgCommons.MinMinerFee * 2)
+            value =
+              ergsToFission + (ErgCommons.MinMinerFee * 2) + (ergsToFission / 10)
           )
 
           val fissionTx: FissionTx = FissionTx(
@@ -106,7 +109,9 @@ class FissionTxSpec extends GluonWBase {
           assert(
             outPaymentBox.value == FundsToAddressBox
               .from(paymentBox)
-              .value - ergsToFission - ErgCommons.MinMinerFee
+              .value - ergsToFission - ErgCommons.MinMinerFee - getFissionOrFusionFees(
+              ergsToFission
+            )(gluonWFeesCalculator)
           )
           assert(
             outPaymentBox.tokens
@@ -126,8 +131,6 @@ class FissionTxSpec extends GluonWBase {
 
     "chain through multiple fission tx" in {
       client.getClient.execute { implicit ctx =>
-        val gluonWBox: GluonWBox = genesisGluonWBox()
-
         val maxErgs: Long = 10_000L
         val maxErgsInNanoErgs: Long = maxErgs * Parameters.OneErg
         val changeAddress: Address = trueAddress
@@ -135,6 +138,9 @@ class FissionTxSpec extends GluonWBase {
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
         (1 to 10).foreach { _ =>
+          implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+            GluonWFeesCalculator()(inGluonWBox, gluonWConstants)
+
           val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
             sProtons = inGluonWBox.protonsCirculatingSupply,
             sNeutrons = inGluonWBox.neutronsCirculatingSupply,
@@ -150,7 +156,8 @@ class FissionTxSpec extends GluonWBase {
 
           // Payment box to pay for the transaction
           val paymentBox: InputBox = createPaymentBox(
-            value = ergsToFission + (ErgCommons.MinMinerFee * 2)
+            value =
+              ergsToFission + (ErgCommons.MinMinerFee * 2) + (ergsToFission / 10)
           )
 
           val fissionTx: FissionTx = FissionTx(
@@ -159,6 +166,8 @@ class FissionTxSpec extends GluonWBase {
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
           )
+
+          fissionTx.signTx
 
           val outBoxes: Seq[InputBox] = fissionTx.getOutBoxesAsInputBoxes()
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
@@ -191,7 +200,9 @@ class FissionTxSpec extends GluonWBase {
           assert(
             outPaymentBox.value == FundsToAddressBox
               .from(paymentBox)
-              .value - ergsToFission - ErgCommons.MinMinerFee
+              .value - ergsToFission - ErgCommons.MinMinerFee - getFissionOrFusionFees(
+              ergsToFission
+            )(gluonWFeesCalculator)
           )
           assert(
             outPaymentBox.tokens
@@ -219,6 +230,8 @@ class FissionTxSpec extends GluonWBase {
       GluonWAlgorithm(gluonWConstants)
 
     val gluonWBox: GluonWBox = genesisGluonWBox()
+    implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+      GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
     val oracleBox: OracleBox = createTestOracleBox
 
@@ -236,7 +249,8 @@ class FissionTxSpec extends GluonWBase {
       // Payment box to pay for the transaction
       // Give more ergs for cases.
       val paymentBox: InputBox = createPaymentBox(
-        value = ergsToFission + (ErgCommons.MinMinerFee * 2) + minErgs
+        value =
+          ergsToFission + (ErgCommons.MinMinerFee * 2) + (ergsToFission / 10)
       )
 
       val fissionTx: FissionTx = FissionTx(

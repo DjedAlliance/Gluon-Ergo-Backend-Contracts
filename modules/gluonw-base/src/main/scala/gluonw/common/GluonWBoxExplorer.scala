@@ -37,7 +37,7 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
         val oracleConfig: TOracleConfig = OracleConfig.get()
 
         val oracleBoxes: Seq[InputBox] =
-          client.getAllUnspentBox(Address.create(oracleConfig.address))
+          client.getAllUnspentBox(oracleConfig.address)
 
         val priceOracleBoxes: Seq[InputBox] =
           oracleBoxes.filter(_.getRegisters.size() == 2)

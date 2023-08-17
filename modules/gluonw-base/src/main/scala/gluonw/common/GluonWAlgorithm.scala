@@ -49,7 +49,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   ): BigInt = {
     // We divide pt by 1000 because it is kilograms. And we want to do it in grams.
     val rightHandMinVal: BigInt = {
-      (BigInt(neutronsInCirculation) * BigInt(pt / 1000) / fissionedErg).toLong
+      (BigInt(neutronsInCirculation) * BigInt(pt) / fissionedErg).toLong
     }
 
     rightHandMinVal.min(BigInt(qStar))
@@ -298,7 +298,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         sProtons = sProtons,
         rErg = rErg,
         gluonWConstants = gluonWConstants
-      ).betaDecayPlus(protonsAmount)(oracleBox.getPrice)
+      ).betaDecayPlus(protonsAmount)(oracleBox.getPricePerGrams)
 
     outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }
@@ -318,7 +318,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         sProtons = sProtons,
         rErg = rErg,
         gluonWConstants = gluonWConstants
-      ).betaDecayMinus(neutronsAmount)(oracleBox.getPrice)
+      ).betaDecayMinus(neutronsAmount)(oracleBox.getPricePerGrams)
 
     outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount)
   }

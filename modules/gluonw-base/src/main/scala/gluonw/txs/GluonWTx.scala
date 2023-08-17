@@ -2,13 +2,16 @@ package gluonw.txs
 
 import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
+import edge.registers.LongPairRegister
 import gluonw.boxes.{GluonWBox, OracleBox}
-import gluonw.common.TGluonWAlgorithm
+import gluonw.common.{GluonWFees, GluonWFeesCalculator, TGluonWAlgorithm}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.TTx
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
-abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends TTx {
+abstract class GluonWTx(
+  algorithm: TGluonWAlgorithm
+) extends TTx {
 
   def outputGluonTokens(
     userTokens: Seq[ErgoToken],
@@ -58,7 +61,6 @@ abstract class GluonWTx(algorithm: TGluonWAlgorithm) extends TTx {
 
     outUserTokens
   }
-
 }
 
 case class FissionTx(
@@ -66,8 +68,11 @@ case class FissionTx(
   ergToExchange: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
-    extends GluonWTx(algorithm) {
+)(
+  implicit val ctx: BlockchainContext,
+  implicit val algorithm: TGluonWAlgorithm,
+  implicit val feesCalculator: GluonWFeesCalculator
+) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
@@ -122,12 +127,31 @@ case class FissionTx(
       outUserTokens = outUserTokens :+ ErgoToken(protonsId, protonsGained)
     }
 
+    val gluonWFees: GluonWFees =
+      feesCalculator.getFissionOrFusionFees(ergToExchange)
+
+    val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
+      gluonWFees
+    )
+
+    val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
+
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value - ergsCost - ErgCommons.MinMinerFee,
+      value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
       tokens = outUserTokens
     )
 
-    Seq(outGluonWBox, outUserBox)
+    val outGluonWBoxWithFeeRepaidUpdated: GluonWBox =
+      outGluonWBox.copy(
+        feeRegister = new LongPairRegister(
+          (
+            outGluonWBox.feeRegister.value._1 + gluonWFees.devFee._1,
+            outGluonWBox.feeRegister.value._2
+          )
+        )
+      )
+
+    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
   }
 }
 
@@ -136,8 +160,11 @@ case class FusionTx(
   ergToRetrieve: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
-    extends GluonWTx(algorithm) {
+)(
+  implicit val ctx: BlockchainContext,
+  implicit val algorithm: TGluonWAlgorithm,
+  implicit val feesCalculator: GluonWFeesCalculator
+) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
@@ -177,14 +204,33 @@ case class FusionTx(
       }
     }
 
+    val gluonWFees: GluonWFees =
+      feesCalculator.getFissionOrFusionFees(ergToRetrieve)
+
+    val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
+      gluonWFees
+    )
+
+    val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
+
     // Ergs gained should minus protocol fee
     val ergsToUser: Long = ergsGained
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value + ergsToUser - ErgCommons.MinMinerFee,
+      value = userBox.value + ergsToUser - ErgCommons.MinMinerFee - totalFees,
       tokens = outUserTokens
     )
 
-    Seq(outGluonWBox, outUserBox)
+    val outGluonWBoxWithFeeRepaidUpdated: GluonWBox =
+      outGluonWBox.copy(
+        feeRegister = new LongPairRegister(
+          (
+            outGluonWBox.feeRegister.value._1 + gluonWFees.devFee._1,
+            outGluonWBox.feeRegister.value._2
+          )
+        )
+      )
+
+    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
   }
 }
 
@@ -196,8 +242,11 @@ case class BetaDecayPlusTx(
   protonsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
-    extends GluonWTx(algorithm) {
+)(
+  implicit val ctx: BlockchainContext,
+  implicit val algorithm: TGluonWAlgorithm,
+  implicit val feesCalculator: GluonWFeesCalculator
+) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
@@ -221,12 +270,31 @@ case class BetaDecayPlusTx(
       (inGluonWBox.Protons.getId, protonsCost)
     )
 
+    val gluonWFees: GluonWFees =
+      feesCalculator.getBetaDecayPlusFees(protonsToTransmute, neutronOracleBox)
+
+    val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
+      gluonWFees
+    )
+
+    val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
+
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value - ergsCost - ErgCommons.MinMinerFee,
+      value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
       tokens = finalCalculatedGluonTokens
     )
 
-    Seq(outGluonWBox, outUserBox)
+    val outGluonWBoxWithFeeRepaidUpdated: GluonWBox =
+      outGluonWBox.copy(
+        feeRegister = new LongPairRegister(
+          (
+            outGluonWBox.feeRegister.value._1 + gluonWFees.devFee._1,
+            outGluonWBox.feeRegister.value._2
+          )
+        )
+      )
+
+    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
   }
 }
 
@@ -238,8 +306,11 @@ case class BetaDecayMinusTx(
   neutronsToTransmute: Long,
   override val changeAddress: Address,
   override val dataInputs: Seq[InputBox]
-)(implicit val ctx: BlockchainContext, implicit val algorithm: TGluonWAlgorithm)
-    extends GluonWTx(algorithm) {
+)(
+  implicit val ctx: BlockchainContext,
+  implicit val algorithm: TGluonWAlgorithm,
+  implicit val feesCalculator: GluonWFeesCalculator
+) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
@@ -263,11 +334,33 @@ case class BetaDecayMinusTx(
       (inGluonWBox.Protons.getId, protonsCost)
     )
 
+    val gluonWFees: GluonWFees =
+      feesCalculator.getBetaDecayMinusFees(
+        neutronsToTransmute,
+        neutronOracleBox
+      )
+
+    val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
+      gluonWFees
+    )
+
+    val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
+
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value - ergsCost - ErgCommons.MinMinerFee,
+      value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
       tokens = finalCalculatedGluonTokens
     )
 
-    Seq(outGluonWBox, outUserBox)
+    val outGluonWBoxWithFeeRepaidUpdated: GluonWBox =
+      outGluonWBox.copy(
+        feeRegister = new LongPairRegister(
+          (
+            outGluonWBox.feeRegister.value._1 + gluonWFees.devFee._1,
+            outGluonWBox.feeRegister.value._2
+          )
+        )
+      )
+
+    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
   }
 }

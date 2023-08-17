@@ -5,12 +5,18 @@
     // Type             : Guard Script
     // Author           : Kii
     // Last Modified    : June 25th 2023
-    // Version          : v 1.0
-    // Status           : In Progress
+    // Version          : v 1.1
+    // Status           : V1 in Test
+
+    // ===== Version Logs ===== //
+    // - 1.0: GluonWBox implemented without dev fees
+    // - 1.1: Dev fees and UI fees implemented
 
     // ===== Contract Hard-Coded Constants ===== //
     // val _MinFee:                     Long
-    // val _MutatePk:                   Coll[Byte]
+    // val _DevPk:                      SigmaProp
+    // val _OracleFeePk:                Coll[Byte]
+    // val _OraclePoolNFT:              Coll[Byte]
 
     // ===== Box Contents ===== //
     // Tokens
@@ -21,6 +27,10 @@
     // Registers
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
     // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
+    // R6 - (MaxAmountDevFeesToBePaid, TotalDevFeesPaid): (Coll[Long], Coll[Long])
+
+    // ===== Context Vars ===== //
+    // val _optUIFee                    SigmaProp
 
     // ===== Relevant Transactions ===== //
     // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
@@ -55,13 +65,19 @@
 
     val IN_GLUONW_BOX: Box = SELF
     val OUT_GLUONW_BOX: Box = OUTPUTS(0)
-    val GOLD_ORACLE_BOX: Box = CONTEXT.dataInputs(0)
+    val ORACLE_BOX: Box = CONTEXT.dataInputs(0)
     val ASSET_TOKENID_REGISTER: (Coll[Byte], Coll[Byte]) = IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get
     val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUONW_BOX.R4[(Long, Long)].get
+    val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUONW_BOX.R6[(Long, Long)].get
+    val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUONW_BOX.R6[(Long, Long)].get
     val NEUTRONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._1
     val PROTONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._2
     val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1
     val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2
+    val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1
+    val MAX_DEV_FEE_THRESHOLD: Long = ASSET_MAX_DEV_FEE_THRESHOLD._2
+    val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
+    val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
 
     val IN_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(1)
     val IN_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(2)
@@ -75,7 +91,8 @@
         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
-        IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get
+        IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get,
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
@@ -167,6 +184,190 @@
 
     // ===== (END) Variable Declarations ===== //
 
+    // ===== (START) Oracle Checks ===== //
+    // The two checks for the oracle is:
+    // 1. It has the right NFT on it
+    // 2. It's height is within 70 min, (35 blocks)
+    val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
+    val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
+
+    val __oracleCheck: Boolean = allOf(Coll(
+        oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow > 0,
+        oracleBoxPoolNFT._1 == _OraclePoolNFT
+    ))
+    // ===== (END) Oracle Checks ===== //
+
+    // ===== (START) Fee Declarations ===== //
+    // reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
+    val _optUIFee: Coll[Byte] = getVar[SigmaProp](0)
+    val fees: Coll[(Coll[Byte], BigInt)] = {
+        val feeDenom: Long = 1000L.toBigInt
+        val devFee: Long = 5L.toBigInt
+        val oracleFee: Long = 1L.toBigInt
+        val uiFee: Long = 4L.toBigInt
+        val emptyFees: (Coll[Byte], Long)          = (Coll(1.toByte), 0L.toBigInt)
+
+        // principal is the amount that is requested
+        val principal: BigInt = if (isFissionTx) {
+                (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
+            } else if (isFusionTx) {
+                (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
+            } else if (isBetaDecayPlusTx) {
+                // Calculate the value based on protons
+                // Check Protons reduction in OutBox
+                val protonsValue: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
+                val oneMinusFusionRatio: BigInt = (precision - fusionRatio).toBigInt
+                val protonsPrice: BigInt = oneMinusFusionRatio * RErg.toBigInt / SProtons.toBigInt
+                val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision.toBigInt
+
+                protonsInNanoergs
+            } else {
+                // Calculate the value based on neutrons
+                val neutronsValue: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
+                val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt.toBigInt / precision.toBigInt
+
+                neutronsInNanoergs
+            }
+
+        val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
+            val initialFee: BigInt = (devFee * principal) / feeDenom
+            val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
+            decayedFee
+        } else {
+            0L.toBigInt
+        }
+        val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
+        val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
+
+        val devFeeAddressAndPayout: (Coll[Byte], BigInt) =
+            (_DevPk.propBytes, devFeePayout)
+        val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) =
+            (_OracleFeePk, oracleFeePayout)
+
+        if (isBetaDecayMinusTx || isBetaDecayPlusTx)
+        {
+            // If Ui fee is defined, then we add an additional 0.4% fee
+            if (_optUIFee.isDefined) {
+                Coll(
+                    devFeeAddressAndPayout,
+                    (_optUIFee.get.propBytes, uiFeePayout),
+                    oracleFeeAddressAndPayout
+                )
+            }
+            else {
+                Coll(
+                    devFeeAddressAndPayout,
+                    emptyFees,
+                    oracleFeeAddressAndPayout
+                )
+            }
+        }
+        else
+        {
+            // If Ui fee is defined, then we add an additional 0.4% fee
+            if (_optUIFee.isDefined) {
+                Coll(
+                    devFeeAddressAndPayout,
+                    (_optUIFee.get.propBytes, uiFeePayout),
+                    emptyFees,
+                )
+            }
+            else {
+                Coll(
+                    devFeeAddressAndPayout,
+                    emptyFees,
+                    emptyFees
+                )
+            }
+        }
+    }
+
+    val feesPaid: Boolean = {
+        val uiFeesToBePaid: Boolean = fees(1)._2 > 0
+        val oracleFeesToBePaid: Boolean = fees(2)._2 > 0
+        val devFeesPaid: Boolean = {
+            if (fees(0)._2 > 0)
+            {
+                // Dev fee is greater than 0
+                val devOutput: Box   = OUTPUTS(2)
+                allOf(
+                    Coll(
+                        devOutput.propositionBytes      == fees(0)._1,
+                        devOutput.value.toBigInt        == fees(0)._2 + _MinFee
+                    )
+                )
+            }
+            else
+            {
+                true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value bonds
+            }
+        }
+
+        val uiFeesPaid: Boolean = {
+            if (_optUIFee.isDefined)
+            {
+                if(fees(1)._2 > 0) {
+                    // UI fee is greater than 0
+                    val uiOutput: Box    = OUTPUTS(3)
+                    allOf(
+                        Coll(
+                            uiOutput.propositionBytes       == fees(1)._1,
+                            uiOutput.value.toBigInt         == fees(1)._2 + _MinFee
+                        )
+                    )
+                }
+                else
+                {
+                    true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value bonds
+                }
+            } else {
+                true // if ui fee isn't defined, then default to true.
+            }
+        }
+
+        val oracleOutput: Box = if (uiFeesToBePaid)
+        {
+            OUTPUTS(4)
+        }
+        else
+        {
+            OUTPUTS(3)
+        }
+
+         val oracleFeesPaid: Boolean = {
+            if (isBetaDecayPlusTx || isBetaDecayMinusTx)
+            {
+                if (fees(2)._2 > 0)
+                { // Dev fee is greater than 0
+                    allOf(
+                        Coll(
+                            oracleOutput.propositionBytes      == fees(2)._1,
+                            oracleOutput.value.toBigInt         == fees(2)._2 + _MinFee
+                        )
+                    )
+                }
+                else
+                {
+                    true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value bonds
+                }
+            } else {
+                true // if oracle fee is not defined, then default to true.
+            }
+        }
+
+        devFeesPaid && uiFeesPaid && oracleFeesPaid
+    }
+
+    val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == fees(0)._2
+    val maxDevFeeThresholdSame: Boolean = OUT_MAX_DEV_FEE_THRESHOLD == MAX_DEV_FEE_THRESHOLD
+
+    val __feesCheck: Boolean = allOf(Coll(
+        feesPaid,
+        devFeeRepaidValueAdded,
+        maxDevFeeThresholdSame
+    ))
+    // ===== (END) Fee Declarations ===== //
+
     // NOTE:
     // In all of these transactions, the Inputs value varies, however, the output does not. The output is exactly how much
     // the user wants. Therefore we can use the outbox to calculate the value of M by using Outbox.value - InputBox
@@ -200,7 +401,8 @@
             __checkGluonWBoxNFT,
             __outNeutronsValueValid,
             __outProtonsValueValid,
-            __inErgsValueValid
+            __inErgsValueValid,
+            __feesCheck
         )))
     }
     else if (isFusionTx)
@@ -241,7 +443,8 @@
             __checkGluonWBoxNFT,
             __inNeutronsValueValid,
             __inProtonsValueValid,
-            __outErgsValueValid
+            __outErgsValueValid,
+            __feesCheck
         )))
     }
     else if (isBetaDecayPlusTx)
@@ -286,7 +489,8 @@
             __checkGluonWBoxNFT,
             __neutronsValueValid,
             __protonsValueValid,
-            __ergsValueValid
+            __ergsValueValid,
+            __feesCheck
         )))
     }
     else if (isBetaDecayMinusTx)
@@ -329,11 +533,14 @@
             __checkGluonWBoxNFT,
             __neutronsValueValid,
             __protonsValueValid,
-            __ergsValueValid
+            __ergsValueValid,
+            __feesCheck
         )))
     } else {
         val isMutate: Boolean = allOf(Coll(
-            __checkGluonWBoxNFT,
+            IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
+            IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
+            IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
             // Check Neutrons reduction in OutBox
             IN_GLUONW_NEUTRONS_TOKEN._2 == OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -345,7 +552,7 @@
         ))
 
         if (isMutate) {
-            _MutatePk
+            _DevPk
         } else {
             // Fails if not a valid tx
             sigmaProp(false)

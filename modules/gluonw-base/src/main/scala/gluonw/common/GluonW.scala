@@ -270,13 +270,16 @@ class GluonW @Inject() (
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
       // 4. Create FissionTx
       val fissionTx: FissionTx = FissionTx(
         ergToExchange = ergAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm)
+      )(ctx, algorithm, gluonWFeesCalculator)
 
       Seq(fissionTx)
     }
@@ -321,6 +324,8 @@ class GluonW @Inject() (
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
       // 4. Create BetaDecayPlusTx
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
@@ -328,7 +333,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm)
+      )(ctx, algorithm, gluonWFeesCalculator)
 
       Seq(betaDecayMinusTx)
     }
@@ -377,6 +382,8 @@ class GluonW @Inject() (
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
       // 4. Create BetaDecayMinusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
@@ -384,7 +391,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm)
+      )(ctx, algorithm, gluonWFeesCalculator)
 
       Seq(betaDecayPlusTx)
     }

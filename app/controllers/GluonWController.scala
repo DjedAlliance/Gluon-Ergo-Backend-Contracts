@@ -55,7 +55,10 @@ trait TGluonWController {
     * @param isEIP12 should this be a EIP12 tx?
     * @return
     */
-  def transmuteNeutronsToProtons(neutronsAmount: Long, isEIP12: Boolean): Action[Json]
+  def transmuteNeutronsToProtons(
+    neutronsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json]
 
   /**
     * Neutrons to Protons rate
@@ -70,7 +73,10 @@ trait TGluonWController {
     * @param isEIP12 should this be a EIP12 tx?
     * @return
     */
-  def transmuteProtonsToNeutrons(protonsAmount: Long, isEIP12: Boolean): Action[Json]
+  def transmuteProtonsToNeutrons(
+    protonsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json]
 
   /**
     * Protons to Neutrons rate
@@ -166,16 +172,15 @@ class GluonWController @Inject() (
     // Set up fission tx and get response
     val txs: Seq[TTx] = txFunc(assetAmount, walletAddress)
 
-    if (isEIP12)
-    {
-      val eip12UnsignedTxs: Seq[EIP12Tx] = txs.map(tx => {
+    if (isEIP12) {
+      val eip12UnsignedTxs: Seq[EIP12Tx] = txs.map { tx =>
         EIP12Tx(tx.buildTx, List())
-      })
+      }
 
-      Json.fromValues(eip12UnsignedTxs.map(tx => Json.fromString(tx.toJsonString())))
-    }
-    else
-    {
+      Json.fromValues(
+        eip12UnsignedTxs.map(tx => Json.fromString(tx.toJsonString()))
+      )
+    } else {
       // Send ergoPayResponse back
       val ergoPayResponses: Seq[ErgoPayResponse] =
         txs.zipWithIndex.map((indexedTx) =>
@@ -215,7 +220,8 @@ class GluonWController @Inject() (
   override def fission(ergAmount: Long, isEIP12: Boolean): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
       try {
-        Ok(TxCall(request, ergAmount, gluonW.fission, isEIP12)).as("application/json")
+        Ok(TxCall(request, ergAmount, gluonW.fission, isEIP12))
+          .as("application/json")
       } catch {
         case e: Throwable => exception(e, logger)
       }
@@ -242,10 +248,19 @@ class GluonWController @Inject() (
     * @param neutronsAmount the amount of neutrons to be converted
     * @return
     */
-  override def transmuteNeutronsToProtons(neutronsAmount: Long, isEIP12: Boolean): Action[Json] =
+  override def transmuteNeutronsToProtons(
+    neutronsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, neutronsAmount, gluonW.transmuteNeutronsToProtons, isEIP12))
-        .as("application/json")
+      Ok(
+        TxCall(
+          request,
+          neutronsAmount,
+          gluonW.transmuteNeutronsToProtons,
+          isEIP12
+        )
+      ).as("application/json")
     }
 
   /**
@@ -272,10 +287,19 @@ class GluonWController @Inject() (
     * @param protonsAmount the amount of Protons to be converted
     * @return
     */
-  override def transmuteProtonsToNeutrons(protonsAmount: Long, isEIP12: Boolean): Action[Json] =
+  override def transmuteProtonsToNeutrons(
+    protonsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, protonsAmount, gluonW.transmuteProtonsToNeutrons, isEIP12))
-        .as("application/json")
+      Ok(
+        TxCall(
+          request,
+          protonsAmount,
+          gluonW.transmuteProtonsToNeutrons,
+          isEIP12
+        )
+      ).as("application/json")
     }
 
   /**
@@ -305,7 +329,8 @@ class GluonWController @Inject() (
     */
   override def mintNeutrons(ergAmount: Long, isEIP12: Boolean): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
-      Ok(TxCall(request, ergAmount, gluonW.mintNeutrons, isEIP12)).as("application/json")
+      Ok(TxCall(request, ergAmount, gluonW.mintNeutrons, isEIP12))
+        .as("application/json")
     }
 
   /**
@@ -329,7 +354,10 @@ class GluonWController @Inject() (
     * @param neutronsAmount the amount of Neutrons to be redeemed
     * @return
     */
-  override def redeemNeutrons(neutronsAmount: Long, isEIP12: Boolean): Action[Json] =
+  override def redeemNeutrons(
+    neutronsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
       Ok(TxCall(request, neutronsAmount, gluonW.redeemNeutrons, isEIP12))
         .as("application/json")
@@ -383,7 +411,10 @@ class GluonWController @Inject() (
     * @param protonsAmount the amount of Protons to be redeemed
     * @return
     */
-  override def redeemProtons(protonsAmount: Long, isEIP12: Boolean): Action[Json] =
+  override def redeemProtons(
+    protonsAmount: Long,
+    isEIP12: Boolean
+  ): Action[Json] =
     Action(circe.json) { implicit request: Request[Json] =>
       Ok(TxCall(request, protonsAmount, gluonW.redeemProtons, isEIP12))
         .as("application/json")
