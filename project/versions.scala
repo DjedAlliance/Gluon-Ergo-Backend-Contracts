@@ -5,7 +5,6 @@ object versions {
   val ErgoAppKitVersion = "5.0.3"
   val ScryptoVersion = "2.3.0"
   val EdgeVersion = "0.1.7-SNAPSHOT"
-  val SimVersion = "0.1.0-SNAPSHOT"
 
   // API
   val SttpVersion = "3.3.11"
