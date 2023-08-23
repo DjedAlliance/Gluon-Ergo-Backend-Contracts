@@ -28,6 +28,9 @@
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
     // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
     // R6 - (MaxAmountDevFeesToBePaid, TotalDevFeesPaid): (Coll[Long], Coll[Long])
+    // R7 - BetaPlusVolume: Coll[Long]
+    // R8 - BetaMinusVolume: Coll[Long]
+    // R9 - LastBucketBlock: Long
 
     // ===== Context Vars ===== //
     // val _optUIFee                    SigmaProp
@@ -84,6 +87,17 @@
 
     val OUT_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(1)
     val OUT_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(2)
+
+    val inVolumePlus: Coll[Long] = IN_GLUONW_BOX.R7[Coll[Long]].get
+    val inVolumeMinus: Coll[Long] = IN_GLUONW_BOX.R8[Coll[Long]].get
+    val outVolumePlus: Coll[Long] = OUT_GLUONW_BOX.R7[Coll[Long]].get
+    val outVolumeMinus: Coll[Long] = OUT_GLUONW_BOX.R8[Coll[Long]].get
+
+    val inLastBucketBlock: Long = IN_GLUONW_BOX.R9[Long].get
+    val outLastBucketBlock: Long = OUT_GLUONW_BOX.R9[Long].get 
+
+    val BLOCKS_PER_VOLUME_BUCKET = 720 // Approximately 1 day per volume bucket
+    val BUCKETS = 14 // Tracking volume of approximately 14 days
 
     val __checkGluonWBoxNFT: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
@@ -368,6 +382,16 @@
     ))
     // ===== (END) Fee Declarations ===== //
 
+    // In the case of fission and fusion transactions, the variables related to volume handling should remain unchanged
+    val volumePlusPreserved = inVolumePlus == outVolumePlus // TODO: fix this: we need to check that all respective elements of the two collections are the same.
+    val volumeMinusPreserved = inVolumeMinus == outVolumeMinus // TODO: fix this: we need to check that all the respective elements of the two collections are the same.
+    val lastBucketBlockPreserved = inLastBucketBlock == outLastBucketBlock
+    val __validVolumeHandling = allOf(Coll(
+        volumePlusPreserved,
+        volumeMinusPreserved,
+        lastBucketBlockPreserved
+    ))
+
     // NOTE:
     // In all of these transactions, the Inputs value varies, however, the output does not. The output is exactly how much
     // the user wants. Therefore we can use the outbox to calculate the value of M by using Outbox.value - InputBox
@@ -397,12 +421,15 @@
         val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
         val __inErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
+
+
         sigmaProp(allOf(Coll(
             __checkGluonWBoxNFT,
             __outNeutronsValueValid,
             __outProtonsValueValid,
             __inErgsValueValid,
-            __feesCheck
+            __feesCheck,
+            __validVolumeHandling
         )))
     }
     else if (isFusionTx)
@@ -444,7 +471,8 @@
             __inNeutronsValueValid,
             __inProtonsValueValid,
             __outErgsValueValid,
-            __feesCheck
+            __feesCheck,
+            __validVolumeHandling
         )))
     }
     else if (isBetaDecayPlusTx)
@@ -454,15 +482,43 @@
 
         val M: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
 
-        // ** Tx FEE for pool ** @todo v2: Fix with real Equation
-        // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
-        // but for v1, we're just going to use a constant of 1%.
-        val VarPhiBeta: BigInt = (2 * precision / 100).toBigInt
-
         // The protons and neutrons are lesser in outbox than inputbox
         val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
         val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
         val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
+
+        val currentBlockNumber = 00000 // TODO: get latest block number
+
+        val worthOfMInErgs = 00000 // TODO: convert M to Ergs
+
+        val n = (currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET
+
+        val shiftedInVolumePlus = // TODO: shift inVolumePlus by n 
+        // (i.e. `shiftedInVolumePlus(n+k) = inVolumePlus(k)` for all k>0 
+        // and `shiftedInVolumePlus(j) = 0 for j < n)
+
+        val __volumePlusAccounted = outVolumePlus(0) == shiftedInVolumePlus(0) + worthOfMInErgs && 
+        // TODO: forall 0 < k < outVolumePlus.length, outVolumePlus(k) == shiftedInVolumePlus(k)
+
+        val shiftedInVolumeMinus = //TODO: shift inVolumeMinus by n
+
+        val __volumeMinusPreserved = // TODO: forall 0 <= k < outVolumeMinus.length, outVolumeMinus(k) == shiftedInVolumeMinus(k)
+
+        val __correctNumberOfBlocks = outVolumePlus.length == BUCKETS && outVolumeMinus.length == BUCKETS
+
+        val volumePlus = outVolumePlus.reduce(_ + _) // adds all elements of the collection, computing the total volume
+        val volumeMinus = outVolumeMinus.reduce(_ + _) 
+
+        val volume = volumePlus - volumeMinus // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+
+        // ** Tx FEE for pool ** @todo v2: Fix with real Equation          ggbg
+        // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
+        // but for v1, we're just going to use a constant of 1%.
+        
+        val Phi0 = 0.01 // TODO: handle precision properly
+        val Phi1 = 0.5  // TODO: handle precision properly
+        
+        val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / OUT_GLUONW_BOX.value // TODO: handle precision properly
 
         // ** Fusion Ratio **
         // min(q*, (SNeutrons * Pt / R))
@@ -490,7 +546,11 @@
             __neutronsValueValid,
             __protonsValueValid,
             __ergsValueValid,
-            __feesCheck
+            __feesCheck,
+            __blockToleranceAccepted,
+            __correctNumberOfBlocks,
+            __volumePlusAccounted,
+            __volumeMinusPreserved
         )))
     }
     else if (isBetaDecayMinusTx)
@@ -503,6 +563,9 @@
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
         val VarPhiBeta: BigInt = (2 * precision / 100).toBigInt
+        // TODO: Do for betaDecayMinusTx the same that was done for betaDecayPlusTx.
+        // TODO: but this transaction's volume should be accounted in the 
+        // TODO: outVolumeMinus collection and `volume` should be `volumeMinus - volumePlus`
 
         // The protons and neutrons are lesser in outbox than inputbox
         val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -534,7 +597,9 @@
             __neutronsValueValid,
             __protonsValueValid,
             __ergsValueValid,
-            __feesCheck
+            __feesCheck,
+            __volumeMinusAccounted,
+            __volumePlusPreserved
         )))
     } else {
         val isMutate: Boolean = allOf(Coll(
