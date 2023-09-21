@@ -8,6 +8,8 @@ GET /api/v1/neutrons/price                                          controllers.
 GET /api/v1/protons/price                                           controllers.GluonWController.protonPrice()
 GET /api/v1/fission/:ergAmount                                      controllers.GluonWController.fissionPrice(ergAmount: Long)
 PUT /api/v1/fission/:ergAmount/:isEIP12                             controllers.GluonWController.fission(ergAmount: Long, isEIP12: Boolean)
+GET /api/v1/fusion/:ergAmount                                       controllers.GluonWController.fusionPrice(ergRedeemed: Long)
+PUT /api/v1/fnission/:ergAmount/:isEIP12                            controllers.GluonWController.fusion(ergAmount: Long, isEIP12: Boolean)
 
 GET /api/v1/transmute/toProtons/:neutronsAmount                     controllers.GluonWController.transmuteNeutronsToProtonsPrice(neutronsAmount: Long)
 PUT /api/v1/transmute/toProtons/:neutronsAmount/:isEIP12            controllers.GluonWController.transmuteNeutronsToProtons(neutronsAmount: Long, isEIP12: Boolean)

@@ -196,6 +196,26 @@
     val rightHandMin: BigInt = SNeutrons * Pt / RErg
     val fusionRatio: BigInt = min(qStar, rightHandMin)
 
+    // Calculate the value based on protons
+    // Check Protons reduction in OutBox
+    def getProtonsPrice(protonsValue: Long): BigInt = {
+        val oneMinusFusionRatio: BigInt = (precision - fusionRatio).toBigInt
+        val protonsPrice: BigInt = oneMinusFusionRatio * RErg.toBigInt / SProtons.toBigInt
+        val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision.toBigInt
+
+        protonsInNanoergs
+    }
+
+    def getNeutronsPrice(neutronsValue: Long): BigInt = {
+        val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt.toBigInt / precision.toBigInt
+
+        neutronsInNanoergs
+    }
+
+    def sum(collLong: Coll[Long]): BigInt = {
+        collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
+    }
+
     // ===== (END) Variable Declarations ===== //
 
     // ===== (START) Oracle Checks ===== //
@@ -230,15 +250,13 @@
                 // Calculate the value based on protons
                 // Check Protons reduction in OutBox
                 val protonsValue: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
-                val oneMinusFusionRatio: BigInt = (precision - fusionRatio).toBigInt
-                val protonsPrice: BigInt = oneMinusFusionRatio * RErg.toBigInt / SProtons.toBigInt
-                val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision.toBigInt
+                val protonsInNanoergs: BigInt = getProtonsPrice(protonsValue)
 
                 protonsInNanoergs
             } else {
                 // Calculate the value based on neutrons
                 val neutronsValue: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
-                val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt.toBigInt / precision.toBigInt
+                val neutronsInNanoergs: BigInt = getNeutronsPrice(neutronsValue)
 
                 neutronsInNanoergs
             }
@@ -480,6 +498,7 @@
         //===== BetaDecayPlus Tx ===== //
         //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S proton)) / q(R, S proton)) * (S protons / S neutrons) [Protons]
 
+        // proton value
         val M: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
 
         // The protons and neutrons are lesser in outbox than inputbox
@@ -487,38 +506,99 @@
         val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
         val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
-        val currentBlockNumber = 00000 // TODO: get latest block number
+        // ** VarPhiBeta Calculation **
+        val currentBlockNumber: Long = CONTEXT.height
 
-        val worthOfMInErgs = 00000 // TODO: convert M to Ergs
+        // Check Protons reduction in OutBox
+        val worthOfMInErgs: BigInt = getProtonsPrice(M)
 
-        val n = (currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET
+        // calculate the amount of days that has been since the last betaDecayTx
+        // 1000 - 200 = 800 | 800 / 720 = 1
+        val nDays: Long = (currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET
 
-        val shiftedInVolumePlus = // TODO: shift inVolumePlus by n 
-        // (i.e. `shiftedInVolumePlus(n+k) = inVolumePlus(k)` for all k>0 
-        // and `shiftedInVolumePlus(j) = 0 for j < n)
+        // we don't need to shift it, we just need to check if outVolumePlus is correct.
+        // Therefore, if there is a requirement to shift, we just need to check if the
+        // value after n is the same for the next 14.
+        //
+        // Here's an example:
+        // assuming our initial block is this
+        // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        //
+        // if nDays = 4, and worthOfMInErgs = x
+        // We should expect:
+        // [x, 0, 0 ,0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        //
+        // if nDays = 0, and worthOfMInErgs = x
+        // [1 + x, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        //
+        // The conditions are:
+        // 1. The value in outVolumePlus(0) should be worthOfMInErgs + if (n == 0) inVolumePlus(0) else 0
+        // 2. For the block after 0, if n > 1, then n - 1 of the blocks after should be 0.
+        // 3. The rest of the value, outVolumePlus(x) [where x = n up to 14 - n] should be
+        //      equal to inVolumePlus(y) [where y = 0 up to n]
+        // 4. The volume should be 14.
+        // The same conditions go for outVolumeMinus, other than #1 whereby, it is replaced
+        // by outVolumeMinus(0) == if (nDays == 0) {inVolumeMinus(0)} else {0L}
 
-        val __volumePlusAccounted = outVolumePlus(0) == shiftedInVolumePlus(0) + worthOfMInErgs && 
-        // TODO: forall 0 < k < outVolumePlus.length, outVolumePlus(k) == shiftedInVolumePlus(k)
+        // #1
+        val outVolumePlusExpectedValue = (if (nDays == 0) {inVolumePlus(0)} else {0L}) + worthOfMInErgs
+        val _volumePlusAccounted = outVolumePlus(0) == outVolumePlusExpectedValue
 
-        val shiftedInVolumeMinus = //TODO: shift inVolumeMinus by n
+        // #2
+        // We sliced n - 1 of the value in between, and we check if all of it are 0s.
+        val slicedNVolumePlus: Coll[Long] = outVolumePlus.slice(1, nDays)
+        val _nVolumePlusAllZeros: Boolean = slicedNVolumePlus.forAll{(indexValue: Long) => indexedValue == 0L}
 
-        val __volumeMinusPreserved = // TODO: forall 0 <= k < outVolumeMinus.length, outVolumeMinus(k) == shiftedInVolumeMinus(k)
+        // #3
+        // If we slice the correct pieces from in and out, we should get the same
+        // exact value
+        val slicedOutVolumePlus: Coll[Long] = outVolumePlus.slice(nDays, 14 - nDays)
+        val slicedInVolumePlus: Coll[Long] = inVolumePlus.slice(0, nDays)
+        val _isSlicedValuedVolumePlusEqual: Boolean = slicedOutVolumePlus == slicedInVolumePlus
 
-        val __correctNumberOfBlocks = outVolumePlus.length == BUCKETS && outVolumeMinus.length == BUCKETS
+        val __outVolumePlusValidated: Boolean = allOf(Coll(
+            outVolumePlus.size == BUCKETS,
+            _volumePlusAccounted,
+            _isSlicedValuedVolumePlusEqual,
+            _nVolumePlusAllZeros
+        ))
 
-        val volumePlus = outVolumePlus.reduce(_ + _) // adds all elements of the collection, computing the total volume
-        val volumeMinus = outVolumeMinus.reduce(_ + _) 
+        // #1
+        val _outVolumeMinusFirstIndexedPreserved = if (nDays == 0) {inVolumeMinus(0)} else {0L}
 
-        val volume = volumePlus - volumeMinus // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+        // #2
+        // We sliced n - 1 of the value in between, and we check if all of it are 0s.
+        val slicedNVolumeMinus: Coll[Long] = outVolumeMinus.slice(1, nDays)
+        val _nVolumeMinusAllZeros: Boolean = slicedNVolumeMinus.forAll{(indexValue: Long) => indexedValue == 0L}
 
-        // ** Tx FEE for pool ** @todo v2: Fix with real Equation          ggbg
+        // #3
+        val slicedOutVolumeMinus: Coll[Long] = outVolumeMinus.slice(nDays, 14 - nDays)
+        val slicedInVolumeMinus: Coll[Long] = inVolumeMinus.slice(0, nDays)
+        val _isSlicedValuedVolumeMinusEqual: Boolean = slicedOutVolumeMinus == slicedInVolumeMinus
+
+        val __outVolumeMinusValidated: Boolean = allOf(Coll(
+            outVolumeMinus.size == BUCKETS,
+            _outVolumeMinusFirstIndexedPreserved,
+            _isSlicedValuedVolumeMinusEqual,
+            _nVolumeMinusAllZeros
+        ))
+
+        val volumePlus: BigInt = sum(outVolumePlus) // adds all elements of the collection, computing the total volume
+        val volumeMinus: BigInt = sum(outVolumeMinus)
+
+        val volume: BigInt = if (volumeMinus > volumePlus) {0L.toBigInt}
+            else {volumePlus - volumeMinus} // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+
+        // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
         
-        val Phi0 = 0.01 // TODO: handle precision properly
-        val Phi1 = 0.5  // TODO: handle precision properly
+        val Phi0 = precision / 100
+        val Phi1 = precision / 2
         
         val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / OUT_GLUONW_BOX.value // TODO: handle precision properly
+
+        // ** VarPhiBeta Calculation End **
 
         // ** Fusion Ratio **
         // min(q*, (SNeutrons * Pt / R))
@@ -548,9 +628,8 @@
             __ergsValueValid,
             __feesCheck,
             __blockToleranceAccepted,
-            __correctNumberOfBlocks,
-            __volumePlusAccounted,
-            __volumeMinusPreserved
+            __outVolumeMinusValidated,
+            __outVolumePlusValidated
         )))
     }
     else if (isBetaDecayMinusTx)
@@ -559,13 +638,76 @@
         // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
         val M: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
 
+        // ** VarPhiBeta Calculation **
+        val currentBlockNumber: Long = CONTEXT.height
+
+        // Check Neutrons reduction in OutBox
+        val worthOfMInErgs: BigInt = getNeutronsPrice(M)
+
+        // calculate the amount of days that has been since the last betaDecayTx
+        // 1000 - 200 = 800 | 800 / 720 = 1
+        val nDays: Long = (currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET
+
+        // SAME AS BetaDecayPlus, but reversed between plus and minus
+        // #1
+        val outVolumeMinusExpectedValue = (if (nDays == 0) {inVolumeMinus(0)} else {0L}) + worthOfMInErgs
+        val _volumeMinusAccounted = outVolumeMinus(0) == outVolumeMinusExpectedValue
+
+        // #2
+        // We sliced n - 1 of the value in between, and we check if all of it are 0s.
+        val slicedNVolumeMinus: Coll[Long] = outVolumeMinus.slice(1, nDays)
+        val _nVolumeMinusAllZeros: Boolean = slicedNVolumeMinus.forAll{(indexValue: Long) => indexedValue == 0L}
+
+        // #3
+        // If we slice the correct pieces from in and out, we should get the same
+        // exact value
+        val slicedOutVolumeMinus: Coll[Long] = outVolumeMinus.slice(nDays, 14 - nDays)
+        val slicedInVolumeMinus: Coll[Long] = inVolumeMinus.slice(0, nDays)
+        val _isSlicedValuedVolumeMinusEqual: Boolean = slicedOutVolumeMinus == slicedInVolumeMinus
+
+        val __outVolumeMinusValidated: Boolean = allOf(Coll(
+            outVolumeMinus.size == BUCKETS,
+            _volumeMinusAccounted,
+            _isSlicedValuedVolumeMinusEqual,
+            _nVolumeMinusAllZeros
+        ))
+
+        // #1
+        val _outVolumePlusFirstIndexedPreserved = if (nDays == 0) {inVolumePlus(0)} else {0L}
+
+        // #2
+        // We sliced n - 1 of the value in between, and we check if all of it are 0s.
+        val slicedNVolumePlus: Coll[Long] = outVolumePlus.slice(1, nDays)
+        val _nVolumePlusAllZeros: Boolean = slicedNVolumePlus.forAll{(indexValue: Long) => indexedValue == 0L}
+
+        // #3
+        val slicedOutVolumePlus: Coll[Long] = outVolumePlus.slice(nDays, 14 - nDays)
+        val slicedInVolumePlus: Coll[Long] = inVolumePlus.slice(0, nDays)
+        val _isSlicedValuedVolumePlusEqual: Boolean = slicedOutVolumePlus == slicedInVolumePlus
+
+        val __outVolumePlusValidated: Boolean = allOf(Coll(
+            outVolumePlus.size == BUCKETS,
+            _outVolumePlusFirstIndexedPreserved,
+            _isSlicedValuedVolumePlusEqual,
+            _nVolumePlusAllZeros
+        ))
+
+        val volumePlus: BigInt = sum(outVolumePlus) // adds all elements of the collection, computing the total volume
+        val volumeMinus: BigInt = sum(outVolumeMinus)
+
+        val volume: BigInt = if (volumePlus > volumeMinus) {0L.toBigInt}
+            else {volumeMinus - volumePlus} // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+
         // ** Tx FEE for pool ** @todo v2: Fix with real Equation
         // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
         // but for v1, we're just going to use a constant of 1%.
-        val VarPhiBeta: BigInt = (2 * precision / 100).toBigInt
-        // TODO: Do for betaDecayMinusTx the same that was done for betaDecayPlusTx.
-        // TODO: but this transaction's volume should be accounted in the 
-        // TODO: outVolumeMinus collection and `volume` should be `volumeMinus - volumePlus`
+
+        val Phi0 = precision / 100
+        val Phi1 = precision / 2
+
+        val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / OUT_GLUONW_BOX.value // TODO: handle precision properly
+
+        // ** VarPhiBeta Calculation End **
 
         // The protons and neutrons are lesser in outbox than inputbox
         val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -598,8 +740,8 @@
             __protonsValueValid,
             __ergsValueValid,
             __feesCheck,
-            __volumeMinusAccounted,
-            __volumePlusPreserved
+            __outVolumePlusValidated,
+            __outVolumeMinusValidated
         )))
     } else {
         val isMutate: Boolean = allOf(Coll(
