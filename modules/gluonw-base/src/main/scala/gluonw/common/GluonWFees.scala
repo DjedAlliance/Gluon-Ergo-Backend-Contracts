@@ -44,7 +44,15 @@ case class GluonWFeesCalculator(
     oracleBox: OracleBox
   ): GluonWFees = {
     val protonsNanoErgPrice: BigInt =
-      BigInt(protonsToNanoErg(protonsAmount, oracleBox.getPricePerGrams))
+      BigInt(
+        gluonWConstants.protonsToNanoErg(
+          neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+          protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+          protonsAmount = protonsAmount,
+          fissionedErg = gluonWBox.ergFissioned,
+          goldPriceGramNanoErg = oracleBox.getPricePerGrams
+        )
+      )
     val devFee: Long =
       (protonsNanoErgPrice * devFeesNumerator / denominator).toLong
     val uiFee: Long =
@@ -64,7 +72,10 @@ case class GluonWFeesCalculator(
     oracleBox: OracleBox
   ): GluonWFees = {
     val neutronsNanoErgPrice: BigInt =
-      BigInt(neutronsToNanoErg(neutronsAmount, oracleBox.getPricePerGrams))
+      BigInt(
+        gluonWConstants
+          .neutronsToNanoErg(neutronsAmount, oracleBox.getPricePerGrams)
+      )
     val devFee: Long =
       (neutronsNanoErgPrice * devFeesNumerator / denominator).toLong
     val uiFee: Long =
@@ -77,30 +88,6 @@ case class GluonWFeesCalculator(
       uiFee = uiFee,
       oracleFee = oracleFee
     )
-  }
-
-  def neutronsToNanoErg(
-    neutronsAmount: Long,
-    goldPriceGramsNanoErg: Long
-  ): Long =
-    (BigInt(neutronsAmount) * BigInt(goldPriceGramsNanoErg) / GluonWBoxConstants.PRECISION).toLong
-
-  def protonsToNanoErg(
-    protonsAmount: Long,
-    goldPriceGramNanoErg: Long
-  ): Long = {
-    val fusionRatio: BigInt =
-      gluonWConstants.fusionRatio(
-        gluonWBox.neutronsCirculatingSupply,
-        pt = goldPriceGramNanoErg,
-        fissionedErg = gluonWBox.ergFissioned
-      )
-
-    val oneMinusFusionRatio: BigInt = GluonWBoxConstants.PRECISION - fusionRatio
-    val protonsPrice: BigInt =
-      (oneMinusFusionRatio * gluonWBox.ergFissioned / gluonWBox.protonsCirculatingSupply)
-
-    (BigInt(protonsAmount) * protonsPrice / GluonWBoxConstants.PRECISION).toLong
   }
 
   def getFeesOutBox(gluonWFees: GluonWFees): Seq[FundsToAddressBox] = {

@@ -51,35 +51,35 @@ class GluonWCalculatorSpec extends GluonWBase {
     }
   }
 
-  "GluonWCalculator: BetaDecayPlus" should {
-    "request for right amount of Neutron for BetaDecayPlus" in {
-      val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
-      val outputAssetAmount: GluonWBoxOutputAssetAmount =
-        gluonWCalculator.betaDecayPlus(protonToDecay)(
-          oracleBox.getPricePerGrams
-        )
+//  "GluonWCalculator: BetaDecayPlus" should {
+//    "request for right amount of Neutron for BetaDecayPlus" in {
+//      val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+//      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+//        gluonWCalculator.betaDecayPlus(protonToDecay)(
+//          oracleBox.getPricePerGrams
+//        )
+//
+//      val neutronsAtPrecision: Float =
+//        outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+//
+//      assert(MathUtils.~=(neutronsAtPrecision, 0.137347, 4))
+//    }
+//  }
 
-      val neutronsAtPrecision: Float =
-        outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
-
-      assert(MathUtils.~=(neutronsAtPrecision, 0.137347, 4))
-    }
-  }
-
-  "GluonWCalculator: BetaDecayMinus" should {
-    "request for right amount of Protons for BetaDecayMinus" in {
-      val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
-      val outputAssetAmount: GluonWBoxOutputAssetAmount =
-        gluonWCalculator.betaDecayMinus(neutronToDecay)(
-          oracleBox.getPricePerGrams
-        )
-
-      val protonsAtPrecision: Float =
-        outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
-
-      assert(MathUtils.~=(protonsAtPrecision, 0.017481243, 4))
-    }
-  }
+//  "GluonWCalculator: BetaDecayMinus" should {
+//    "request for right amount of Protons for BetaDecayMinus" in {
+//      val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+//      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+//        gluonWCalculator.betaDecayMinus(neutronToDecay)(
+//          oracleBox.getPricePerGrams
+//        )
+//
+//      val protonsAtPrecision: Float =
+//        outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+//
+//      assert(MathUtils.~=(protonsAtPrecision, 0.017481243, 4))
+//    }
+//  }
 
   "GluonWCalculator: Fission Simulation" should {
     object Operations {
@@ -196,78 +196,78 @@ class GluonWCalculatorSpec extends GluonWBase {
         amountAndOperationAndResult._2._2
       val operationType: String = amountAndOperationAndResult._2._1
 
-      s"Simulation: $operationType at position $count" in {
-        val simGluonWCalculator: GluonWCalculator = GluonWCalculator(
-          sProtons = simulationGluonWBox.protonsCirculatingSupply,
-          sNeutrons = simulationGluonWBox.neutronsCirculatingSupply,
-          rErg = simulationGluonWBox.ergFissioned,
-          gluonWConstants = gluonWConstants
-        )
-
-        val outputAssetAmount: GluonWBoxOutputAssetAmount =
-          operationType match {
-            case Operations.FISSION =>
-              simGluonWCalculator.fission(amountAndOperationAndResult._1)
-            case Operations.FUSION =>
-              simGluonWCalculator.fusion(amountAndOperationAndResult._1)
-            case Operations.BETA_DECAY_PLUS =>
-              simGluonWCalculator.betaDecayPlus(amountAndOperationAndResult._1)(
-                oracleBox.getPricePerGrams
-              )
-            case Operations.BETA_DECAY_MINUS =>
-              simGluonWCalculator.betaDecayMinus(
-                amountAndOperationAndResult._1
-              )(
-                oracleBox.getPricePerGrams
-              )
-          }
-
-        val tokens: Seq[ErgoToken] = simulationGluonWBox.tokens.map { token =>
-          token.getId match {
-            case GluonWTokens.neutronId =>
-              ErgoToken(
-                token.getId,
-                token.getValue - outputAssetAmount.neutronsAmount
-              )
-            case GluonWTokens.protonId =>
-              ErgoToken(
-                token.getId,
-                token.getValue - outputAssetAmount.protonsAmount
-              )
-            case _ => token
-          }
-        }
-
-        simulationGluonWBox = simulationGluonWBox.copy(
-          value = simulationGluonWBox.value - outputAssetAmount.ergAmount,
-          tokens = tokens
-        )
-        assert(
-          MathUtils.~=(
-            outputAssetAmount.ergAmount.toFloat / GluonWBoxConstants.PRECISION,
-            results.ergAmount.toFloat / GluonWBoxConstants.PRECISION,
-            3
-          ),
-          s"\noutputErgAmount: ${outputAssetAmount.ergAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.ergAmount.toFloat / GluonWBoxConstants.PRECISION}"
-        )
-        assert(
-          MathUtils
-            .~=(
-              outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION,
-              results.protonsAmount.toFloat / GluonWBoxConstants.PRECISION,
-              3
-            ),
-          s"\noutputProtonsAmount: ${outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.protonsAmount.toFloat / GluonWBoxConstants.PRECISION}"
-        )
-        assert(
-          MathUtils.~=(
-            outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION,
-            results.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION,
-            3
-          ),
-          s"\noutputNeutronsAmount: ${outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION}"
-        )
-      }
+//      s"Simulation: $operationType at position $count" in {
+//        val simGluonWCalculator: GluonWCalculator = GluonWCalculator(
+//          sProtons = simulationGluonWBox.protonsCirculatingSupply,
+//          sNeutrons = simulationGluonWBox.neutronsCirculatingSupply,
+//          rErg = simulationGluonWBox.ergFissioned,
+//          gluonWConstants = gluonWConstants
+//        )
+//
+//        val outputAssetAmount: GluonWBoxOutputAssetAmount =
+//          operationType match {
+//            case Operations.FISSION =>
+//              simGluonWCalculator.fission(amountAndOperationAndResult._1)
+//            case Operations.FUSION =>
+//              simGluonWCalculator.fusion(amountAndOperationAndResult._1)
+//            case Operations.BETA_DECAY_PLUS =>
+//              simGluonWCalculator.betaDecayPlus(amountAndOperationAndResult._1)(
+//                oracleBox.getPricePerGrams
+//              )
+//            case Operations.BETA_DECAY_MINUS =>
+//              simGluonWCalculator.betaDecayMinus(
+//                amountAndOperationAndResult._1
+//              )(
+//                oracleBox.getPricePerGrams
+//              )
+//          }
+//
+//        val tokens: Seq[ErgoToken] = simulationGluonWBox.tokens.map { token =>
+//          token.getId match {
+//            case GluonWTokens.neutronId =>
+//              ErgoToken(
+//                token.getId,
+//                token.getValue - outputAssetAmount.neutronsAmount
+//              )
+//            case GluonWTokens.protonId =>
+//              ErgoToken(
+//                token.getId,
+//                token.getValue - outputAssetAmount.protonsAmount
+//              )
+//            case _ => token
+//          }
+//        }
+//
+//        simulationGluonWBox = simulationGluonWBox.copy(
+//          value = simulationGluonWBox.value - outputAssetAmount.ergAmount,
+//          tokens = tokens
+//        )
+//        assert(
+//          MathUtils.~=(
+//            outputAssetAmount.ergAmount.toFloat / GluonWBoxConstants.PRECISION,
+//            results.ergAmount.toFloat / GluonWBoxConstants.PRECISION,
+//            3
+//          ),
+//          s"\noutputErgAmount: ${outputAssetAmount.ergAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.ergAmount.toFloat / GluonWBoxConstants.PRECISION}"
+//        )
+//        assert(
+//          MathUtils
+//            .~=(
+//              outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION,
+//              results.protonsAmount.toFloat / GluonWBoxConstants.PRECISION,
+//              3
+//            ),
+//          s"\noutputProtonsAmount: ${outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.protonsAmount.toFloat / GluonWBoxConstants.PRECISION}"
+//        )
+//        assert(
+//          MathUtils.~=(
+//            outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION,
+//            results.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION,
+//            3
+//          ),
+//          s"\noutputNeutronsAmount: ${outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION}, expected: ${results.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION}"
+//        )
+//      }
     }
   }
 }

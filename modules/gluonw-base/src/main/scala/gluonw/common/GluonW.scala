@@ -202,7 +202,8 @@ class GluonW @Inject() (
 
   def getPriceFromAlgorithmWithOracleBox(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -213,13 +214,15 @@ class GluonW @Inject() (
     getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
       assetAmount,
       gluonWBox,
+      currentHeight,
       algorithmFunc
     )._2
   }
 
   def getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -230,6 +233,7 @@ class GluonW @Inject() (
     getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
       assetAmount,
       gluonWBox,
+      currentHeight,
       algorithmFunc
     )
   }
@@ -237,7 +241,8 @@ class GluonW @Inject() (
   def getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
     assetAmount: Long,
     gluonWBox: GluonWBox,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -246,7 +251,7 @@ class GluonW @Inject() (
     val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
     // 2. Use Algorithm to calculate rate
-    algorithmFunc(gluonWBox, neutronOracleBox, assetAmount)
+    algorithmFunc(gluonWBox, neutronOracleBox, assetAmount, currentHeight)
   }
 
   /**
@@ -333,7 +338,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm, gluonWFeesCalculator)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
 
       Seq(betaDecayMinusTx)
     }
@@ -351,6 +356,7 @@ class GluonW @Inject() (
     // Use Algorithm to calculate BetaDecayPlus rate
     getPriceFromAlgorithmWithOracleBox(
       neutronsAmount,
+      currentHeight = client.getHeight,
       algorithm.betaDecayPlusPrice
     )
 
@@ -391,7 +397,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm, gluonWFeesCalculator)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
 
       Seq(betaDecayPlusTx)
     }
@@ -409,6 +415,7 @@ class GluonW @Inject() (
     // Use Algorithm to calculate BetaDecayMinus rate
     getPriceFromAlgorithmWithOracleBox(
       protonsAmount,
+      currentHeight = client.getHeight,
       algorithm.betaDecayMinusPrice
     )
 
@@ -451,6 +458,7 @@ class GluonW @Inject() (
     val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
       getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
         neutronsAmount,
+        currentHeight = client.getHeight,
         algorithm.betaDecayMinusPrice
       )
     ???

@@ -29,25 +29,25 @@ object BoxCreation extends App {
   client.setClient()
 
   val tokens: Seq[(String, (String, Long))] = Seq(
-    ("GluonW NFT", ("GluonW NFTby DJed Alliance v1.1", 1L)),
+    ("GluonW NFT", ("GluonW NFTby DJed Alliance v1.2: VarPhiBeta Implemented", 1L)),
     (
       "GluonW Neutrons",
       (
-        "GluonW Neutrons by DJed Alliance v1.1",
+        "GluonW Neutrons by DJed Alliance v1.2: VarPhiBeta Implemented",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     ),
     (
       "GluonW Protons",
       (
-        "GluonW Protons by DJed Alliance v1.1",
+        "GluonW Protons by DJed Alliance v1.2: VarPhiBeta Implemented",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     )
   )
 
   val txJson: Seq[Unit] = client.getClient.execute { (ctx: BlockchainContext) =>
-    val runTx = "merge"
+    val runTx = "mint"
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY

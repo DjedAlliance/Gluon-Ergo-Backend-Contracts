@@ -2,8 +2,8 @@ package gluonw.txs
 
 import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
-import edge.registers.LongPairRegister
-import gluonw.boxes.{GluonWBox, OracleBox}
+import edge.registers.{LongPairRegister, LongRegister, NumbersRegister}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import gluonw.common.{GluonWFees, GluonWFeesCalculator, TGluonWAlgorithm}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.TTx
@@ -245,7 +245,8 @@ case class BetaDecayPlusTx(
 )(
   implicit val ctx: BlockchainContext,
   implicit val algorithm: TGluonWAlgorithm,
-  implicit val feesCalculator: GluonWFeesCalculator
+  implicit val feesCalculator: GluonWFeesCalculator,
+  implicit val currentHeight: Long
 ) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -256,7 +257,10 @@ case class BetaDecayPlusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayPlus(inGluonWBox, protonsToTransmute)
+      algorithm.betaDecayPlus(inGluonWBox, protonsToTransmute)(
+        oracleBox = neutronOracleBox,
+        currentHeight = currentHeight
+      )
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -294,7 +298,14 @@ case class BetaDecayPlusTx(
         )
       )
 
-    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
+    val outGluonWBoxWithLastBlockUpdated: GluonWBox =
+      outGluonWBoxWithFeeRepaidUpdated.copy(
+        lastDayBlockRegister = new LongRegister(
+          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        )
+      )
+
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
   }
 }
 
@@ -309,7 +320,8 @@ case class BetaDecayMinusTx(
 )(
   implicit val ctx: BlockchainContext,
   implicit val algorithm: TGluonWAlgorithm,
-  implicit val feesCalculator: GluonWFeesCalculator
+  implicit val feesCalculator: GluonWFeesCalculator,
+  implicit val currentHeight: Long
 ) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -320,7 +332,10 @@ case class BetaDecayMinusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayMinus(inGluonWBox, neutronsToTransmute)
+      algorithm.betaDecayMinus(inGluonWBox, neutronsToTransmute)(
+        oracleBox = neutronOracleBox,
+        currentHeight = currentHeight
+      )
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -361,6 +376,13 @@ case class BetaDecayMinusTx(
         )
       )
 
-    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
+    val outGluonWBoxWithLastBlockUpdated: GluonWBox =
+      outGluonWBoxWithFeeRepaidUpdated.copy(
+        lastDayBlockRegister = new LongRegister(
+          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        )
+      )
+
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
   }
 }
