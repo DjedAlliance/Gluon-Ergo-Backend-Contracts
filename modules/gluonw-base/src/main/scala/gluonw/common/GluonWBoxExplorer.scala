@@ -4,6 +4,7 @@ import commons.configs.{OracleConfig, TOracleConfig}
 import commons.node.{Client, MainNodeInfo}
 import edge.errors.ParseException
 import edge.explorer.Explorer
+import edge.node.BaseClient
 import gluonw.boxes.{GluonWBox, OracleBox}
 import gluonw.contracts.GluonWBoxContract
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}

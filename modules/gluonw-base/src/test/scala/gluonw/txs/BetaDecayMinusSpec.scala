@@ -183,7 +183,6 @@ class BetaDecayMinusSpec extends GluonWBase {
             dataInputs = Seq(oracleBoxInputBox)
           )
 
-          println(betaDecayMinusTx.visualizeTx)
           betaDecayMinusTx.signTx
 
           val outBoxes: Seq[InputBox] =
