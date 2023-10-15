@@ -110,7 +110,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   def protonsToNanoErg(
     neutronsInCirculation: Long,
     protonsInCirculation: Long,
-    protonsAmount: Long,
+    protonsToTransmute: Long,
     fissionedErg: Long,
     goldPriceGramNanoErg: Long
   ): Long = {
@@ -125,7 +125,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     val protonsPrice: BigInt =
       (oneMinusFusionRatio * fissionedErg / protonsInCirculation)
 
-    (BigInt(protonsAmount) * protonsPrice / GluonWBoxConstants.PRECISION).toLong
+    (BigInt(protonsToTransmute) * protonsPrice / GluonWBoxConstants.PRECISION).toLong
   }
 
 }
@@ -145,12 +145,12 @@ trait TGluonWAlgorithm {
 
   def fusion(inputGluonWBox: GluonWBox, ergRedeemed: Long): GluonWBox
 
-  def betaDecayPlus(inputGluonWBox: GluonWBox, neutronsAmount: Long)(
+  def betaDecayPlus(inputGluonWBox: GluonWBox, protonsToTransmute: Long)(
     implicit oracleBox: OracleBox,
     currentHeight: Long
   ): GluonWBox
 
-  def betaDecayMinus(inputGluonWBox: GluonWBox, protonsAmount: Long)(
+  def betaDecayMinus(inputGluonWBox: GluonWBox, neutronsToTransmute: Long)(
     implicit oracleBox: OracleBox,
     currentHeight: Long
   ): GluonWBox
@@ -168,14 +168,14 @@ trait TGluonWAlgorithm {
   def betaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    neutronsAmount: Long,
+    protonsToTransmute: Long,
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice])
 
   def betaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    protonsAmount: Long,
+    neutronsToTransmute: Long,
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice])
 }
@@ -332,7 +332,6 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         .slice(0, GluonWBoxConstants.BUCKETS - nDays)
     }
 
-    // @todo kii: Fix this
     val outVolumeListToPreservedExpectedValue: Long = if (nDays == 0) {
       volumeListToPreserved.head
     } else { 0L }
@@ -436,7 +435,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
 
   override def betaDecayPlus(
     inputGluonWBox: GluonWBox,
-    protonsAmount: Long
+    protonsToTransmute: Long
   )(implicit oracleBox: OracleBox, currentHeight: Long): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
@@ -450,7 +449,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         protonsInCirculation = sProtons,
         fissionedErg = rErg,
         goldPriceGramNanoErg = oracleBox.getPricePerGrams,
-        protonsAmount = protonsAmount
+        protonsAmount = protonsToTransmute
       ),
       volumeListToAdd = inputGluonWBox.volumePlusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumeMinusRegister.value.toList
@@ -463,7 +462,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         rErg = rErg,
         gluonWConstants = gluonWConstants
       ).betaDecayPlus(
-        protonsToDecay = protonsAmount,
+        protonsToDecay = protonsToTransmute,
         rErg = rErg,
         volumePlus = volumePlus,
         volumeMinus = volumeMinus
@@ -483,7 +482,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
 
   override def betaDecayMinus(
     inputGluonWBox: GluonWBox,
-    neutronsAmount: Long
+    neutronsToTransmute: Long
   )(implicit oracleBox: OracleBox, currentHeight: Long): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
@@ -494,7 +493,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       currentHeight = currentHeight,
       lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value,
       mVolumeInErgs = gluonWConstants
-        .neutronsToNanoErg(neutronsAmount, oracleBox.getPricePerGrams),
+        .neutronsToNanoErg(neutronsToTransmute, oracleBox.getPricePerGrams),
       volumeListToAdd = inputGluonWBox.volumeMinusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumePlusRegister.value.toList
     )
@@ -509,7 +508,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         rErg = rErg,
         volumePlus = volumePlus,
         volumeMinus = volumeMinus,
-        neutronsToDecay = neutronsAmount
+        neutronsToDecay = neutronsToTransmute
       )(oracleBox.getPricePerGrams)
 
     val dayBlockHeight: Long =
@@ -581,11 +580,11 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   override def betaDecayPlusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    protonsAmount: Long,
+    protonsToTransmute: Long,
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      betaDecayPlus(inputGluonWBox, protonsAmount)(oracleBox, currentHeight)
+      betaDecayPlus(inputGluonWBox, protonsToTransmute)(oracleBox, currentHeight)
 
     (
       outGluonWBox,
@@ -602,11 +601,11 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   override def betaDecayMinusPrice(
     inputGluonWBox: GluonWBox,
     oracleBox: OracleBox,
-    neutronsAmount: Long,
+    neutronsToTransmute: Long,
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      betaDecayMinus(inputGluonWBox, neutronsAmount)(oracleBox, currentHeight)
+      betaDecayMinus(inputGluonWBox, neutronsToTransmute)(oracleBox, currentHeight)
 
     (
       outGluonWBox,
