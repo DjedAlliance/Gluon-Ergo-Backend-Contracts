@@ -21,14 +21,19 @@ import org.ergoplatform.appkit.{
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
 import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import org.ergoplatform.sdk.ErgoToken
-import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object BoxCreation extends App {
 
+  val isMainNet: Boolean = false
   val configFileName = "ergo_config.json"
-  val conf: ErgoToolConfig = ErgoToolConfig.load(configFileName)
+  val testNetConfigFileName = "ergo_config_testnet.json"
+  val conf: ErgoToolConfig = if (isMainNet) {
+    ErgoToolConfig.load(configFileName)
+  } else {
+    ErgoToolConfig.load(testNetConfigFileName)
+  }
   val nodeConf: ErgoNodeConfig = conf.getNode
   val client: BaseClient = new TestClient(nodeConf.getNetworkType)
 //  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
@@ -67,7 +72,7 @@ object BoxCreation extends App {
     val MERGE: String = "merge"
 
     // SET RUN TX HERE
-    val runTx: String = MERGE
+    val runTx: String = SIGN_REDUCED
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -140,7 +145,7 @@ object BoxCreation extends App {
         )
 //        val oracleBox: OracleBox = explorer.getOracleBox
 
-        mutate(
+        BoxTools.mutate(
           boxIdToMutate = boxIdToMutate,
           Seq(toUserBox)
 //          dataInputs = Seq(oracleBox.box.get.input)
@@ -172,7 +177,7 @@ object BoxCreation extends App {
           )
         )
 
-        consolidateBoxes(ergValue = ergValue, tokens = tokens)(
+        BoxTools.consolidateBoxes(ergValue = ergValue, tokens = tokens)(
           client,
           conf,
           nodeConf
@@ -188,67 +193,4 @@ object BoxCreation extends App {
   }
 
   System.out.println("Completed Transaction")
-
-  def mutate(
-    boxIdToMutate: String,
-    outBoxes: Seq[BoxWrapper],
-    dataInputs: Seq[InputBox] = Seq()
-  )(
-    client: BaseClient,
-    config: ErgoToolConfig,
-    nodeConfig: ErgoNodeConfig
-  ): Seq[SignedTransaction] =
-    client.getClient.execute { ctx =>
-      val prover: ErgoProver = getProver(nodeConfig, config)(ctx)
-      val ownerAddress: Address = prover.getEip3Addresses.get(0)
-
-      val boxesToMutate: Seq[InputBox] = ctx.getBoxesById(boxIdToMutate)
-
-      val tx: Tx = Tx(
-        inputBoxes = boxesToMutate,
-        outBoxes = outBoxes,
-        changeAddress = ownerAddress,
-        dataInputs = dataInputs
-      )(ctx)
-
-      val signed: SignedTransaction = tx.signTxWithProver(prover)
-
-      Seq(signed)
-    }
-
-  def consolidateBoxes(
-    ergValue: Long,
-    tokens: Seq[ErgoToken]
-  )(
-    client: BaseClient,
-    config: ErgoToolConfig,
-    nodeConfig: ErgoNodeConfig
-  ): Seq[SignedTransaction] =
-    client.getClient.execute { ctx =>
-      val prover: ErgoProver = getProver(nodeConfig, config)(ctx)
-      val ownerAddress: Address = prover.getEip3Addresses.get(0)
-
-      val coveringBoxes: List[InputBox] = client
-        .getCoveringBoxesFor(
-          ownerAddress,
-          ergValue + Parameters.MinFee,
-          tokens.toList.asJava
-        )
-
-      val consolidatedBox: FundsToAddressBox = FundsToAddressBox(
-        address = ownerAddress,
-        value = ergValue,
-        tokens = tokens
-      )
-
-      val tx: Tx = Tx(
-        inputBoxes = coveringBoxes,
-        outBoxes = Seq(consolidatedBox),
-        changeAddress = ownerAddress
-      )(ctx)
-
-      val signed: SignedTransaction = tx.signTxWithProver(prover)
-
-      Seq(signed)
-    }
 }
