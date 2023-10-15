@@ -51,35 +51,93 @@ class GluonWCalculatorSpec extends GluonWBase {
     }
   }
 
-//  "GluonWCalculator: BetaDecayPlus" should {
-//    "request for right amount of Neutron for BetaDecayPlus" in {
-//      val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
-//      val outputAssetAmount: GluonWBoxOutputAssetAmount =
-//        gluonWCalculator.betaDecayPlus(protonToDecay)(
-//          oracleBox.getPricePerGrams
-//        )
-//
-//      val neutronsAtPrecision: Float =
-//        outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
-//
-//      assert(MathUtils.~=(neutronsAtPrecision, 0.137347, 4))
-//    }
-//  }
+  "GluonWCalculator: BetaDecayPlus" should {
+    "request for right amount of Neutron for BetaDecayPlus -> Volume 0" in {
+      val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+        gluonWCalculator.betaDecayPlus(
+          rErg = 200 * Parameters.OneErg,
+          volumePlus = List.fill(7)(0L),
+          volumeMinus = List.fill(7)(0L),
+          protonsToDecay = protonToDecay
+        )(
+          oracleBox.getPricePerGrams
+        )
 
-//  "GluonWCalculator: BetaDecayMinus" should {
-//    "request for right amount of Protons for BetaDecayMinus" in {
-//      val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
-//      val outputAssetAmount: GluonWBoxOutputAssetAmount =
-//        gluonWCalculator.betaDecayMinus(neutronToDecay)(
-//          oracleBox.getPricePerGrams
-//        )
-//
-//      val protonsAtPrecision: Float =
-//        outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
-//
-//      assert(MathUtils.~=(protonsAtPrecision, 0.017481243, 4))
-//    }
-//  }
+      val neutronsAtPrecision: Float =
+        outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+
+      assert(
+        MathUtils.~=(neutronsAtPrecision, 0.13873242, 4),
+        s"neutronsAtPrecision: ${neutronsAtPrecision}, RealResult: 0.137347"
+      )
+    }
+
+    "request for right amount of Neutron for BetaDecayPlus -> Volume 140" in {
+      val protonToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+        gluonWCalculator.betaDecayPlus(
+          rErg = 200 * Parameters.OneErg,
+          volumePlus = List.fill(7)(20L * GluonWBoxConstants.PRECISION),
+          volumeMinus = List.fill(7)(10L * GluonWBoxConstants.PRECISION),
+          protonsToDecay = protonToDecay
+        )(
+          oracleBox.getPricePerGrams
+        )
+
+      val neutronsAtPrecision: Float =
+        outputAssetAmount.neutronsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+
+      assert(
+        MathUtils.~=(neutronsAtPrecision, 0.114222, 4),
+        s"neutronsAtPrecision: ${neutronsAtPrecision}, RealResult: 0.114222"
+      )
+    }
+  }
+
+  "GluonWCalculator: BetaDecayMinus" should {
+    "request for right amount of Protons for BetaDecayMinus -> volume 0" in {
+      val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+        gluonWCalculator.betaDecayMinus(
+          rErg = 200 * Parameters.OneErg,
+          volumePlus = List.fill(7)(0L),
+          volumeMinus = List.fill(7)(0L),
+          neutronsToDecay = neutronToDecay
+        )(
+          oracleBox.getPricePerGrams
+        )
+
+      val protonsAtPrecision: Float =
+        outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+
+      assert(
+        MathUtils.~=(protonsAtPrecision, 0.017661696, 4),
+        s"neutronsAtPrecision: ${protonsAtPrecision}, RealResult: 0.17661696"
+      )
+    }
+
+    "request for right amount of Protons for BetaDecayMinus -> volume 140" in {
+      val neutronToDecay: Long = (0.05 * GluonWBoxConstants.PRECISION).toLong
+      val outputAssetAmount: GluonWBoxOutputAssetAmount =
+        gluonWCalculator.betaDecayMinus(
+          rErg = 200 * Parameters.OneErg,
+          volumeMinus = List.fill(7)(20L * GluonWBoxConstants.PRECISION),
+          volumePlus = List.fill(7)(10L * GluonWBoxConstants.PRECISION),
+          neutronsToDecay = neutronToDecay
+        )(
+          oracleBox.getPricePerGrams
+        )
+
+      val protonsAtPrecision: Float =
+        outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
+
+      assert(
+        MathUtils.~=(protonsAtPrecision, 0.014538, 4),
+        s"neutronsAtPrecision: ${protonsAtPrecision}, RealResult: 0.014538"
+      )
+    }
+  }
 
   "GluonWCalculator: Fission Simulation" should {
     object Operations {

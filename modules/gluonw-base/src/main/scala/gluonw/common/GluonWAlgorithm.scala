@@ -401,7 +401,11 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         gluonWConstants = gluonWConstants
       ).fission(ergToChange)
 
-    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount, dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value)
+    outputGluonWBox(
+      inputGluonWBox,
+      gluonWBoxOutputAssetAmount,
+      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value
+    )
   }
 
   override def fusion(
@@ -423,7 +427,11 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         gluonWConstants = gluonWConstants
       ).fusion(ergToChange)
 
-    outputGluonWBox(inputGluonWBox, gluonWBoxOutputAssetAmount, dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value)
+    outputGluonWBox(
+      inputGluonWBox,
+      gluonWBoxOutputAssetAmount,
+      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value
+    )
   }
 
   override def betaDecayPlus(

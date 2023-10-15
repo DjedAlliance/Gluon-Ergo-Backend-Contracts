@@ -115,7 +115,6 @@ case class GluonWBox(
   override def R8: Option[Register[_]] = Option(volumeMinusRegister)
   override def R9: Option[Register[_]] = Option(lastDayBlockRegister)
 
-  // @todo kii: do we need to Implement Neutrons and protons asset price?
   override def toJson(): Json =
     Json.fromFields(
       List(

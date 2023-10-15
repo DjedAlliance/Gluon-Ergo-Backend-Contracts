@@ -4,7 +4,7 @@ import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, OracleBox}
-import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
+import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx, FusionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.{TTx, Tx}
 import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
@@ -30,6 +30,23 @@ trait TGluonW {
     * @return
     */
   def fissionPrice(ergAmount: Long): Seq[AssetPrice]
+
+  /**
+    * Fusion
+    * Gets the Fusion Tx
+    * @param ergAmount Amount of Erg to be transacted
+    * @param walletAddress Wallet Address of the user
+    * @return
+    */
+  def fusion(ergAmount: Long, walletAddress: Address): Seq[TTx]
+
+  /**
+    * Fusion Price
+    * Gets the rate for the Fusion Tx
+    * @param ergAmount Amount of Erg to be transacted
+    * @return
+    */
+  def fusionPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
     * Transmute Neutrons to Protons
@@ -299,6 +316,36 @@ class GluonW @Inject() (
   override def fissionPrice(ergAmount: Long): Seq[AssetPrice] =
     // Use Algorithm to calculate Fission rate
     getPriceFromAlgorithm(ergAmount, algorithm.fissionPrice)
+
+  override def fusion(ergAmount: Long, walletAddress: Address): Seq[TTx] =
+    client.getClient.execute { (ctx: BlockchainContext) =>
+      // 1. Get the box from the user
+      val userBoxes: java.util.List[InputBox] =
+        client.getCoveringBoxesFor(walletAddress, ergAmount).getBoxes
+
+      // 2. Get the Latest GluonWBox
+      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+
+      // 3. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+      // 4. Create FissionTx
+      val fusionTx: FusionTx = FusionTx(
+        ergToRetrieve = ergAmount,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
+        changeAddress = walletAddress,
+        dataInputs = Seq(neutronOracleBox.box.get.input)
+      )(ctx, algorithm, gluonWFeesCalculator)
+
+      Seq(fusionTx)
+    }
+
+  override def fusionPrice(ergAmount: Long): Seq[AssetPrice] =
+    // Use Algorithm to calculate Fission rate
+    getPriceFromAlgorithm(ergAmount, algorithm.fusionPrice)
 
   /**
     * Transmute Neutrons to Protons

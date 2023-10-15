@@ -402,8 +402,8 @@
         // ===== (END) Fee Declarations ===== //
 
         // In the case of fission and fusion transactions, the variables related to volume handling should remain unchanged
-        val volumePlusPreserved = inVolumePlus == outVolumePlus // TODO: fix this: we need to check that all respective elements of the two collections are the same.
-        val volumeMinusPreserved = inVolumeMinus == outVolumeMinus // TODO: fix this: we need to check that all the respective elements of the two collections are the same.
+        val volumePlusPreserved = inVolumePlus == outVolumePlus
+        val volumeMinusPreserved = inVolumeMinus == outVolumeMinus
         val lastBucketBlockPreserved = inLastBucketBlock == outLastBucketBlock
         val __validVolumeHandling = allOf(Coll(
             volumePlusPreserved,
@@ -616,7 +616,7 @@
             val Phi0 = precision / 100
             val Phi1 = precision / 2
 
-            val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / RErg // TODO: handle precision properly
+            val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / RErg
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +-3 blocks
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
@@ -756,7 +756,7 @@
             val Phi0 = precision / 100
             val Phi1 = precision / 2
 
-            val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg) // TODO: handle precision properly
+            val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +-3 blocks
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,

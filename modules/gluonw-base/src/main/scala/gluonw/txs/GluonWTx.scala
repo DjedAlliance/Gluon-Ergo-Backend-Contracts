@@ -87,7 +87,6 @@ case class FissionTx(
     val outGluonWBox: GluonWBox =
       algorithm.fission(inGluonWBox, ergToExchange)
 
-    // @todo kii : Add protocol fee for DAO
     val neutronsGained: Long =
       inGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue
     val protonsGained: Long =
