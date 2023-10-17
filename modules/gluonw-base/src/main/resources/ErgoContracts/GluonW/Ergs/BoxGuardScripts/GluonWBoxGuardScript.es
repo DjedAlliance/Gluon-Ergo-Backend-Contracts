@@ -27,7 +27,7 @@
     // Registers
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
     // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
-    // R6 - (MaxAmountDevFeesToBePaid, TotalDevFeesPaid): (Coll[Long], Coll[Long])
+    // R6 - (MaxAmountDevFeesToBePaid, TotalDevFeesPaid): (Coll[Long], Coll[Long])  // TODO: in the code, this pair appears to be swapped
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
     // R9 - LastBucketBlock: Long
@@ -55,14 +55,14 @@
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
     // 2. Fission       - the reactor has a increment in both protons and neutrons but
-    //                      has an reduction in Ergs
+    //                      has a reduction in Ergs
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val < In.val
     //
-    // 3. BetaDecay +    - the reactor has an increment of neutrons (SigGold) and a decrement in protons (Protons)
+    // 3. BetaDecay +    - the reactor has an increment of neutrons and a decrement in protons
     //                      has an increment in Ergs due to fees
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
-    // 4. BetaDecay -    - the reactor has an decrement of neutrons (SigGold) and a increment in protons (Protons)
+    // 4. BetaDecay -    - the reactor has a decrement of neutrons and a increment in protons
     //                      has an increment in Ergs due to fees
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val > In.val
 
@@ -99,14 +99,14 @@
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
 
-    val __checkGluonWBoxNFT: Boolean = allOf(Coll(
+    val __checkGluonWBoxNFT: Boolean = allOf(Coll(   // TODO: it seems that we are checking more than just the NFT here. Shouldn't this variable have another name then?
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
         IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get,
-        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2, // TODO: is this correct w.r.t. the comment in line 30? It appears to be swapped, either here or in the comment.
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
@@ -141,13 +141,13 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check Neutrons increment in OutBox
+        // Check Neutrons increment in OutBox // TODO: do we mean "decrease" instead of "increment" here?
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check Protons reduction in OutBox
+        // Check Protons reduction in OutBox // TODO: do we mean "increase" insted of "reduction" here?
         IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,
 
-        // Check Erg value increment in OutBox
+        // Check Erg value preservation
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
     ))
 
@@ -159,13 +159,13 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         __checkGluonWBoxNFT,
-        // Check Neutrons decrement in OutBox
+        // Check Neutrons decrement in OutBox  // TODO: Do we mean "increase" here?
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check Protons increment in OutBox
+        // Check Protons increment in OutBox  // TODO: Do we mean "decrease" here?
         IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
 
-        // Check Erg value increment in OutBox
+        // Check Erg value preservation
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
     ))
     // ===== (END) Tx Definition ===== //
@@ -805,7 +805,8 @@
                 __lastBlockPreserved
             )))
         } else sigmaProp(false)
-    } else {
+    } else {  // TODO: this doesn't seem right. If the transaction is none of fission, fusion, decayProtons or decayNeutrons, then we are not checking any conditions. 
+              // TODO: So a hacker would be able to construct a transaction that is of neither of those 4 types and steal the money from the contract.
 //        val isMutate: Boolean = allOf(Coll(
 //            IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
 //            IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
@@ -821,7 +822,7 @@
 //        ))
 
 //        if (isMutate) {
-            _DevPk
+            _DevPk  // TODO: where is `_DevPk` defined? I couldn't find it.
 //        } else {
 //             Fails if not a valid tx
 //            sigmaProp(false)
