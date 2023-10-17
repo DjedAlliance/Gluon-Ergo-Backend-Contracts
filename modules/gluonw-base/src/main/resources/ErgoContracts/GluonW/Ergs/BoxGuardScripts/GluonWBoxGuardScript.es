@@ -38,8 +38,8 @@
     // ===== Relevant Transactions ===== //
     // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
     // 2. Fusion            - The user sends Neutrons and Protons to the reactor and receives Ergs
-    // 3. Beta Decay +      - The user sends Neutrons to the reactor and receives Protons
-    // 4. Beta Decay -      - The user sends Protons to the reactor and receives Neutrons
+    // 3. Beta Decay +      - The user sends Protons to the reactor and receives Neutrons
+    // 4. Beta Decay -      - The user sends Neutrons to the reactor and receives Protons
     //
     // For all 4 tx:
     // Inputs: GluonWBox, UserPk
