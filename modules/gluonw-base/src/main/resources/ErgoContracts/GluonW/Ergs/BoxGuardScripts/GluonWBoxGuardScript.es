@@ -189,7 +189,7 @@
         val Pt: BigInt = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000
 
         // We're using 1,000,000,000 because the precision is based on nanoErgs
-        val precision: BigInt = (1000 * 1000 * 1000).toBigInt
+        val precision: BigInt = (1000000000).toBigInt
 
         // q* = 0.66
         // @todo kii, reason about replacing 1 with precision at all parts using 1.
@@ -222,7 +222,7 @@
         // ===== (START) Oracle Checks ===== //
         // The two checks for the oracle is:
         // 1. It has the right NFT on it
-        // 2. It's height is within 70 min, (35 blocks)
+        // 2. Its height is within 70 min, (35 blocks)
         val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
         val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
 
@@ -236,11 +236,12 @@
         // reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
         val _optUIFee: Coll[Byte] = getVar[SigmaProp](0)
         val fees: Coll[(Coll[Byte], BigInt)] = {
-            val feeDenom: Long = 1000L.toBigInt
+            // TODO: in the following lines, why are we converting to BigInt and then converting back to Long?
+            val feeDenom: Long = 1000L.toBigInt  
             val devFee: Long = 5L.toBigInt
             val oracleFee: Long = 1L.toBigInt
             val uiFee: Long = 4L.toBigInt
-            val emptyFees: (Coll[Byte], Long)          = (Coll(1.toByte), 0L.toBigInt)
+            val emptyFees: (Coll[Byte], Long) = (Coll(1.toByte), 0L.toBigInt)
 
             // principal is the amount that is requested
             val principal: BigInt = if (isFissionTx) {
@@ -358,29 +359,18 @@
                 }
             }
 
-            val oracleOutput: Box = if (uiFeesToBePaid)
-            {
-                OUTPUTS(4)
-            }
-            else
-            {
-                OUTPUTS(3)
-            }
+            val oracleOutput: Box = if (uiFeesToBePaid) { OUTPUTS(4) } else { OUTPUTS(3) }
 
              val oracleFeesPaid: Boolean = {
-                if (isBetaDecayPlusTx || isBetaDecayMinusTx)
-                {
-                    if (fees(2)._2 > 0)
-                    { // Dev fee is greater than 0
+                if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
+                    if (fees(2)._2 > 0) { // Dev fee is greater than 0
                         allOf(
                             Coll(
                                 oracleOutput.propositionBytes      == fees(2)._1,
                                 oracleOutput.value.toBigInt         == fees(2)._2 + _MinFee
                             )
                         )
-                    }
-                    else
-                    {
+                    } else {
                         true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value bonds
                     }
                 } else {
@@ -412,7 +402,7 @@
         ))
 
         // NOTE:
-        // In all of these transactions, the Inputs value varies, however, the output does not. The output is exactly how much
+        // In all of these transactions, the Input value varies, however, the output does not. The output is exactly how much
         // the user wants. Therefore we can use the outbox to calculate the value of M by using Outbox.value - InputBox
         if (isFissionTx)
         {
@@ -421,9 +411,8 @@
 
             val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
 
-            // ** Tx FEE for pool ** @todo v2: Fix with real Equation
-            // This is the fee that gets collected to add into the pool during fission. There is an equation for this fee
-            // but for v1, we're just going to use a constant of 1%.
+            // ** Tx FEE for pool **
+            // This is the fee that gets collected to add into the pool during fission.
             val PhiT: BigInt = (precision / 100).toBigInt
 
             // The protons and neutrons are lesser in outbox than inputbox
@@ -435,7 +424,7 @@
             val ProtonsExpectedValue: BigInt = (M * SProtons * (precision - PhiT) / RErg) / precision
             val ErgsExpectedValue: BigInt = M
 
-            // ### The 2 conditions to ensure that the values out is right ### //
+            // ### The 2 conditions to ensure that the values out are right ### //
             val __outNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
             val __inErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
@@ -454,9 +443,8 @@
             // ===== FISSION Tx ===== //
             // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] = M (1 - PhiT) [Ergs]
 
-            // ** Tx FEE for pool ** @todo v2: Fix with real Equation
-            // This is the fee that gets collected to add into the pool during fission. There is an equation for this fee
-            // but for v1, we're just going to use a constant of 1%.
+            // ** Tx FEE for pool **
+            // This is the fee that gets collected to add into the pool during fission.
             val PhiFusion: BigInt = (precision / 100).toBigInt
 
             // The protons and neutrons are lesser in outbox than inputbox
@@ -475,7 +463,7 @@
 
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
-            // This is technically always true. We can take this off, but I don't want to.
+            // This will make the outErgsValueValid condition tautological. We could take this and the condition off, but we will keep it for the sake of completeness.
             val ErgsExpectedValue: BigInt = ErgsActualValue
 
             // ### The 2 conditions to ensure that the values out is right ### //
@@ -606,12 +594,10 @@
             val volumePlus: BigInt = sum(outVolumePlus) // adds all elements of the collection, computing the total volume
             val volumeMinus: BigInt = sum(outVolumeMinus)
 
-            val volume: BigInt = if (volumeMinus > volumePlus) {0L.toBigInt}
-                else {volumePlus - volumeMinus} // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+            val volume: BigInt = if (volumeMinus > volumePlus) {0L.toBigInt} else {volumePlus - volumeMinus} // integer subtraction
 
-            // ** Tx FEE for pool ** @todo v2: Fix with real Equation
-            // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
-            // but for v1, we're just going to use a constant of 1%.
+            // ** Tx FEE for pool **
+            // This is the fee that gets collected to add into the pool during decay.
 
             val Phi0 = precision / 100
             val Phi1 = precision / 2
@@ -746,12 +732,10 @@
             val volumePlus: BigInt = sum(outVolumePlus) // adds all elements of the collection, computing the total volume
             val volumeMinus: BigInt = sum(outVolumeMinus)
 
-            val volume: BigInt = if (volumePlus > volumeMinus) {0L.toBigInt}
-                else {volumeMinus - volumePlus} // ATTENTION: this should be integer subtraction and should be 0 when volumeMinus > volumePlus
+            val volume: BigInt = if (volumePlus > volumeMinus) {0L.toBigInt} else {volumeMinus - volumePlus} // integer subtraction
 
-            // ** Tx FEE for pool ** @todo v2: Fix with real Equation
-            // This is the fee that gets collected to add into the pool during decay. There is an equation for this fee
-            // but for v1, we're just going to use a constant of 1%.
+            // ** Tx FEE for pool **
+            // This is the fee that gets collected to add into the pool during decay.
 
             val Phi0 = precision / 100
             val Phi1 = precision / 2
@@ -789,7 +773,7 @@
             val ProtonsExpectedValue: BigInt = outProtonsAmount
             val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
-            // ### The 2 conditions to ensure that the values out is right ### //
+            // ### The 2 conditions to ensure that the values out are right ### //
             val __neutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __protonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
@@ -805,8 +789,7 @@
                 __lastBlockPreserved
             )))
         } else sigmaProp(false)
-    } else {  // TODO: this doesn't seem right. If the transaction is none of fission, fusion, decayProtons or decayNeutrons, then we are not checking any conditions. 
-              // TODO: So a hacker would be able to construct a transaction that is of neither of those 4 types and steal the money from the contract.
+    } else {
 //        val isMutate: Boolean = allOf(Coll(
 //            IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
 //            IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
@@ -822,7 +805,7 @@
 //        ))
 
 //        if (isMutate) {
-            _DevPk  // TODO: where is `_DevPk` defined? I couldn't find it.
+            _DevPk
 //        } else {
 //             Fails if not a valid tx
 //            sigmaProp(false)
