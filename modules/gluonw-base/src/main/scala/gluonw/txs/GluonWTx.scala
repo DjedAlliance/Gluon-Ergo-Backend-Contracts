@@ -2,8 +2,8 @@ package gluonw.txs
 
 import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
-import edge.registers.LongPairRegister
-import gluonw.boxes.{GluonWBox, OracleBox}
+import edge.registers.{LongPairRegister, LongRegister, NumbersRegister}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import gluonw.common.{GluonWFees, GluonWFeesCalculator, TGluonWAlgorithm}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.TTx
@@ -87,7 +87,6 @@ case class FissionTx(
     val outGluonWBox: GluonWBox =
       algorithm.fission(inGluonWBox, ergToExchange)
 
-    // @todo kii : Add protocol fee for DAO
     val neutronsGained: Long =
       inGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue
     val protonsGained: Long =
@@ -235,6 +234,7 @@ case class FusionTx(
 }
 
 /**
+  * NOTE: THIS STATEMENT BELOW HAS BEEN DOUBLE CHECK AGAINST PAPER
   * Transmute Protons to Neutrons
   */
 case class BetaDecayPlusTx(
@@ -245,7 +245,8 @@ case class BetaDecayPlusTx(
 )(
   implicit val ctx: BlockchainContext,
   implicit val algorithm: TGluonWAlgorithm,
-  implicit val feesCalculator: GluonWFeesCalculator
+  implicit val feesCalculator: GluonWFeesCalculator,
+  implicit val currentHeight: Long
 ) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -256,7 +257,11 @@ case class BetaDecayPlusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayPlus(inGluonWBox, protonsToTransmute)
+      algorithm.betaDecayPlus(inGluonWBox,
+        protonsToTransmute = protonsToTransmute)(
+        oracleBox = neutronOracleBox,
+        currentHeight = currentHeight
+      )
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -271,7 +276,8 @@ case class BetaDecayPlusTx(
     )
 
     val gluonWFees: GluonWFees =
-      feesCalculator.getBetaDecayPlusFees(protonsToTransmute, neutronOracleBox)
+      feesCalculator.getBetaDecayPlusFees(
+        protonsAmount = protonsToTransmute, neutronOracleBox)
 
     val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
       gluonWFees
@@ -294,11 +300,19 @@ case class BetaDecayPlusTx(
         )
       )
 
-    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
+    val outGluonWBoxWithLastBlockUpdated: GluonWBox =
+      outGluonWBoxWithFeeRepaidUpdated.copy(
+        lastDayBlockRegister = new LongRegister(
+          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        )
+      )
+
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
   }
 }
 
 /**
+  * NOTE: THIS STATEMENT BELOW HAS BEEN DOUBLE CHECK AGAINST PAPER
   * Transmute Neutrons to Protons
   */
 case class BetaDecayMinusTx(
@@ -309,7 +323,8 @@ case class BetaDecayMinusTx(
 )(
   implicit val ctx: BlockchainContext,
   implicit val algorithm: TGluonWAlgorithm,
-  implicit val feesCalculator: GluonWFeesCalculator
+  implicit val feesCalculator: GluonWFeesCalculator,
+  implicit val currentHeight: Long
 ) extends GluonWTx(algorithm) {
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
@@ -320,7 +335,10 @@ case class BetaDecayMinusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayMinus(inGluonWBox, neutronsToTransmute)
+      algorithm.betaDecayMinus(inGluonWBox, neutronsToTransmute)(
+        oracleBox = neutronOracleBox,
+        currentHeight = currentHeight
+      )
 
     val neutronsCost: Long =
       outGluonWBox.Neutrons.getValue - inGluonWBox.Neutrons.getValue
@@ -336,7 +354,7 @@ case class BetaDecayMinusTx(
 
     val gluonWFees: GluonWFees =
       feesCalculator.getBetaDecayMinusFees(
-        neutronsToTransmute,
+        neutronsAmount = neutronsToTransmute,
         neutronOracleBox
       )
 
@@ -361,6 +379,13 @@ case class BetaDecayMinusTx(
         )
       )
 
-    Seq(outGluonWBoxWithFeeRepaidUpdated, outUserBox) ++ feeBoxes
+    val outGluonWBoxWithLastBlockUpdated: GluonWBox =
+      outGluonWBoxWithFeeRepaidUpdated.copy(
+        lastDayBlockRegister = new LongRegister(
+          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        )
+      )
+
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
   }
 }

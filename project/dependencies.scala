@@ -11,7 +11,7 @@ object dependencies {
   )
 
   val Edge: List[ModuleID] = List(
-    "io.github.ergo-lend"  %% "edge"                 % EdgeVersion,
+    "io.github.ergo-lend" %% "edge" % EdgeVersion
   )
 
   val Circe: List[ModuleID] = List(

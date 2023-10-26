@@ -1,5 +1,6 @@
 logs
 ergo_config.json
+ergo_config_testnet.json
 /.bsp
 /.idea
 /.idea_modules

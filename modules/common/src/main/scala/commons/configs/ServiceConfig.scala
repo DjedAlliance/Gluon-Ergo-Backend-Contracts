@@ -16,12 +16,6 @@ object ServiceConfig extends ConfigHelper {
 
   lazy val testNetServiceFeeAddress: Address =
     Address.create(readKey("service.TESTNET.feeAddress"))
-
-  lazy val serviceFee: Long = readKey("service.fee").toLong
-
-  lazy val profitSharingPercentage: Long = readKey(
-    "service.profitSharingPercentage"
-  ).toLong
 }
 
 object GetServiceConfig {

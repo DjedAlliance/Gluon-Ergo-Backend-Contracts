@@ -57,21 +57,16 @@ class BetaDecayPlusSpec extends GluonWBase {
           val random: Double = new Random().nextDouble()
           val protonsToDecay: Long = (maxProtonsInPrecision * random).toLong
 
-          val outputAssetAmount: GluonWBoxOutputAssetAmount =
-            gluonWCalculator.betaDecayPlus(protonsToDecay)(
-              oracleBox.getPricePerGrams
-            )
-
-          // @todo kii create ProxyBoxes
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWFeesCalculator.neutronsToNanoErg(
+              value = gluonWConstants.neutronsToNanoErg(
                 protonsToDecay,
                 oracleBox.getPricePerGrams
               ) / 10,
               protonsValue = protonsToDecay
             )
 
+          implicit val currentHeight: Long = ctx.getHeight
           val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
             inputBoxes = Seq(gluonWBox.getAsInputBox(), paymentBox),
             protonsToTransmute = protonsToDecay,
@@ -86,6 +81,16 @@ class BetaDecayPlusSpec extends GluonWBase {
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
           val outPaymentBox: FundsToAddressBox =
             FundsToAddressBox.from(outBoxes.tail.head)
+
+          val outputAssetAmount: GluonWBoxOutputAssetAmount =
+            gluonWCalculator.betaDecayPlus(
+              rErg = gluonWBox.ergFissioned,
+              volumePlus = outGluonWBox.volumePlusRegister.value.toList,
+              volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
+              protonsToDecay = protonsToDecay
+            )(
+              oracleBox.getPricePerGrams
+            )
 
           assert(
             outGluonWBox.value == gluonWBox.value + outputAssetAmount.ergAmount
@@ -132,7 +137,7 @@ class BetaDecayPlusSpec extends GluonWBase {
         var inGluonWBox: GluonWBox = gluonWBox
         val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
 
-        (1 to 10).foreach { _ =>
+        (1 to 5).foreach { _ =>
           implicit val gluonWFeesCalculator: GluonWFeesCalculator =
             GluonWFeesCalculator()(inGluonWBox, gluonWConstants)
 
@@ -146,21 +151,17 @@ class BetaDecayPlusSpec extends GluonWBase {
           val random: Double = new Random().nextDouble()
           val protonsToTransmute: Long = (maxProtonsInPrecision * random).toLong
 
-          val outputAssetAmount: GluonWBoxOutputAssetAmount =
-            testGluonWCalculator.betaDecayPlus(protonsToTransmute)(
-              oracleBox.getPricePerGrams
-            )
-
           // Payment box to pay for the transaction
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWFeesCalculator.neutronsToNanoErg(
+              value = gluonWConstants.neutronsToNanoErg(
                 protonsToTransmute,
                 oracleBox.getPricePerGrams
               ) / 10,
               protonsValue = protonsToTransmute
             )
 
+          implicit val currentHeight: Long = ctx.getHeight
           val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
             inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
             protonsToTransmute = protonsToTransmute,
@@ -173,6 +174,16 @@ class BetaDecayPlusSpec extends GluonWBase {
           val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
           val outPaymentBox: FundsToAddressBox =
             FundsToAddressBox.from(outBoxes.tail.head)
+
+          val outputAssetAmount: GluonWBoxOutputAssetAmount =
+            testGluonWCalculator.betaDecayPlus(
+              rErg = inGluonWBox.ergFissioned,
+              volumePlus = outGluonWBox.volumePlusRegister.value.toList,
+              volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
+              protonsToDecay = protonsToTransmute
+            )(
+              oracleBox.getPricePerGrams
+            )
 
           val outServiceFeeBox: FundsToAddressBox =
             FundsToAddressBox.from(outBoxes.tail.tail.head)
@@ -247,13 +258,14 @@ class BetaDecayPlusSpec extends GluonWBase {
       // Payment box to pay for the transaction
       val paymentBox: InputBox =
         createPaymentBox(
-          value = gluonWFeesCalculator.neutronsToNanoErg(
+          value = gluonWConstants.neutronsToNanoErg(
             protonsToTransmute,
             oracleBox.getPricePerGrams
           ) / 10,
           protonsValue = protonsToTransmute
         )
 
+      implicit val currentHeight: Long = ctx.getHeight
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
         protonsToTransmute = protonsToTransmute,

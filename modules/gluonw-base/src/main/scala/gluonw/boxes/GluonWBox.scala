@@ -7,8 +7,10 @@ import edge.registers.{
   IntRegister,
   LongPairRegister,
   LongRegister,
+  NumbersRegister,
   Register
 }
+import gluonw.boxes.GluonWBoxConstants.BUCKETS
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
@@ -32,6 +34,9 @@ object GluonWBoxConstants {
   // amount a box require to have to exist on the ergo blockchain
   val GLUONWBOX_BOX_EXISTENCE_FEE: Long = Parameters.MinFee
   val GLUONWBOX_MAX_FEE: Long = 2_500_000L * Parameters.OneErg
+  val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
+  val BLOCKS_PER_VOLUME_BUCKET
+    : Int = 720 // Approximately 1 day per volume bucket
 }
 
 case class GluonWBox(
@@ -49,6 +54,13 @@ case class GluonWBox(
     0L,
     GluonWBoxConstants.GLUONWBOX_MAX_FEE
   ),
+  volumePlusRegister: NumbersRegister = new NumbersRegister(
+    new Array[Long](BUCKETS)
+  ),
+  volumeMinusRegister: NumbersRegister = new NumbersRegister(
+    new Array[Long](BUCKETS)
+  ),
+  lastDayBlockRegister: LongRegister = new LongRegister(0L),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -99,8 +111,10 @@ case class GluonWBox(
   override def R5: Option[Register[_]] = Option(tokenIdRegister)
 
   override def R6: Option[Register[_]] = Option(feeRegister)
+  override def R7: Option[Register[_]] = Option(volumePlusRegister)
+  override def R8: Option[Register[_]] = Option(volumeMinusRegister)
+  override def R9: Option[Register[_]] = Option(lastDayBlockRegister)
 
-  // @todo kii: do we need to Implement Neutrons and protons asset price?
   override def toJson(): Json =
     Json.fromFields(
       List(
@@ -218,7 +232,16 @@ object GluonWBox extends BoxWrapperHelper {
       tokenIdRegister = new CollBytePairRegister(
         (tokenIdRegisterTuple._1.toArray, tokenIdRegisterTuple._2.toArray)
       ),
-      feeRegister = new LongPairRegister(feeRegisterTuple)
+      feeRegister = new LongPairRegister(feeRegisterTuple),
+      volumePlusRegister = new NumbersRegister(
+        inputBox.getRegisters.get(3).getValue.asInstanceOf[Coll[Long]].toArray
+      ),
+      volumeMinusRegister = new NumbersRegister(
+        inputBox.getRegisters.get(4).getValue.asInstanceOf[Coll[Long]].toArray
+      ),
+      lastDayBlockRegister = new LongRegister(
+        inputBox.getRegisters.get(5).getValue.asInstanceOf[Long]
+      )
     )
   }
 

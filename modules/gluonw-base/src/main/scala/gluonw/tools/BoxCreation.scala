@@ -1,8 +1,10 @@
 package gluonw.tools
 
-import commons.node.TestClient
-import edge.boxes.BoxWrapper
+import commons.configs.ServiceConfig
+import commons.node.{Client, TestClient}
+import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.node.BaseClient
+import edge.registers.LongRegister
 import edge.tools.BoxTools
 import edge.tools.BoxTools.{getProver, mergeBox, mintTokens}
 import edge.txs.Tx
@@ -12,48 +14,71 @@ import org.ergoplatform.appkit.{
   BlockchainContext,
   ErgoProver,
   InputBox,
+  NetworkType,
   Parameters,
   SignedTransaction
 }
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import org.ergoplatform.sdk.ErgoToken
-import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
+
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object BoxCreation extends App {
 
+  val isMainNet: Boolean = false
   val configFileName = "ergo_config.json"
-  val conf: ErgoToolConfig = ErgoToolConfig.load(configFileName)
+  val testNetConfigFileName = "ergo_config_testnet.json"
+  val conf: ErgoToolConfig = if (isMainNet) {
+    ErgoToolConfig.load(configFileName)
+  } else {
+    ErgoToolConfig.load(testNetConfigFileName)
+  }
   val nodeConf: ErgoNodeConfig = conf.getNode
   val client: BaseClient = new TestClient(nodeConf.getNetworkType)
+//  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
+  val reducedTxBytes: String = ""
+
   client.setClient()
 
   val tokens: Seq[(String, (String, Long))] = Seq(
-    ("GluonW NFT", ("GluonW NFTby DJed Alliance v1.1", 1L)),
     (
-      "GluonW Neutrons",
+      "GluonW Test NFT",
       (
-        "GluonW Neutrons by DJed Alliance v1.1",
+        "GluonW NFTby DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
+        1L
+      )
+    ),
+    (
+      "GluonW Test Neutrons",
+      (
+        "GluonW Neutrons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     ),
     (
-      "GluonW Protons",
+      "GluonW Test Protons",
       (
-        "GluonW Protons by DJed Alliance v1.1",
+        "GluonW Protons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     )
   )
 
   val txJson: Seq[Unit] = client.getClient.execute { (ctx: BlockchainContext) =>
-    val runTx = "merge"
+    val SIGN_REDUCED: String = "signReduced"
+    val MINT: String = "mint"
+    val MUTATE: String = "mutate"
+    val MERGE: String = "merge"
+
+    // SET RUN TX HERE
+    val runTx: String = SIGN_REDUCED
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
 
     val signedTxs: Seq[SignedTransaction] = runTx match {
-      case "mint" => {
+      case MINT => {
         val neutronsMintTx = mintTokens(
           tokens(1)._1,
           tokens(1)._2._1,
@@ -70,27 +95,28 @@ object BoxCreation extends App {
           tokens.head._2._2
         )(client, conf, nodeConf)
 
-        gluonWNFTMintTx
+        protonsMintTx
       }
-      case "merge" => {
+      case MERGE => {
         val nftToken = ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)
         val sigGoldToken = ErgoToken(GluonWTokens.neutronId, totalSupply)
         val sigGoldRsvToken =
           ErgoToken(GluonWTokens.protonId, totalSupply)
         val gluonWBox: GluonWBox = GluonWBox(
           value =
-            20 * Parameters.OneErg + GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE,
+            2 * Parameters.OneErg + GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE,
           tokens = Seq(
             ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
             ErgoToken(
               GluonWTokens.neutronId,
-              totalSupply - (GluonWBoxConstants.PRECISION / 10)
+              totalSupply - (GluonWBoxConstants.PRECISION / 100)
             ),
             ErgoToken(
               GluonWTokens.protonId,
-              totalSupply - (GluonWBoxConstants.PRECISION / 10)
+              totalSupply - (GluonWBoxConstants.PRECISION / 100)
             )
-          )
+          ),
+          lastDayBlockRegister = new LongRegister(client.getHeight)
         )
 
         mergeBox(
@@ -98,27 +124,64 @@ object BoxCreation extends App {
           Seq(gluonWBox)
         )(client, conf, nodeConf)
       }
-      case "mutate" => {
+      case MUTATE => {
         val boxIdToMutate: String =
-          "ee8626ae0b03e003403aa397db4ffdadd47e802343f2da8ff9cebf5a9b15d1e9"
+          "1e1449da157a51d5d7f43d2bd3a35fa9cfc6b82cae9ff33c1d8d5bced4a875ad"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
+        val toUserBox: FundsToAddressBox = FundsToAddressBox(
+          address =
+            if (nodeConf.getNetworkType == NetworkType.MAINNET)
+              ServiceConfig.mainNetServiceOwner
+            else ServiceConfig.testNetServiceOwner,
+          value = mutatedGluonWBox.value - 2 * Parameters.MinFee,
+          tokens = mutatedGluonWBox.tokens,
+          R4 = Option(mutatedGluonWBox.totalSupplyRegister),
+          R5 = Option(mutatedGluonWBox.tokenIdRegister),
+          R6 = Option(mutatedGluonWBox.feeRegister),
+          R7 = Option(mutatedGluonWBox.volumePlusRegister),
+          R8 = Option(mutatedGluonWBox.volumeMinusRegister),
+          R9 = Option(mutatedGluonWBox.lastDayBlockRegister)
+        )
+//        val oracleBox: OracleBox = explorer.getOracleBox
 
-        mutate(
+        BoxTools.mutate(
           boxIdToMutate = boxIdToMutate,
-          mutatedGluonWBox
+          Seq(toUserBox)
+//          dataInputs = Seq(oracleBox.box.get.input)
         )(
           client,
           conf,
           nodeConf
         )
       }
-      case "signReduced" => {
+      case SIGN_REDUCED => {
         BoxTools.signReducedTx(
           Seq(
-            "rwoCuFzI3Zxt-QE9EZQfbH3PAkTqi_tTsmQaJmhgV2sJIAsAAFqv9BOmBM-8eHN2z_YpD-eNED1gXeVlH1cmcIYb5ptJAAABXE84PBIk5HqUAQIqHi2wPwtoa7zyUxvgS_ycVhEFKrkFXdCrRTGOFETnTusaEU9u6iOUVtPq02Yk1-L_ORqRZ_hbboRukDYoYgyV0Z8p5txCAMfbQUF5SgTJNnw8Ri2gkpbBOjSZ-FqGmAkLHnTv1oiVIxEpSJjijuL_y6IwK-rLWGQSoptAlQyGmFq_-6LFd-vzHO8Hzv8BSRgDgloSUCqpvKbIN9qMdjchIZVrdT1djwNCGAGV_vUCEeds9d-AKwPA3MvhbxAVBAAEAgQCBAQEBAQABAAEgKjWuQcGAWQFgIl6BgFCBAAGAgPoAQEBAQYBAgEBAQEGAQIIzQNVIwyyP55qXvBVeLc6hq32K8FVFdHRco_BtCkY6fs_mAEA2BrWAdtjCKfWArKlcwAA1gPbYwhyAtYEsnIBcwEA1gWycgNzAgDWBrJyAXMDANYHsnIDcwQA1gjkxqcEWdYJloMGAZOMsnIBcwUAAYyycgNzBgABk4xyBAGMcgUBk4xyBgGMcgcBk8KnwnICk3II5MZyAgRZk-TGpwU8Dg7kxnICBTwODtYKjHIEAtYLjHIFAtYMkXIKcgvWDYxyBgLWDoxyBwLWD5FyDXIO1hDBp9YRwXIC1hJ-mYxyCAFyCgbWE3MH1hRzCNYVfplyEHMJBtYWfpmMcggCcg0G1hehnZxzCn5yEwZyFJ2cchKdfuTGsttlAf5zCwAEBQZzDHIV1hiTchByEdYZj3IKcgvWGo9yDXIOlZaDBAFyCXIMcg-PchByEdgC1ht-mXIRchAG1hyZfnITBp1-chMGchTRloMEAXIJk36ZcgpyCwadnZycchtyEnIcchV-chMGk36Zcg1yDgadnZycchtyFnIcchV-chMGcw2VloMEAXIJchlyGpFyEHIR2APWG5l-chMGnX5yEwZyFNYcnH6ZchFyEAadfnITBnIb1h2cchVyG9GWgwQBcgmTfplyCnILBp2cnHIcchJ-chMGch2TfplyDXIOBp2cnHIcchZ-chMGch1zDpWWgwQBcglyDHIachjRloMEAXIJk36ZcgpyCwadnJ2cfplyDnINBp2cmX5yEwadnHMPfnITBnIUmX5yEwZyF35yEwZyF3ISchZzEJN-chEGfnIQBpWWgwQBcglyGXIPchjRloMEAXIJcxGTfplyDXIOBp2cnZydnH6ZcgtyCgaZfnITBp2ccxJ-chMGchR-chMGchZyEnIXmX5yEwZyF5N-chEGfnIQBpWWgwQBcgmTcgpyC5NyDXIOchhzE9FzFPvhJQMAAQH5_oKvhK_RsQEC5_z20oWv0bEBAlmAgNDYi96i4wKAgNDYi96i4wI8Dg4gW26EbpA2KGIMldGfKebcQgDH20FBeUoEyTZ8PEYtoJIglsE6NJn4WoaYCQsedO_WiJUjESlImOKO4v_LojAr6suAq472vQEACM0DVSMMsj-eal7wVXi3Ooat9ivBVRXR0XKPwbQpGOn7P5j74SUEA4DC1y8CmYOxGQGHgaW9AQSAwtcvAMCEPRAFBAAEAA42EAIEoAsIzQJ5vmZ--dy7rFWgYpXOhwsHApv82y3OKNlZ8oFbFvgXmOoC0ZKjmozHpwFzAHMBEAECBALRloMDAZOjjMeypXMAAAGTwrKlcwEAdHMCcwODAQjN7qyTsaVzBPvhJQAA05GWA80DVSMMsj-eal7wVXi3Ooat9ivBVRXR0XKPwbQpGOn7P5jmlgPmlgM="
+            reducedTxBytes
           )
         )(client, conf, nodeConf)
+      }
+      case "consolidate" => {
+        val ergValue =
+          2 * Parameters.OneErg + GluonWBoxConstants.GLUONWBOX_BOX_EXISTENCE_FEE
+        val tokens = Seq(
+          ErgoToken(GluonWTokens.gluonWBoxNFTId, 1),
+          ErgoToken(
+            GluonWTokens.neutronId,
+            totalSupply - (GluonWBoxConstants.PRECISION / 100)
+          ),
+          ErgoToken(
+            GluonWTokens.protonId,
+            totalSupply - (GluonWBoxConstants.PRECISION / 100)
+          )
+        )
+
+        BoxTools.consolidateBoxes(ergValue = ergValue, tokens = tokens)(
+          client,
+          conf,
+          nodeConf
+        )
       }
     }
 
@@ -130,34 +193,4 @@ object BoxCreation extends App {
   }
 
   System.out.println("Completed Transaction")
-
-  def mutate(
-    boxIdToMutate: String,
-    outBox: BoxWrapper,
-    dataInputs: Seq[InputBox] = null
-  )(
-    client: BaseClient,
-    config: ErgoToolConfig,
-    nodeConfig: ErgoNodeConfig
-  ): Seq[SignedTransaction] =
-    client.getClient.execute { ctx =>
-      val prover: ErgoProver = getProver(nodeConfig, config)(ctx)
-      val ownerAddress: Address = prover.getEip3Addresses.get(0)
-
-      val spendingBoxes: java.util.List[InputBox] =
-        ctx.getDataSource.getUnspentBoxesFor(ownerAddress, 0, 500)
-
-      val boxesToMutate: Seq[InputBox] = ctx.getBoxesById(boxIdToMutate)
-
-      val tx: Tx = Tx(
-        inputBoxes = boxesToMutate ++ spendingBoxes,
-        outBoxes = Seq(outBox),
-        changeAddress = ownerAddress,
-        dataInputs = dataInputs
-      )(ctx)
-
-      val signed: SignedTransaction = tx.signTxWithProver(prover)
-
-      Seq(signed)
-    }
 }

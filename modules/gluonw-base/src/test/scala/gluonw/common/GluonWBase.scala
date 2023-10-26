@@ -184,10 +184,14 @@ trait GluonWBase extends UnitSpec {
     tokenIdToChange: ErgoId,
     amountToChange: Long
   ): Seq[ErgoToken] =
-    tokens.map { token =>
-      if (token.getId.equals(tokenIdToChange)) {
-        ErgoToken(token.getId, token.value + amountToChange)
-      } else token
+    if (tokens.nonEmpty) {
+      tokens.map { token =>
+        if (token.getId.equals(tokenIdToChange)) {
+          ErgoToken(token.getId, token.value + amountToChange)
+        } else token
+      }
+    } else {
+      Seq(ErgoToken(tokenIdToChange, amountToChange))
     }
 
   def getFissionOrFusionFees(

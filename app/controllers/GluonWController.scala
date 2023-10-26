@@ -50,6 +50,21 @@ trait TGluonWController {
   def fissionPrice(ergAmount: Long): Action[AnyContent]
 
   /**
+    * Erg to Neutrons and Protons
+    * @param ergAmount the amount of erg to be converted
+    * @param isEIP12 should this be a EIP12 tx?
+    * @return
+    */
+  def fusion(ergAmount: Long, isEIP12: Boolean): Action[Json]
+
+  /**
+    * Erg to Neutrons and Protons Price
+    * @param ergAmount the amount of erg to be converted
+    * @return
+    */
+  def fusionPrice(ergAmount: Long): Action[AnyContent]
+
+  /**
     * Neutrons to Protons
     * @param neutronsAmount the amount of neutrons to be converted
     * @param isEIP12 should this be a EIP12 tx?
@@ -238,6 +253,25 @@ class GluonWController @Inject() (
       Ok(
         Json.fromValues(
           gluonW.fissionPrice(ergAmount).map(rate => rate.toJson)
+        )
+      ).as("application/json")
+    }
+
+  override def fusion(ergAmount: Long, isEIP12: Boolean): Action[Json] =
+    Action(circe.json) { implicit request: Request[Json] =>
+      try {
+        Ok(TxCall(request, ergAmount, gluonW.fusion, isEIP12))
+          .as("application/json")
+      } catch {
+        case e: Throwable => exception(e, logger)
+      }
+    }
+
+  override def fusionPrice(ergAmount: Long): Action[AnyContent] =
+    Action { implicit request: Request[AnyContent] =>
+      Ok(
+        Json.fromValues(
+          gluonW.fusionPrice(ergAmount).map(rate => rate.toJson)
         )
       ).as("application/json")
     }

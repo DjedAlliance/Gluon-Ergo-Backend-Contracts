@@ -4,7 +4,7 @@ import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, OracleBox}
-import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx}
+import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx, FusionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.{TTx, Tx}
 import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
@@ -30,6 +30,23 @@ trait TGluonW {
     * @return
     */
   def fissionPrice(ergAmount: Long): Seq[AssetPrice]
+
+  /**
+    * Fusion
+    * Gets the Fusion Tx
+    * @param ergAmount Amount of Erg to be transacted
+    * @param walletAddress Wallet Address of the user
+    * @return
+    */
+  def fusion(ergAmount: Long, walletAddress: Address): Seq[TTx]
+
+  /**
+    * Fusion Price
+    * Gets the rate for the Fusion Tx
+    * @param ergAmount Amount of Erg to be transacted
+    * @return
+    */
+  def fusionPrice(ergAmount: Long): Seq[AssetPrice]
 
   /**
     * Transmute Neutrons to Protons
@@ -202,7 +219,8 @@ class GluonW @Inject() (
 
   def getPriceFromAlgorithmWithOracleBox(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -213,13 +231,15 @@ class GluonW @Inject() (
     getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
       assetAmount,
       gluonWBox,
+      currentHeight,
       algorithmFunc
     )._2
   }
 
   def getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
     assetAmount: Long,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -230,6 +250,7 @@ class GluonW @Inject() (
     getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
       assetAmount,
       gluonWBox,
+      currentHeight,
       algorithmFunc
     )
   }
@@ -237,7 +258,8 @@ class GluonW @Inject() (
   def getPriceAndGluonWBoxFromAlgorithmWithGluonWBoxAndOracleBox(
     assetAmount: Long,
     gluonWBox: GluonWBox,
-    algorithmFunc: (GluonWBox, OracleBox, Long) => (
+    currentHeight: Long,
+    algorithmFunc: (GluonWBox, OracleBox, Long, Long) => (
       GluonWBox,
       Seq[AssetPrice]
     )
@@ -246,7 +268,7 @@ class GluonW @Inject() (
     val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
     // 2. Use Algorithm to calculate rate
-    algorithmFunc(gluonWBox, neutronOracleBox, assetAmount)
+    algorithmFunc(gluonWBox, neutronOracleBox, assetAmount, currentHeight)
   }
 
   /**
@@ -295,9 +317,39 @@ class GluonW @Inject() (
     // Use Algorithm to calculate Fission rate
     getPriceFromAlgorithm(ergAmount, algorithm.fissionPrice)
 
+  override def fusion(ergAmount: Long, walletAddress: Address): Seq[TTx] =
+    client.getClient.execute { (ctx: BlockchainContext) =>
+      // 1. Get the box from the user
+      val userBoxes: java.util.List[InputBox] =
+        client.getCoveringBoxesFor(walletAddress, ergAmount).getBoxes
+
+      // 2. Get the Latest GluonWBox
+      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+
+      // 3. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+      // 4. Create FissionTx
+      val fusionTx: FusionTx = FusionTx(
+        ergToRetrieve = ergAmount,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
+        changeAddress = walletAddress,
+        dataInputs = Seq(neutronOracleBox.box.get.input)
+      )(ctx, algorithm, gluonWFeesCalculator)
+
+      Seq(fusionTx)
+    }
+
+  override def fusionPrice(ergAmount: Long): Seq[AssetPrice] =
+    // Use Algorithm to calculate Fission rate
+    getPriceFromAlgorithm(ergAmount, algorithm.fusionPrice)
+
   /**
     * Transmute Neutrons to Protons
-    * Beta Decay Plus Tx
+    * Beta Decay Minus Tx
     *
     * @param neutronsAmount    Amount of Neutrons to be transacted
     * @param walletAddress Wallet Address of the user
@@ -333,7 +385,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm, gluonWFeesCalculator)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
 
       Seq(betaDecayMinusTx)
     }
@@ -351,6 +403,7 @@ class GluonW @Inject() (
     // Use Algorithm to calculate BetaDecayPlus rate
     getPriceFromAlgorithmWithOracleBox(
       neutronsAmount,
+      currentHeight = client.getHeight,
       algorithm.betaDecayPlusPrice
     )
 
@@ -391,7 +444,7 @@ class GluonW @Inject() (
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
-      )(ctx, algorithm, gluonWFeesCalculator)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
 
       Seq(betaDecayPlusTx)
     }
@@ -409,6 +462,7 @@ class GluonW @Inject() (
     // Use Algorithm to calculate BetaDecayMinus rate
     getPriceFromAlgorithmWithOracleBox(
       protonsAmount,
+      currentHeight = client.getHeight,
       algorithm.betaDecayMinusPrice
     )
 
@@ -451,6 +505,7 @@ class GluonW @Inject() (
     val betaDecayMinusPriceAndGluonWBox: (GluonWBox, Seq[AssetPrice]) =
       getPriceAndGluonWBoxFromAlgorithmWithOracleBox(
         neutronsAmount,
+        currentHeight = client.getHeight,
         algorithm.betaDecayMinusPrice
       )
     ???
@@ -505,13 +560,37 @@ class GluonW @Inject() (
     * @return
     */
   override def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[TTx] =
-    // 1. Get the box from the user
-    // 2. Get the Latest GluonWBox
-    // 3. Get the Oracle Box
-    // 5. Create FissionTx
-    // 6. Get GluonWBox and UserBox from Tx
-    // 7. Create BetaDecay-Tx with Protons retrieved
-    ???
+  {
+    // 1. Create FissionTx
+    val fissionTx = fission(ergAmount, walletAddress)
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+    // 2. Get GluonWBox and UserBox from Tx
+    // 3. Create BetaDecay-Tx with Protons retrieved
+    client.getClient.execute { (ctx: BlockchainContext) =>
+      val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
+
+      // 2. Get the Latest GluonWBox
+      val outputGluonWBox: GluonWBox = GluonWBox.from(
+        fissionTxAsInputBoxes.get(0))
+
+      // 3. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+      val protonsTransmuted: Long = gluonWBox.Protons.value - outputGluonWBox.Protons.value
+
+      // 4. Create BetaDecayPlusTx
+      val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
+        protonsToTransmute = protonsTransmuted,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+        changeAddress = walletAddress,
+        dataInputs = Seq(neutronOracleBox.box.get.input)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
+
+      fissionTx ++ Seq(betaDecayPlusTx)
+    }
+  }
 
   /**
     * Mint Neutrons with Erg rate
@@ -522,11 +601,26 @@ class GluonW @Inject() (
     * @return
     */
   override def mintNeutronsPrice(ergAmount: Long): Seq[AssetPrice] =
+  {
     // 1. Get the Latest GluonWBox
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
     // 2. Get the Oracle Box
-    // 3. Calculate amount of Neutrons received
-    // with fissionTx and BetaDecay-Tx
-    ???
+    val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+    // 3. Calculate amount of Protons received
+    val fissionTxGluonWBox: GluonWBox = algorithm.fission(gluonWBox, ergAmount)
+    val protonsTransmuted: Long = gluonWBox.Protons.value - fissionTxGluonWBox.Protons.value
+
+    // BetaDecay-Tx
+    val betaDecayPlusTxGluonWBox: GluonWBox = algorithm.betaDecayPlus(
+      fissionTxGluonWBox,
+      protonsToTransmute = protonsTransmuted)(neutronOracleBox, client.getHeight)
+
+    Seq(AssetPrice(
+      name = GluonWAsset.NEUTRON.toString,
+      gluonWBox.Neutrons.getValue - betaDecayPlusTxGluonWBox.Neutrons.getValue,
+      GluonWTokens.neutronId
+    ))
+  }
 
   /**
     * Mint Protons with Erg
@@ -540,14 +634,38 @@ class GluonW @Inject() (
   override def mintProtons(
     ergAmount: Long,
     walletAddress: Address
-  ): Seq[Tx] =
-    // 1. Get the box from the user
-    // 2. Get the Latest GluonWBox
-    // 3. Get the Oracle Box
-    // 5. Create FissionTx
-    // 6. Get GluonWBox and UserBox from Tx
-    // 7. Create BetaDecay+Tx with Protons retrieved
-    ???
+  ): Seq[TTx] =
+  {
+    // 1. Create FissionTx
+    val fissionTx = fission(ergAmount, walletAddress)
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+    // 2. Get GluonWBox and UserBox from Tx
+    // 3. Create BetaDecay-Tx with Protons retrieved
+    client.getClient.execute { (ctx: BlockchainContext) =>
+      val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
+
+      // 2. Get the Latest GluonWBox
+      val outputGluonWBox: GluonWBox = GluonWBox.from(
+        fissionTxAsInputBoxes.get(0))
+
+      // 3. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+      val neutronsTransmuted: Long = gluonWBox.Neutrons.value - outputGluonWBox.Neutrons.value
+
+      // 4. Create BetaDecayMinusTx
+      val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+        neutronsToTransmute = neutronsTransmuted,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+        changeAddress = walletAddress,
+        dataInputs = Seq(neutronOracleBox.box.get.input)
+      )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
+
+      fissionTx ++ Seq(betaDecayMinusTx)
+    }
+  }
 
   /**
     * Mint Protons with Erg rate
@@ -560,9 +678,24 @@ class GluonW @Inject() (
     * @return
     */
   override def mintProtonsPrice(ergAmount: Long): Seq[AssetPrice] =
+  {
     // 1. Get the Latest GluonWBox
+    val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
     // 2. Get the Oracle Box
+    val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
     // 3. Calculate amount of Neutrons received
-    // with fissionTx and BetaDecay+Tx
-    ???
+    val fissionTxGluonWBox: GluonWBox = algorithm.fission(gluonWBox, ergAmount)
+    val neutronsTransmuted: Long = gluonWBox.Neutrons.value - fissionTxGluonWBox.Neutrons.value
+
+    // BetaDecay-Tx
+    val betaDecayPlusTxGluonWBox: GluonWBox = algorithm.betaDecayMinus(
+      fissionTxGluonWBox,
+      neutronsToTransmute = neutronsTransmuted)(neutronOracleBox, client.getHeight)
+
+    Seq(AssetPrice(
+      name = GluonWAsset.PROTON.toString,
+      gluonWBox.Protons.getValue - betaDecayPlusTxGluonWBox.Protons.getValue,
+      GluonWTokens.protonId
+    ))
+  }
 }
