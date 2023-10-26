@@ -27,13 +27,13 @@
     // Registers
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
     // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
-    // R6 - (MaxAmountDevFeesToBePaid, TotalDevFeesPaid): (Coll[Long], Coll[Long])  // TODO: in the code, this pair appears to be swapped
+    // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Coll[Long], Coll[Long])
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
     // R9 - LastBucketBlock: Long
 
     // ===== Context Vars ===== //
-    // val _optUIFee                    SigmaProp
+    // val _optUIFeeAddress                    SigmaProp
 
     // ===== Relevant Transactions ===== //
     // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
@@ -99,18 +99,18 @@
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
 
-    val __checkGluonWBoxNFT: Boolean = allOf(Coll(   // TODO: it seems that we are checking more than just the NFT here. Shouldn't this variable have another name then?
+    val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
         IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get,
-        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2, // TODO: is this correct w.r.t. the comment in line 30? It appears to be swapped, either here or in the comment.
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
-        __checkGluonWBoxNFT,
+        __gluonWBoxPersistedValueCheck,
         // Check Neutrons reduction in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -122,7 +122,7 @@
     ))
 
     val isFusionTx: Boolean = allOf(Coll(
-        __checkGluonWBoxNFT,
+        __gluonWBoxPersistedValueCheck,
         // Check Neutrons increment in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -140,11 +140,11 @@
     // TotalInCirculation = TotalSupply - TokensAmountInBox
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
-        __checkGluonWBoxNFT,
-        // Check Neutrons increment in OutBox // TODO: do we mean "decrease" instead of "increment" here?
+        __gluonWBoxPersistedValueCheck,
+        // Check Neutrons decrease in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check Protons reduction in OutBox // TODO: do we mean "increase" insted of "reduction" here?
+        // Check Protons increase in OutBox
         IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value preservation
@@ -158,11 +158,11 @@
     // TotalInCirculation = TotalSupply - TokensAmountInBox
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
-        __checkGluonWBoxNFT,
-        // Check Neutrons decrement in OutBox  // TODO: Do we mean "increase" here?
+        __gluonWBoxPersistedValueCheck,
+        // Check Neutrons increase in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
-        // Check Protons increment in OutBox  // TODO: Do we mean "decrease" here?
+        // Check Protons decrease in OutBox
         IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,
 
         // Check Erg value preservation
@@ -192,7 +192,6 @@
         val precision: BigInt = (1000000000).toBigInt
 
         // q* = 0.66
-        // @todo kii, reason about replacing 1 with precision at all parts using 1.
         val qStar: BigInt = (66 * precision / 100)
         val rightHandMin: BigInt = SNeutrons * Pt / RErg
         val fusionRatio: BigInt = min(qStar, rightHandMin)
@@ -234,13 +233,12 @@
 
         // ===== (START) Fee Declarations ===== //
         // reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
-        val _optUIFee: Coll[Byte] = getVar[SigmaProp](0)
+        val _optUIFeeAddress: Coll[Byte] = getVar[SigmaProp](0)
         val fees: Coll[(Coll[Byte], BigInt)] = {
-            // TODO: in the following lines, why are we converting to BigInt and then converting back to Long?
-            val feeDenom: Long = 1000L.toBigInt  
-            val devFee: Long = 5L.toBigInt
-            val oracleFee: Long = 1L.toBigInt
-            val uiFee: Long = 4L.toBigInt
+            val feeDenom: BigInt = 1000L.toBigInt
+            val devFee: BigInt = 5L.toBigInt
+            val oracleFee: BigInt = 1L.toBigInt
+            val uiFee: BigInt = 4L.toBigInt
             val emptyFees: (Coll[Byte], Long) = (Coll(1.toByte), 0L.toBigInt)
 
             // principal is the amount that is requested
@@ -281,10 +279,10 @@
             if (isBetaDecayMinusTx || isBetaDecayPlusTx)
             {
                 // If Ui fee is defined, then we add an additional 0.4% fee
-                if (_optUIFee.isDefined) {
+                if (_optUIFeeAddress.isDefined) {
                     Coll(
                         devFeeAddressAndPayout,
-                        (_optUIFee.get.propBytes, uiFeePayout),
+                        (_optUIFeeAddress.get.propBytes, uiFeePayout),
                         oracleFeeAddressAndPayout
                     )
                 }
@@ -299,10 +297,10 @@
             else
             {
                 // If Ui fee is defined, then we add an additional 0.4% fee
-                if (_optUIFee.isDefined) {
+                if (_optUIFeeAddress.isDefined) {
                     Coll(
                         devFeeAddressAndPayout,
-                        (_optUIFee.get.propBytes, uiFeePayout),
+                        (_optUIFeeAddress.get.propBytes, uiFeePayout),
                         emptyFees,
                     )
                 }
@@ -333,12 +331,12 @@
                 }
                 else
                 {
-                    true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value bonds
+                    true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fees
                 }
             }
 
             val uiFeesPaid: Boolean = {
-                if (_optUIFee.isDefined)
+                if (_optUIFeeAddress.isDefined)
                 {
                     if(fees(1)._2 > 0) {
                         // UI fee is greater than 0
@@ -352,7 +350,7 @@
                     }
                     else
                     {
-                        true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value bonds
+                        true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value fee
                     }
                 } else {
                     true // if ui fee isn't defined, then default to true.
@@ -371,7 +369,7 @@
                             )
                         )
                     } else {
-                        true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value bonds
+                        true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
                     }
                 } else {
                     true // if oracle fee is not defined, then default to true.
@@ -430,7 +428,7 @@
             val __inErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __checkGluonWBoxNFT,
+                __gluonWBoxPersistedValueCheck,
                 __outNeutronsValueValid,
                 __outProtonsValueValid,
                 __inErgsValueValid,
@@ -472,7 +470,7 @@
             val __outErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __checkGluonWBoxNFT,
+                __gluonWBoxPersistedValueCheck,
                 __inNeutronsValueValid,
                 __inProtonsValueValid,
                 __outErgsValueValid,
@@ -637,7 +635,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __checkGluonWBoxNFT,
+                __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid,
                 __protonsValueValid,
                 __ergsValueValid,
@@ -779,7 +777,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __checkGluonWBoxNFT,
+                __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid,
                 __protonsValueValid,
                 __ergsValueValid,
