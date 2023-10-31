@@ -559,8 +559,10 @@ class GluonW @Inject() (
     * @param walletAddress Wallet Address of the user
     * @return
     */
-  override def mintNeutrons(ergAmount: Long, walletAddress: Address): Seq[TTx] =
-  {
+  override def mintNeutrons(
+    ergAmount: Long,
+    walletAddress: Address
+  ): Seq[TTx] = {
     // 1. Create FissionTx
     val fissionTx = fission(ergAmount, walletAddress)
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
@@ -570,20 +572,22 @@ class GluonW @Inject() (
       val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
 
       // 2. Get the Latest GluonWBox
-      val outputGluonWBox: GluonWBox = GluonWBox.from(
-        fissionTxAsInputBoxes.get(0))
+      val outputGluonWBox: GluonWBox =
+        GluonWBox.from(fissionTxAsInputBoxes.get(0))
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
       val gluonWFeesCalculator: GluonWFeesCalculator =
         GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-      val protonsTransmuted: Long = gluonWBox.Protons.value - outputGluonWBox.Protons.value
+      val protonsTransmuted: Long =
+        gluonWBox.Protons.value - outputGluonWBox.Protons.value
 
       // 4. Create BetaDecayPlusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsTransmuted,
-        inputBoxes = Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+        inputBoxes =
+          Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -600,26 +604,29 @@ class GluonW @Inject() (
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintNeutronsPrice(ergAmount: Long): Seq[AssetPrice] =
-  {
+  override def mintNeutronsPrice(ergAmount: Long): Seq[AssetPrice] = {
     // 1. Get the Latest GluonWBox
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
     // 2. Get the Oracle Box
     val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
     // 3. Calculate amount of Protons received
     val fissionTxGluonWBox: GluonWBox = algorithm.fission(gluonWBox, ergAmount)
-    val protonsTransmuted: Long = gluonWBox.Protons.value - fissionTxGluonWBox.Protons.value
+    val protonsTransmuted: Long =
+      gluonWBox.Protons.value - fissionTxGluonWBox.Protons.value
 
     // BetaDecay-Tx
     val betaDecayPlusTxGluonWBox: GluonWBox = algorithm.betaDecayPlus(
       fissionTxGluonWBox,
-      protonsToTransmute = protonsTransmuted)(neutronOracleBox, client.getHeight)
+      protonsToTransmute = protonsTransmuted
+    )(neutronOracleBox, client.getHeight)
 
-    Seq(AssetPrice(
-      name = GluonWAsset.NEUTRON.toString,
-      gluonWBox.Neutrons.getValue - betaDecayPlusTxGluonWBox.Neutrons.getValue,
-      GluonWTokens.neutronId
-    ))
+    Seq(
+      AssetPrice(
+        name = GluonWAsset.NEUTRON.toString,
+        gluonWBox.Neutrons.getValue - betaDecayPlusTxGluonWBox.Neutrons.getValue,
+        GluonWTokens.neutronId
+      )
+    )
   }
 
   /**
@@ -634,8 +641,7 @@ class GluonW @Inject() (
   override def mintProtons(
     ergAmount: Long,
     walletAddress: Address
-  ): Seq[TTx] =
-  {
+  ): Seq[TTx] = {
     // 1. Create FissionTx
     val fissionTx = fission(ergAmount, walletAddress)
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
@@ -645,20 +651,22 @@ class GluonW @Inject() (
       val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
 
       // 2. Get the Latest GluonWBox
-      val outputGluonWBox: GluonWBox = GluonWBox.from(
-        fissionTxAsInputBoxes.get(0))
+      val outputGluonWBox: GluonWBox =
+        GluonWBox.from(fissionTxAsInputBoxes.get(0))
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
       val gluonWFeesCalculator: GluonWFeesCalculator =
         GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-      val neutronsTransmuted: Long = gluonWBox.Neutrons.value - outputGluonWBox.Neutrons.value
+      val neutronsTransmuted: Long =
+        gluonWBox.Neutrons.value - outputGluonWBox.Neutrons.value
 
       // 4. Create BetaDecayMinusTx
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
         neutronsToTransmute = neutronsTransmuted,
-        inputBoxes = Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+        inputBoxes =
+          Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -677,25 +685,28 @@ class GluonW @Inject() (
     * @param ergAmount Amount of Ergs to be transacted
     * @return
     */
-  override def mintProtonsPrice(ergAmount: Long): Seq[AssetPrice] =
-  {
+  override def mintProtonsPrice(ergAmount: Long): Seq[AssetPrice] = {
     // 1. Get the Latest GluonWBox
     val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
     // 2. Get the Oracle Box
     val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
     // 3. Calculate amount of Neutrons received
     val fissionTxGluonWBox: GluonWBox = algorithm.fission(gluonWBox, ergAmount)
-    val neutronsTransmuted: Long = gluonWBox.Neutrons.value - fissionTxGluonWBox.Neutrons.value
+    val neutronsTransmuted: Long =
+      gluonWBox.Neutrons.value - fissionTxGluonWBox.Neutrons.value
 
     // BetaDecay-Tx
     val betaDecayPlusTxGluonWBox: GluonWBox = algorithm.betaDecayMinus(
       fissionTxGluonWBox,
-      neutronsToTransmute = neutronsTransmuted)(neutronOracleBox, client.getHeight)
+      neutronsToTransmute = neutronsTransmuted
+    )(neutronOracleBox, client.getHeight)
 
-    Seq(AssetPrice(
-      name = GluonWAsset.PROTON.toString,
-      gluonWBox.Protons.getValue - betaDecayPlusTxGluonWBox.Protons.getValue,
-      GluonWTokens.protonId
-    ))
+    Seq(
+      AssetPrice(
+        name = GluonWAsset.PROTON.toString,
+        gluonWBox.Protons.getValue - betaDecayPlusTxGluonWBox.Protons.getValue,
+        GluonWTokens.protonId
+      )
+    )
   }
 }

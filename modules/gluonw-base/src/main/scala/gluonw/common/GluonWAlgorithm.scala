@@ -584,7 +584,10 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      betaDecayPlus(inputGluonWBox, protonsToTransmute)(oracleBox, currentHeight)
+      betaDecayPlus(inputGluonWBox, protonsToTransmute)(
+        oracleBox,
+        currentHeight
+      )
 
     (
       outGluonWBox,
@@ -605,7 +608,10 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     currentHeight: Long
   ): (GluonWBox, Seq[AssetPrice]) = {
     val outGluonWBox: GluonWBox =
-      betaDecayMinus(inputGluonWBox, neutronsToTransmute)(oracleBox, currentHeight)
+      betaDecayMinus(inputGluonWBox, neutronsToTransmute)(
+        oracleBox,
+        currentHeight
+      )
 
     (
       outGluonWBox,

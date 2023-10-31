@@ -257,8 +257,10 @@ case class BetaDecayPlusTx(
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
     val outGluonWBox: GluonWBox =
-      algorithm.betaDecayPlus(inGluonWBox,
-        protonsToTransmute = protonsToTransmute)(
+      algorithm.betaDecayPlus(
+        inGluonWBox,
+        protonsToTransmute = protonsToTransmute
+      )(
         oracleBox = neutronOracleBox,
         currentHeight = currentHeight
       )
@@ -277,7 +279,9 @@ case class BetaDecayPlusTx(
 
     val gluonWFees: GluonWFees =
       feesCalculator.getBetaDecayPlusFees(
-        protonsAmount = protonsToTransmute, neutronOracleBox)
+        protonsAmount = protonsToTransmute,
+        neutronOracleBox
+      )
 
     val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
       gluonWFees

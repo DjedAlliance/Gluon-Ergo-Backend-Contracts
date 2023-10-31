@@ -29,6 +29,7 @@ object BoxCreation extends App {
   val isMainNet: Boolean = false
   val configFileName = "ergo_config.json"
   val testNetConfigFileName = "ergo_config_testnet.json"
+
   val conf: ErgoToolConfig = if (isMainNet) {
     ErgoToolConfig.load(configFileName)
   } else {
