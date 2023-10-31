@@ -15,7 +15,6 @@ import gluonw.common.{
 import org.ergoplatform.appkit.{
   Address,
   InputBox,
-  Parameters,
   UnsignedTransaction
 }
 
