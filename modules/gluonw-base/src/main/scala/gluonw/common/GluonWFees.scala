@@ -2,7 +2,7 @@ package gluonw.common
 
 import commons.configs.{GetServiceConfig, OracleConfig}
 import edge.boxes.FundsToAddressBox
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox}
 import org.ergoplatform.appkit.{Address, Parameters}
 
 case class GluonWFeesCalculator(
