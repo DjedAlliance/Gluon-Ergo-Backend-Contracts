@@ -38,7 +38,10 @@ object BoxCreation extends App {
   val nodeConf: ErgoNodeConfig = conf.getNode
   val client: BaseClient = new TestClient(nodeConf.getNetworkType)
 //  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
-  val reducedTxBytes: String = ""
+  val reducedTxBytes: Seq[String] = Seq(
+    "",
+    ""
+  )
 
   client.setClient()
 
@@ -158,9 +161,7 @@ object BoxCreation extends App {
       }
       case SIGN_REDUCED => {
         BoxTools.signReducedTx(
-          Seq(
             reducedTxBytes
-          )
         )(client, conf, nodeConf)
       }
       case "consolidate" => {

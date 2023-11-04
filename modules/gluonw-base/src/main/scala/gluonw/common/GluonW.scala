@@ -569,11 +569,13 @@ class GluonW @Inject() (
     // 2. Get GluonWBox and UserBox from Tx
     // 3. Create BetaDecay-Tx with Protons retrieved
     client.getClient.execute { (ctx: BlockchainContext) =>
-      val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
+      val fissionTxBuilt = fissionTx.head.buildTx
+      val txId = fissionTxBuilt.getId
+      val fissionTxOutputBox = fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
 
       // 2. Get the Latest GluonWBox
       val outputGluonWBox: GluonWBox =
-        GluonWBox.from(fissionTxAsInputBoxes.get(0))
+        GluonWBox.from(fissionTxOutputBox.head)
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
@@ -587,7 +589,8 @@ class GluonW @Inject() (
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsTransmuted,
         inputBoxes =
-          Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+          // We take everything except nth box because thats the fee box
+          fissionTxOutputBox.take(fissionTxOutputBox.length - 1),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -648,11 +651,13 @@ class GluonW @Inject() (
     // 2. Get GluonWBox and UserBox from Tx
     // 3. Create BetaDecay-Tx with Protons retrieved
     client.getClient.execute { (ctx: BlockchainContext) =>
-      val fissionTxAsInputBoxes = fissionTx.head.buildTx.getInputs
+      val fissionTxBuilt = fissionTx.head.buildTx
+      val txId = fissionTxBuilt.getId
+      val fissionTxOutputBox = fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
 
       // 2. Get the Latest GluonWBox
       val outputGluonWBox: GluonWBox =
-        GluonWBox.from(fissionTxAsInputBoxes.get(0))
+        GluonWBox.from(fissionTxOutputBox.head)
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
@@ -666,7 +671,8 @@ class GluonW @Inject() (
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
         neutronsToTransmute = neutronsTransmuted,
         inputBoxes =
-          Seq(gluonWBox.box.get.input) ++ fissionTxAsInputBoxes.toSeq,
+          // We take everything except nth box because thats the fee box
+          fissionTxOutputBox.take(fissionTxOutputBox.length - 1),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
