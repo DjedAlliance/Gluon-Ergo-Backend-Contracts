@@ -361,23 +361,28 @@ class GluonW @Inject() (
     walletAddress: Address
   ): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
-      // 1. Get the box from the user
+      // 1. Get the Latest GluonWBox
+      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+      // 2. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+
+      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator.getBetaDecayMinusFees(neutronsAmount, neutronOracleBox)
+
+      val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
+      val minerFeeAndReturnBoxFee: Long = ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+
+      // 3. Get the box from the user
       val userBoxes: List[InputBox] =
         client.getCoveringBoxesFor(
           walletAddress,
-          amount = ErgCommons.MinMinerFee,
+          amount = totalFees + minerFeeAndReturnBoxFee,
           tokensToSpend = Seq(
             GluonWTokens.get(GluonWAsset.NEUTRON.toString, neutronsAmount)
           ).asJava
         )
-
-      // 2. Get the Latest GluonWBox
-      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
-
-      // 3. Get the Oracle Box
-      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
-      val gluonWFeesCalculator: GluonWFeesCalculator =
-        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
       // 4. Create BetaDecayPlusTx
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
@@ -420,23 +425,29 @@ class GluonW @Inject() (
     walletAddress: Address
   ): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
-      // 1. Get the box from the user
+      // 1. Get the Latest GluonWBox
+      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+
+      // 2. Get the Oracle Box
+      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      val gluonWFeesCalculator: GluonWFeesCalculator =
+        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+
+
+      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator.getBetaDecayMinusFees(protonsAmount, neutronOracleBox)
+
+      val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
+      val minerFeeAndReturnBoxFee: Long = ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+
+      // 3. Get the box from the user
       val userBoxes: List[InputBox] =
         client.getCoveringBoxesFor(
           walletAddress,
-          amount = ErgCommons.MinMinerFee,
+          amount = totalFees + minerFeeAndReturnBoxFee,
           tokensToSpend = Seq(
             GluonWTokens.get(GluonWAsset.PROTON.toString, protonsAmount)
           ).asJava
         )
-
-      // 2. Get the Latest GluonWBox
-      val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
-
-      // 3. Get the Oracle Box
-      val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
-      val gluonWFeesCalculator: GluonWFeesCalculator =
-        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
       // 4. Create BetaDecayMinusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(

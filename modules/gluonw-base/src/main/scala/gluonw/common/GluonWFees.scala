@@ -125,3 +125,6 @@ case class GluonWFees(
   uiFee: (Long, Address),
   oracleFee: (Long, Address)
 )
+{
+  def getTotalFeeAmount: Long = devFee._1 + uiFee._1 + oracleFee._1
+}
