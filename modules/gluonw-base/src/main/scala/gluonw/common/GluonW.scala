@@ -369,10 +369,12 @@ class GluonW @Inject() (
       // 2. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
 
-      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator.getBetaDecayMinusFees(neutronsAmount, neutronOracleBox)
+      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator
+        .getBetaDecayMinusFees(neutronsAmount, neutronOracleBox)
 
       val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
-      val minerFeeAndReturnBoxFee: Long = ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+      val minerFeeAndReturnBoxFee: Long =
+        ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
 
       // 3. Get the box from the user
       val userBoxes: List[InputBox] =
@@ -433,11 +435,12 @@ class GluonW @Inject() (
       val gluonWFeesCalculator: GluonWFeesCalculator =
         GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-
-      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator.getBetaDecayMinusFees(protonsAmount, neutronOracleBox)
+      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator
+        .getBetaDecayMinusFees(protonsAmount, neutronOracleBox)
 
       val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
-      val minerFeeAndReturnBoxFee: Long = ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+      val minerFeeAndReturnBoxFee: Long =
+        ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
 
       // 3. Get the box from the user
       val userBoxes: List[InputBox] =
@@ -582,7 +585,8 @@ class GluonW @Inject() (
     client.getClient.execute { (ctx: BlockchainContext) =>
       val fissionTxBuilt = fissionTx.head.buildTx
       val txId = fissionTxBuilt.getId
-      val fissionTxOutputBox = fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
+      val fissionTxOutputBox =
+        fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
 
       // 2. Get the Latest GluonWBox
       val outputGluonWBox: GluonWBox =
@@ -664,7 +668,8 @@ class GluonW @Inject() (
     client.getClient.execute { (ctx: BlockchainContext) =>
       val fissionTxBuilt = fissionTx.head.buildTx
       val txId = fissionTxBuilt.getId
-      val fissionTxOutputBox = fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
+      val fissionTxOutputBox =
+        fissionTx.head.getOutBoxesAsInputBoxes(txId = txId)
 
       // 2. Get the Latest GluonWBox
       val outputGluonWBox: GluonWBox =

@@ -37,12 +37,13 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
       try {
         val oracleConfig: TOracleConfig = OracleConfig.get()
 
-        val oracleBoxes: Seq[InputBox] =
-          client.getAllUnspentBox(oracleConfig.address)
+        val oracleBoxesJson =
+          getUnspentTokenBoxes(oracleConfig.nft.id.toString())
+        val oracleBox = OracleBox.from(oracleBoxesJson)
+        val oracleInputBox: InputBox =
+          ctx.getBoxesById(oracleBox.id.toString()).head
 
-        val priceOracleBoxes: Seq[InputBox] =
-          oracleBoxes.filter(_.getRegisters.size() == 2)
-        OracleBox.from(priceOracleBoxes.head)
+        OracleBox.from(oracleInputBox)
       } catch {
         case e: ParseException    => throw ParseException(e.getMessage)
         case e: JsResultException => throw e

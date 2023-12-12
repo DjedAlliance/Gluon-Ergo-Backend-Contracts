@@ -37,6 +37,7 @@ object BoxCreation extends App {
   }
   val nodeConf: ErgoNodeConfig = conf.getNode
   val client: BaseClient = new TestClient(nodeConf.getNetworkType)
+
 //  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
   val reducedTxBytes: Seq[String] = Seq(
     "",
@@ -76,7 +77,7 @@ object BoxCreation extends App {
     val MERGE: String = "merge"
 
     // SET RUN TX HERE
-    val runTx: String = SIGN_REDUCED
+    val runTx: String = MERGE
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -130,7 +131,7 @@ object BoxCreation extends App {
       }
       case MUTATE => {
         val boxIdToMutate: String =
-          "1e1449da157a51d5d7f43d2bd3a35fa9cfc6b82cae9ff33c1d8d5bced4a875ad"
+          "b8212c8254b45d2b431fcc80a9f2e6a6845fafb0cc6e06f54e16e96e28363e88"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
         val toUserBox: FundsToAddressBox = FundsToAddressBox(
@@ -161,7 +162,7 @@ object BoxCreation extends App {
       }
       case SIGN_REDUCED => {
         BoxTools.signReducedTx(
-            reducedTxBytes
+          reducedTxBytes
         )(client, conf, nodeConf)
       }
       case "consolidate" => {

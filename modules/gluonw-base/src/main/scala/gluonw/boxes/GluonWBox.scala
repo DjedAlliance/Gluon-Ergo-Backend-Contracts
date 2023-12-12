@@ -2,6 +2,8 @@ package gluonw.boxes
 
 import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
+import edge.errors.ParseException
+import edge.json.{ErgoJson, Register}
 import edge.registers.{
   CollBytePairRegister,
   IntRegister,
@@ -17,6 +19,7 @@ import io.circe.Json
 import org.ergoplatform.appkit.{
   BlockchainContext,
   ErgoContract,
+  ErgoValue,
   InputBox,
   Parameters
 }
@@ -201,6 +204,78 @@ object OracleBox extends BoxWrapperHelper {
         inputBox.getRegisters.get(1).getValue.asInstanceOf[Int]
       )
     )
+
+  // Json starts from items
+  def from(json: Json): OracleBox = {
+    val boxesJson: Seq[Json] = json.hcursor
+      .downField("items")
+      .as[Seq[Json]]
+      .getOrElse(
+        throw ParseException(
+          "CiJson Parse Error at OracleBox.from"
+        )
+      )
+
+    val id: String =
+      boxesJson.head.hcursor.downField("boxId").as[String].getOrElse("")
+    val value: Long =
+      boxesJson.head.hcursor.downField("value").as[Long].getOrElse(0)
+    val registers: Json = boxesJson.head.hcursor
+      .downField("additionalRegisters")
+      .as[Json]
+      .getOrElse(null)
+    val tokens: Option[Seq[ErgoToken]] =
+      ErgoJson.getTokens(boxesJson.head)
+
+    // Registers
+    val r4Json: Option[Json] = Option(
+      registers.hcursor
+        .downField(Register.R4.toString)
+        .as[Json]
+        .getOrElse(null)
+    )
+
+    val r5Json: Option[Json] = Option(
+      registers.hcursor
+        .downField(Register.R5.toString)
+        .as[Json]
+        .getOrElse(null)
+    )
+
+    val r4: Option[Long] =
+      Option(
+        ErgoValue
+          .fromHex(getRegisterValue(r4Json.get))
+          .getValue
+          .asInstanceOf[Long]
+      )
+
+    val r5: Option[Int] =
+      Option(
+        ErgoValue
+          .fromHex(getRegisterValue(r5Json.get))
+          .getValue
+          .asInstanceOf[Int]
+      )
+
+    OracleBox(
+      value = value,
+      id = ErgoId.create(id),
+      tokens = tokens.get,
+      priceRegister = new LongRegister(
+        r4.get
+      ),
+      epochIdRegister = new IntRegister(
+        r5.get
+      )
+    )
+  }
+
+  private def getRegisterValue(registerJson: Json): String =
+    registerJson.hcursor
+      .downField("serializedValue")
+      .as[String]
+      .getOrElse("")
 }
 
 object GluonWBox extends BoxWrapperHelper {
