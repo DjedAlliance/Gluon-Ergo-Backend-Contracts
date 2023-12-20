@@ -21,13 +21,13 @@
     // ===== Box Contents ===== //
     // Tokens
     // 1. (GluonWNFT, 1)
-    // 2. (Neutrons, IntMax)
-    // 3. (Protons, IntMax)
+    // 2. (Neutrons, Long)
+    // 3. (Protons, Long)
     //
     // Registers
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
     // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
-    // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Coll[Long], Coll[Long])
+    // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Long, Long)
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
     // R9 - LastBucketBlock: Long
@@ -54,27 +54,24 @@
     //                      has an increment in Ergs
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
-    // 2. Fission       - the reactor has a increment in both protons and neutrons but
+    // 2. Fusion       - the reactor has a increment in both protons and neutrons but
     //                      has a reduction in Ergs
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val < In.val
     //
-    // 3. BetaDecay +    - the reactor has an increment of neutrons and a decrement in protons
+    // 3. BetaDecay -    - the reactor has an increment of neutrons and a decrement in protons
     //                      has an increment in Ergs due to fees
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
-    // 4. BetaDecay -    - the reactor has a decrement of neutrons and a increment in protons
+    // 4. BetaDecay +    - the reactor has a decrement of neutrons and a increment in protons
     //                      has an increment in Ergs due to fees
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val > In.val
 
     val IN_GLUONW_BOX: Box = SELF
     val OUT_GLUONW_BOX: Box = OUTPUTS(0)
     val ORACLE_BOX: Box = CONTEXT.dataInputs(0)
-    val ASSET_TOKENID_REGISTER: (Coll[Byte], Coll[Byte]) = IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get
     val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUONW_BOX.R4[(Long, Long)].get
     val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUONW_BOX.R6[(Long, Long)].get
     val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUONW_BOX.R6[(Long, Long)].get
-    val NEUTRONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._1
-    val PROTONS_TOKEN_ID: Coll[Byte] = ASSET_TOKENID_REGISTER._2
     val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1
     val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2
     val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1
@@ -200,14 +197,14 @@
         // Check Protons reduction in OutBox
         def getProtonsPrice(protonsValue: Long): BigInt = {
             val oneMinusFusionRatio: BigInt = (precision - fusionRatio).toBigInt
-            val protonsPrice: BigInt = oneMinusFusionRatio * RErg.toBigInt / SProtons.toBigInt
-            val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision.toBigInt
+            val protonsPrice: BigInt = oneMinusFusionRatio * RErg / SProtons
+            val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision
 
             protonsInNanoergs
         }
 
         def getNeutronsPrice(neutronsValue: Long): BigInt = {
-            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt.toBigInt / precision.toBigInt
+            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt / precision
 
             neutronsInNanoergs
         }
@@ -233,7 +230,7 @@
 
         // ===== (START) Fee Declarations ===== //
         // reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
-        val _optUIFeeAddress: Coll[Byte] = getVar[SigmaProp](0)
+        val _optUIFeeAddress = getVar[SigmaProp](0)
         val fees: Coll[(Coll[Byte], BigInt)] = {
             val feeDenom: BigInt = 1000L.toBigInt
             val devFee: BigInt = 5L.toBigInt
@@ -276,7 +273,7 @@
             val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) =
                 (_OracleFeePk, oracleFeePayout)
 
-            if (isBetaDecayMinusTx || isBetaDecayPlusTx)
+            if (isBetaDecayMinusTx || isBetaDecayPlusTx) // Fission and Fusion does not need Oracle
             {
                 // If Ui fee is defined, then we add an additional 0.4% fee
                 if (_optUIFeeAddress.isDefined) {
@@ -361,7 +358,7 @@
 
              val oracleFeesPaid: Boolean = {
                 if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
-                    if (fees(2)._2 > 0) { // Dev fee is greater than 0
+                    if (fees(2)._2 > 0) { // Oracle fee is greater than 0
                         allOf(
                             Coll(
                                 oracleOutput.propositionBytes      == fees(2)._1,
@@ -438,17 +435,17 @@
         }
         else if (isFusionTx)
         {
-            // ===== FISSION Tx ===== //
+            // ===== FUSION Tx ===== //
             // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] = M (1 - PhiT) [Ergs]
 
             // ** Tx FEE for pool **
             // This is the fee that gets collected to add into the pool during fission.
             val PhiFusion: BigInt = (precision / 100).toBigInt
 
-            // The protons and neutrons are lesser in outbox than inputbox
-            val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
+            // The protons and neutrons are more in outbox than inputbox
+            val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
+            val ErgsActualValue: BigInt = (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
 
             // M(1 - phiFusion) = Ergs
             // therefore, M = Ergs / (1 - phiFusion)
@@ -481,12 +478,12 @@
         else if (isBetaDecayPlusTx)
         {
             //===== BetaDecayPlus Tx ===== //
-            //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S proton)) / q(R, S proton)) * (S protons / S neutrons) [Protons]
+            // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
 
             // proton value
             val M: Long = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2)
 
-            // The protons and neutrons are lesser in outbox than inputbox
+            // The protons increase in output, neutrons decrease in outputs
             val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
@@ -597,6 +594,7 @@
             // ** Tx FEE for pool **
             // This is the fee that gets collected to add into the pool during decay.
 
+            // Phi 0 is 0.01, and Phi1 is 0.5
             val Phi0 = precision / 100
             val Phi1 = precision / 2
 
@@ -648,7 +646,7 @@
         else if (isBetaDecayMinusTx)
         {
             // ===== BetaDecayMinus Tx ===== //
-            // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
+            //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
             val M: Long = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2)
 
             // ** VarPhiBeta Calculation **
@@ -735,6 +733,7 @@
             // ** Tx FEE for pool **
             // This is the fee that gets collected to add into the pool during decay.
 
+            // Phi 0 is 0.01, and Phi1 is 0.5
             val Phi0 = precision / 100
             val Phi1 = precision / 2
 
@@ -751,7 +750,7 @@
 
             // ** VarPhiBeta Calculation End **
 
-            // The protons and neutrons are lesser in outbox than inputbox
+            // Neutrons increase in output, protons decrease in output.
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
