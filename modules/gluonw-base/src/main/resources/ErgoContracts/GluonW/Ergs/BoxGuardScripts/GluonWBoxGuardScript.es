@@ -183,6 +183,8 @@
         val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee
         val RErg: BigInt = _fissionedErg.toBigInt
         // Price of Gold
+        // Gold Oracle data input value has units of: nanoErg / kg
+        // We want units of: nanoErg / g
         val Pt: BigInt = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000
 
         // We're using 1,000,000,000 because the precision is based on nanoErgs
@@ -447,10 +449,8 @@
             val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
 
-            // M(1 - phiFusion) = Ergs
-            // therefore, M = Ergs / (1 - phiFusion)
-            val M: BigInt = ErgsActualValue * (precision / (precision - PhiFusion))
-
+            // M = Ergs
+            val M: BigInt = ErgsActualValue
 
             val inProtonsNumerator: BigInt = M * SProtons * precision
             val inNeutronsNumerator: BigInt = M * SNeutrons * precision
@@ -459,7 +459,7 @@
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
             // This will make the outErgsValueValid condition tautological. We could take this and the condition off, but we will keep it for the sake of completeness.
-            val ErgsExpectedValue: BigInt = ErgsActualValue
+            val ErgsExpectedValue: BigInt = M
 
             // ### The 2 conditions to ensure that the values out is right ### //
             val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -598,7 +598,7 @@
             val Phi0 = precision / 100
             val Phi1 = precision / 2
 
-            val VarPhiBeta: BigInt = Phi0 + Phi1 * volume / RErg
+            val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +-3 blocks
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
@@ -614,17 +614,14 @@
             // ** Fusion Ratio **
             // min(q*, (SNeutrons * Pt / R))
             // where q* is a constant, Pt is the price of gold in Ergs.
-            val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
-            val oneMinusFusionRatio: BigInt = precision - fusionRatio
-            val minusesMultiplied: BigInt =
-                oneMinusPhiBeta * oneMinusFusionRatio / precision
-            val outNeutronsAmount: BigInt =
-                (((M * minusesMultiplied) / fusionRatio) * SNeutrons) / SProtons
-
-            val outProtonsAmount: BigInt = M.toBigInt
+            val oneMinusPhiBeta: BigInt = (precision - VarPhiBeta)
+            val oneMinusFusionRatio: BigInt = (precision - fusionRatio)
+            val numerator: BigInt = M * oneMinusPhiBeta * oneMinusFusionRatio  * SNeutrons
+            val denominator: BigInt = fusionRatio * SProtons
+            val outNeutronsAmount: BigInt = (numerator / denominator) / (precision * precision)
 
             val NeutronsExpectedValue: BigInt = outNeutronsAmount
-            val ProtonsExpectedValue: BigInt = outProtonsAmount
+            val ProtonsExpectedValue: BigInt = M
             val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
             // ### The 2 conditions to ensure that the values out is right ### //
@@ -642,12 +639,10 @@
                 __outVolumePlusValidated,
                 __lastBlockPreserved
             )))
-        }
-        else if (isBetaDecayMinusTx)
-        {
+        } else if (isBetaDecayMinusTx) {
             // ===== BetaDecayMinus Tx ===== //
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
-            val M: Long = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2)
+            val M: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
 
             // ** VarPhiBeta Calculation **
             val currentBlockNumber: Long = CONTEXT.HEIGHT
@@ -760,13 +755,11 @@
             // where q* is a constant, Pt is the price of gold in Ergs.
             val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
             val oneMinusFusionRatio: BigInt = precision - fusionRatio
-            val neutronsToDecayMultiplyOneMinusPhiBeta: BigInt =
-                M.toBigInt * oneMinusPhiBeta / precision
-            val outProtonsAmount: BigInt =
-                ((neutronsToDecayMultiplyOneMinusPhiBeta * SProtons / SNeutrons) * fusionRatio) / oneMinusFusionRatio
-            val outNeutronsAmount: BigInt = M.toBigInt
+            val numerator: BigInt = M * oneMinusPhiBeta * fusionRatio * SProtons
+            val denominator: BigInt = oneMinusFusionRatio * SNeutrons
+            val outProtonsAmount: BigInt = numerator / denominator
 
-            val NeutronsExpectedValue: BigInt = outNeutronsAmount
+            val NeutronsExpectedValue: BigInt = M
             val ProtonsExpectedValue: BigInt = outProtonsAmount
             val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
