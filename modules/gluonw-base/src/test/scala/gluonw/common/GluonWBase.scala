@@ -169,8 +169,8 @@ trait GluonWBase extends UnitSpec {
 
   def genesisGluonWBox(
     ergAmount: Double = 200_000L,
-    neutronAmount: Double = 1_000L,
-    protonAmount: Double = 1_000L
+    neutronAmount: Double = 1_000_000L,
+    protonAmount: Double = 1_000_000L
   ): GluonWBox = GluonWBox.create(
     protonAmount =
       GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY - (protonAmount * GluonWBoxConstants.PRECISION).toLong,

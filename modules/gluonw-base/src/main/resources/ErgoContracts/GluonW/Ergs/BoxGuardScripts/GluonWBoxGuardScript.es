@@ -614,14 +614,15 @@
             // ** Fusion Ratio **
             // min(q*, (SNeutrons * Pt / R))
             // where q* is a constant, Pt is the price of gold in Ergs.
+            // The steps of multiplication and division done below are to avoid overflow errors.
             val oneMinusPhiBeta: BigInt = (precision - VarPhiBeta)
             val oneMinusFusionRatio: BigInt = (precision - fusionRatio)
-            val numerator: BigInt = M * oneMinusPhiBeta * oneMinusFusionRatio  * SNeutrons
-            val denominator: BigInt = fusionRatio * SProtons
-            val outNeutronsAmount: BigInt = (numerator / denominator) / (precision * precision)
+            val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / SProtons
+            val ratio2: BigInt = (oneMinusFusionRatio * SNeutrons) / precision
+            val outNeutronsAmount: BigInt = (ratio1 * ratio2) / fusionRatio
 
             val NeutronsExpectedValue: BigInt = outNeutronsAmount
-            val ProtonsExpectedValue: BigInt = M
+            val ProtonsExpectedValue: BigInt = M.toBigInt
             val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
             // ### The 2 conditions to ensure that the values out is right ### //
@@ -642,7 +643,7 @@
         } else if (isBetaDecayMinusTx) {
             // ===== BetaDecayMinus Tx ===== //
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
-            val M: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+            val M: Long = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2)
 
             // ** VarPhiBeta Calculation **
             val currentBlockNumber: Long = CONTEXT.HEIGHT
@@ -753,13 +754,14 @@
             // ** Fusion Ratio **
             // min(q*, (SNeutrons * Pt / R))
             // where q* is a constant, Pt is the price of gold in Ergs.
+            // The steps of multiplication and division done below are to avoid overflow errors.
             val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
             val oneMinusFusionRatio: BigInt = precision - fusionRatio
-            val numerator: BigInt = M * oneMinusPhiBeta * fusionRatio * SProtons
-            val denominator: BigInt = oneMinusFusionRatio * SNeutrons
-            val outProtonsAmount: BigInt = numerator / denominator
+            val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / SNeutrons
+            val ratio2: BigInt = (fusionRatio * SProtons) / precision 
+            val outProtonsAmount: BigInt = (ratio1 * ratio2) / oneMinusFusionRatio
 
-            val NeutronsExpectedValue: BigInt = M
+            val NeutronsExpectedValue: BigInt = M.toBigInt
             val ProtonsExpectedValue: BigInt = outProtonsAmount
             val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
 
