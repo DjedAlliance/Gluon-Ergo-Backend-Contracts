@@ -18,7 +18,8 @@ case class AssetPrice(name: String, price: Long, id: ErgoId) {
       List(
         ("assetName", Json.fromString(name)),
         ("id", Json.fromString(id.toString)),
-        ("price", Json.fromLong(price))
+        ("price", Json.fromLong(price)),
+        ("decimals", Json.fromLong(9))
       )
     )
 }
@@ -533,12 +534,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          (inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
+          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
           GluonWTokens.neutronId
         ),
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          (inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
+          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
           GluonWTokens.protonId
         )
       )
@@ -563,12 +564,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          (outGluonWBox.Neutrons.getValue - inputGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
+          outGluonWBox.Neutrons.getValue - inputGluonWBox.Neutrons.getValue,
           GluonWTokens.neutronId
         ),
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          (outGluonWBox.Protons.getValue - inputGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
+          outGluonWBox.Protons.getValue - inputGluonWBox.Protons.getValue,
           GluonWTokens.protonId
         )
       )
@@ -592,7 +593,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          (inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
+          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
           GluonWTokens.neutronId
         )
       )
@@ -616,7 +617,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          (inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
+          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
           GluonWTokens.protonId
         )
       )
