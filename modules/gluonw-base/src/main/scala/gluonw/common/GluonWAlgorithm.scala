@@ -533,12 +533,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
+          (inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.neutronId
         ),
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
+          (inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.protonId
         )
       )
@@ -563,12 +563,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          outGluonWBox.Neutrons.getValue - inputGluonWBox.Neutrons.getValue,
+          (outGluonWBox.Neutrons.getValue - inputGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.neutronId
         ),
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          outGluonWBox.Protons.getValue - inputGluonWBox.Protons.getValue,
+          (outGluonWBox.Protons.getValue - inputGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.protonId
         )
       )
@@ -592,7 +592,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.NEUTRON.toString,
-          inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue,
+          (inputGluonWBox.Neutrons.getValue - outGluonWBox.Neutrons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.neutronId
         )
       )
@@ -616,7 +616,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       Seq(
         AssetPrice(
           name = GluonWAsset.PROTON.toString,
-          inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue,
+          (inputGluonWBox.Protons.getValue - outGluonWBox.Protons.getValue) / GluonWBoxConstants.PRECISION,
           GluonWTokens.protonId
         )
       )

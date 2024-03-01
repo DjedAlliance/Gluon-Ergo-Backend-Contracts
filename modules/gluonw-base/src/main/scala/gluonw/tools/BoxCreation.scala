@@ -76,7 +76,7 @@ object BoxCreation extends App {
     val MERGE: String = "merge"
 
     // SET RUN TX HERE
-    val runTx: String = MUTATE
+    val runTx: String = SIGN_REDUCED
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
