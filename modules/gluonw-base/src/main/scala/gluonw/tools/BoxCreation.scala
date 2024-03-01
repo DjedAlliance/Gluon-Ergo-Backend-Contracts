@@ -2,27 +2,22 @@ package gluonw.tools
 
 import commons.configs.ServiceConfig
 import commons.node.{Client, TestClient}
-import edge.boxes.{BoxWrapper, FundsToAddressBox}
+import edge.boxes.FundsToAddressBox
 import edge.node.BaseClient
 import edge.registers.LongRegister
 import edge.tools.BoxTools
-import edge.tools.BoxTools.{getProver, mergeBox, mintTokens}
-import edge.txs.Tx
-import gluonw.common.{GluonWBoxExplorer, GluonWTokens}
+import edge.tools.BoxTools.{mergeBox, mintTokens}
+import gluonw.common.GluonWTokens
 import org.ergoplatform.appkit.{
-  Address,
   BlockchainContext,
-  ErgoProver,
   InputBox,
   NetworkType,
   Parameters,
   SignedTransaction
 }
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants}
 import org.ergoplatform.sdk.ErgoToken
-
-import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object BoxCreation extends App {
 
@@ -40,7 +35,7 @@ object BoxCreation extends App {
 
 //  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
   val reducedTxBytes: Seq[String] = Seq(
-    "",
+    ""
   )
 
   client.setClient()
@@ -74,9 +69,10 @@ object BoxCreation extends App {
     val MINT: String = "mint"
     val MUTATE: String = "mutate"
     val MERGE: String = "merge"
+    val BURN: String = "burn"
 
     // SET RUN TX HERE
-    val runTx: String = SIGN_REDUCED
+    val runTx: String = BURN
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -186,6 +182,20 @@ object BoxCreation extends App {
           conf,
           nodeConf
         )
+      }
+      case BURN => {
+        val tokens = Seq(
+          ErgoToken(
+            GluonWTokens.neutronId,
+            (GluonWBoxConstants.PRECISION / 100)
+          ),
+          ErgoToken(
+            GluonWTokens.protonId,
+            (GluonWBoxConstants.PRECISION / 100)
+          )
+        )
+
+        BoxTools.burnTokens(tokens)(client, conf, nodeConf)
       }
     }
 
