@@ -41,7 +41,6 @@ object BoxCreation extends App {
 //  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
   val reducedTxBytes: Seq[String] = Seq(
     "",
-    ""
   )
 
   client.setClient()
@@ -55,16 +54,16 @@ object BoxCreation extends App {
       )
     ),
     (
-      "GluonW Test Neutrons",
+      "GluonW Test GAU",
       (
-        "GluonW Neutrons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
+        "GluonW GAU Neutrons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     ),
     (
-      "GluonW Test Protons",
+      "GluonW Test GAUC",
       (
-        "GluonW Protons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
+        "GluonW GAUC Protons by DJed Alliance v1.2: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     )
@@ -77,7 +76,7 @@ object BoxCreation extends App {
     val MERGE: String = "merge"
 
     // SET RUN TX HERE
-    val runTx: String = MERGE
+    val runTx: String = MUTATE
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -87,12 +86,14 @@ object BoxCreation extends App {
         val neutronsMintTx = mintTokens(
           tokens(1)._1,
           tokens(1)._2._1,
-          tokens(1)._2._2
+          tokens(1)._2._2,
+          decimals = 9
         )(client, conf, nodeConf)
         val protonsMintTx = mintTokens(
           tokens(2)._1,
           tokens(2)._2._1,
-          tokens(2)._2._2
+          tokens(2)._2._2,
+          decimals = 9
         )(client, conf, nodeConf)
         val gluonWNFTMintTx = mintTokens(
           tokens.head._1,
@@ -100,7 +101,7 @@ object BoxCreation extends App {
           tokens.head._2._2
         )(client, conf, nodeConf)
 
-        protonsMintTx
+        gluonWNFTMintTx
       }
       case MERGE => {
         val nftToken = ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)
@@ -131,7 +132,7 @@ object BoxCreation extends App {
       }
       case MUTATE => {
         val boxIdToMutate: String =
-          "b8212c8254b45d2b431fcc80a9f2e6a6845fafb0cc6e06f54e16e96e28363e88"
+          "f63c28b81dbdf0a2ca46abcde63ffb6d4928579e4a8b67f3586bcc82a3185c98"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
         val toUserBox: FundsToAddressBox = FundsToAddressBox(
