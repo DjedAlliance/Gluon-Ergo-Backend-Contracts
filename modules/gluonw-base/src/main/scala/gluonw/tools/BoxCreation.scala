@@ -7,8 +7,9 @@ import edge.node.BaseClient
 import edge.registers.LongRegister
 import edge.tools.BoxTools
 import edge.tools.BoxTools.{mergeBox, mintTokens}
-import gluonw.common.GluonWTokens
+import gluonw.common.{GluonWBoxExplorer, GluonWTokens}
 import org.ergoplatform.appkit.{
+  Address,
   BlockchainContext,
   InputBox,
   NetworkType,
@@ -16,8 +17,10 @@ import org.ergoplatform.appkit.{
   SignedTransaction
 }
 import org.ergoplatform.appkit.config.{ErgoNodeConfig, ErgoToolConfig}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants}
-import org.ergoplatform.sdk.ErgoToken
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import org.ergoplatform.sdk.{ErgoToken, SecretString}
+
+import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 object BoxCreation extends App {
 
@@ -72,7 +75,7 @@ object BoxCreation extends App {
     val BURN: String = "burn"
 
     // SET RUN TX HERE
-    val runTx: String = BURN
+    val runTx: String = MUTATE
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -128,29 +131,44 @@ object BoxCreation extends App {
       }
       case MUTATE => {
         val boxIdToMutate: String =
-          "f63c28b81dbdf0a2ca46abcde63ffb6d4928579e4a8b67f3586bcc82a3185c98"
+          "5778651e6e9a3748da4158b644ee649d4794e2057f3b999d9f21fb8652d12cb9"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
-        val toUserBox: FundsToAddressBox = FundsToAddressBox(
-          address =
-            if (nodeConf.getNetworkType == NetworkType.MAINNET)
-              ServiceConfig.mainNetServiceOwner
-            else ServiceConfig.testNetServiceOwner,
-          value = mutatedGluonWBox.value - 2 * Parameters.MinFee,
-          tokens = mutatedGluonWBox.tokens,
-          R4 = Option(mutatedGluonWBox.totalSupplyRegister),
-          R5 = Option(mutatedGluonWBox.tokenIdRegister),
-          R6 = Option(mutatedGluonWBox.feeRegister),
-          R7 = Option(mutatedGluonWBox.volumePlusRegister),
-          R8 = Option(mutatedGluonWBox.volumeMinusRegister),
-          R9 = Option(mutatedGluonWBox.lastDayBlockRegister)
+        val ownerAddress: Address = Address.createEip3Address(
+          0,
+          nodeConf.getNetworkType,
+          SecretString.create(nodeConf.getWallet.getMnemonic),
+          SecretString.create(""),
+          false
         )
+        // get some fee for spending
+        val spendingBoxes =
+          ctx.getDataSource
+            .getUnspentBoxesFor(ownerAddress, 0, 500)
+            .asScala
+            .toSeq
+            .filter(_.getTokens.isEmpty)
+//        val toUserBox: FundsToAddressBox = FundsToAddressBox(
+//          address =
+//            if (nodeConf.getNetworkType == NetworkType.MAINNET)
+//              ServiceConfig.mainNetServiceOwner
+//            else ServiceConfig.testNetServiceOwner,
+//          value = mutatedGluonWBox.value - 2 * Parameters.MinFee,
+//          tokens = mutatedGluonWBox.tokens,
+//          R4 = Option(mutatedGluonWBox.totalSupplyRegister),
+//          R5 = Option(mutatedGluonWBox.tokenIdRegister),
+//          R6 = Option(mutatedGluonWBox.feeRegister),
+//          R7 = Option(mutatedGluonWBox.volumePlusRegister),
+//          R8 = Option(mutatedGluonWBox.volumeMinusRegister),
+//          R9 = Option(mutatedGluonWBox.lastDayBlockRegister)
+//        )
 //        val oracleBox: OracleBox = explorer.getOracleBox
 
         BoxTools.mutate(
           boxIdToMutate = boxIdToMutate,
-          Seq(toUserBox)
-//          dataInputs = Seq(oracleBox.box.get.input)
+          Seq(mutatedGluonWBox),
+//          dataInputs = Seq(oracleBox.box.get.input),
+          inputBoxes = spendingBoxes
         )(
           client,
           conf,

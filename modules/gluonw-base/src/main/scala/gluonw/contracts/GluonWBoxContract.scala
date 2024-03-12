@@ -25,6 +25,7 @@ object GluonWBoxContract {
         "_MinFee" -> minFee,
         "_DevPk" -> serviceOwner.getPublicKey,
         "_OracleFeePk" -> oracleConfig.paymentAddress.getErgoAddress.contentBytes,
+        "_OracleBuybackNFT" -> oracleConfig.paymentNft.id.getBytes,
         "_OraclePoolNFT" -> oracleConfig.nft.id.getBytes
       ),
       ownerAddress = serviceOwner,

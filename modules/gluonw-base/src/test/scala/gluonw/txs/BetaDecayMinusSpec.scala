@@ -1,7 +1,7 @@
 package gluonw.txs
 
 import edge.boxes.{CustomBoxData, FundsToAddressBox}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox, OracleBuybackBox}
 import gluonw.common.{
   GluonWAlgorithm,
   GluonWBase,
@@ -12,7 +12,12 @@ import gluonw.common.{
   GluonWTokens,
   TGluonWConstants
 }
-import org.ergoplatform.appkit.{Address, InputBox, UnsignedTransaction}
+import org.ergoplatform.appkit.{
+  Address,
+  ContextVar,
+  InputBox,
+  UnsignedTransaction
+}
 
 import scala.util.Random
 
@@ -69,8 +74,18 @@ class BetaDecayMinusSpec extends GluonWBase {
             )
 
           implicit val currentHeight: Long = ctx.getHeight
+          val oracleBuybackBox: InputBox = OracleBuybackBox
+            .testBox()
+            .getAsInputBox(ctx.newTxBuilder())
+            .withContextVars(ContextVar.of(0.toByte, 0))
+          val oracleBuybackBoxTopUpRoute: InputBox =
+            OracleBuybackBox.setTopUp(oracleBuybackBox)
           val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
-            inputBoxes = Seq(gluonWBox.getAsInputBox(), paymentBox),
+            inputBoxes = Seq(
+              gluonWBox.getAsInputBox(),
+              paymentBox,
+              oracleBuybackBoxTopUpRoute
+            ),
             neutronsToTransmute = neutronsToTransmute,
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
@@ -171,8 +186,16 @@ class BetaDecayMinusSpec extends GluonWBase {
             )
 
           implicit val currentHeight: Long = ctx.getHeight
+          val oracleBuybackBox: InputBox =
+            OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+          val oracleBuybackBoxTopUpRoute: InputBox =
+            OracleBuybackBox.setTopUp(oracleBuybackBox)
           val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
-            inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
+            inputBoxes = Seq(
+              inGluonWBox.getAsInputBox(),
+              paymentBox,
+              oracleBuybackBoxTopUpRoute
+            ),
             neutronsToTransmute = neutronsToTransmute,
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
@@ -280,8 +303,16 @@ class BetaDecayMinusSpec extends GluonWBase {
         )
 
       implicit val currentHeight: Long = ctx.getHeight
+      val oracleBuybackBox: InputBox =
+        OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+      val oracleBuybackBoxTopUpRoute: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuybackBox)
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
-        inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
+        inputBoxes = Seq(
+          inGluonWBox.getAsInputBox(),
+          paymentBox,
+          oracleBuybackBoxTopUpRoute
+        ),
         neutronsToTransmute = neutronsToTransmute,
         changeAddress = changeAddress,
         dataInputs = Seq(oracleBoxInputBox)

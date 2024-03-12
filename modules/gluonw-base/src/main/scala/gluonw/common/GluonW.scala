@@ -1,11 +1,17 @@
 package gluonw.common
 
+import commons.configs.OracleConfig
 import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
-import gluonw.boxes.{GluonWBox, OracleBox}
+import gluonw.boxes.{GluonWBox, OracleBox, OracleBuybackBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx, FusionTx}
-import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
+import org.ergoplatform.appkit.{
+  Address,
+  BlockchainContext,
+  ContextVar,
+  InputBox
+}
 import edge.txs.{TTx, Tx}
 import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
@@ -386,10 +392,18 @@ class GluonW @Inject() (
           ).asJava
         )
 
+      // 3.5 Get OracleBuyBackBox
+      val oracleBuyBackInputBox: InputBox =
+        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+      val oracleBuyBackInputBoxWithContextVar: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
+
       // 4. Create BetaDecayPlusTx
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
         neutronsToTransmute = neutronsAmount,
-        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq ++ Seq(
+          oracleBuyBackInputBoxWithContextVar
+        ),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -452,10 +466,18 @@ class GluonW @Inject() (
           ).asJava
         )
 
+      // 3.5 Get OracleBuyBackBox
+      val oracleBuyBackInputBox: InputBox =
+        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+      val oracleBuybackBoxTopUpRoute: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
+
       // 4. Create BetaDecayMinusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsAmount,
-        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq ++ Seq(
+          oracleBuybackBoxTopUpRoute
+        ),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -600,12 +622,20 @@ class GluonW @Inject() (
       val protonsTransmuted: Long =
         gluonWBox.Protons.value - outputGluonWBox.Protons.value
 
+      // 3.5 Get OracleBuyBackBox
+      val oracleBuyBackInputBox: InputBox =
+        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+      val oracleBuybackBoxTopUpRoute: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
+
       // 4. Create BetaDecayPlusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsTransmuted,
         inputBoxes =
           // We take everything except nth box because thats the fee box
-          fissionTxOutputBox.take(fissionTxOutputBox.length - 1),
+          fissionTxOutputBox.take(fissionTxOutputBox.length - 1) ++ Seq(
+            oracleBuybackBoxTopUpRoute
+          ),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)
@@ -683,12 +713,20 @@ class GluonW @Inject() (
       val neutronsTransmuted: Long =
         gluonWBox.Neutrons.value - outputGluonWBox.Neutrons.value
 
+      // 3.5 Get OracleBuyBackBox
+      val oracleBuyBackInputBox: InputBox =
+        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+
+      val oracleBuyBackInputBoxWithContextVar: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
       // 4. Create BetaDecayMinusTx
       val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
         neutronsToTransmute = neutronsTransmuted,
         inputBoxes =
           // We take everything except nth box because thats the fee box
-          fissionTxOutputBox.take(fissionTxOutputBox.length - 1),
+          fissionTxOutputBox.take(fissionTxOutputBox.length - 1) ++ Seq(
+            oracleBuyBackInputBoxWithContextVar
+          ),
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator, ctx.getHeight)

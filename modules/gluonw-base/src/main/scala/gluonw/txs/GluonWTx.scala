@@ -1,9 +1,10 @@
 package gluonw.txs
 
+import commons.configs.OracleConfig
 import edge.boxes.{BoxWrapper, FundsToAddressBox}
 import edge.commons.{ErgCommons, ErgoBoxHelper}
-import edge.registers.{LongPairRegister, LongRegister, NumbersRegister}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import edge.registers.{LongPairRegister, LongRegister}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox, OracleBuybackBox}
 import gluonw.common.{GluonWFees, GluonWFeesCalculator, TGluonWAlgorithm}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.TTx
@@ -251,8 +252,12 @@ case class BetaDecayPlusTx(
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
+    val userBoxes = inputBoxes.slice(1, inputBoxes.size - 1)
     val userBox: FundsToAddressBox =
-      ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
+      ErgoBoxHelper.consolidateBoxes(userBoxes).head
+
+    val oracleBuybackInputBox: OracleBuybackBox =
+      OracleBuybackBox.from(inputBoxes.last)
 
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
@@ -283,11 +288,18 @@ case class BetaDecayPlusTx(
         neutronOracleBox
       )
 
+    // Excluding OracleBuybackBox
     val feeBoxes: Seq[FundsToAddressBox] = feesCalculator.getFeesOutBox(
       gluonWFees
     )
 
     val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
+
+    // First feeBox is oraclebox
+    val oracleFeeBoxValue: Long =
+      feeBoxes.filter(_.address == OracleConfig.get().paymentAddress).head.value
+    val oracleBuybackOutBox: OracleBuybackBox = oracleBuybackInputBox
+      .copy(value = oracleBuybackInputBox.value + oracleFeeBoxValue)
 
     val outUserBox: FundsToAddressBox = userBox.copy(
       value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
@@ -311,7 +323,9 @@ case class BetaDecayPlusTx(
         )
       )
 
-    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
+    val feeBoxesWithoutOracleBuyback =
+      feeBoxes.filter(_.address != OracleConfig.get().paymentAddress)
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox, oracleBuybackOutBox) ++ feeBoxesWithoutOracleBuyback
   }
 }
 
@@ -333,8 +347,11 @@ case class BetaDecayMinusTx(
 
   override def defineOutBoxWrappers: Seq[BoxWrapper] = {
     val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
+    val userBoxes = inputBoxes.slice(1, inputBoxes.size - 1)
     val userBox: FundsToAddressBox =
-      ErgoBoxHelper.consolidateBoxes(inputBoxes.tail).head
+      ErgoBoxHelper.consolidateBoxes(userBoxes).head
+    val oracleBuybackInputBox: OracleBuybackBox =
+      OracleBuybackBox.from(inputBoxes.last)
 
     implicit val neutronOracleBox: OracleBox =
       OracleBox.from(dataInputs.head)
@@ -368,6 +385,12 @@ case class BetaDecayMinusTx(
 
     val totalFees: Long = feeBoxes.foldLeft(0L)((acc, box) => acc + box.value)
 
+    // First feeBox is oraclebox
+    val oracleFeeBoxValue: Long =
+      feeBoxes.filter(_.address == OracleConfig.get().paymentAddress).head.value
+    val oracleBuybackOutBox: OracleBuybackBox = oracleBuybackInputBox
+      .copy(value = oracleBuybackInputBox.value + oracleFeeBoxValue)
+
     val outUserBox: FundsToAddressBox = userBox.copy(
       value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
       tokens = finalCalculatedGluonTokens
@@ -390,6 +413,8 @@ case class BetaDecayMinusTx(
         )
       )
 
-    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox) ++ feeBoxes
+    val feeBoxesWithoutOracleBuyback =
+      feeBoxes.filter(_.address != OracleConfig.get().paymentAddress)
+    Seq(outGluonWBoxWithLastBlockUpdated, outUserBox, oracleBuybackOutBox) ++ feeBoxesWithoutOracleBuyback
   }
 }

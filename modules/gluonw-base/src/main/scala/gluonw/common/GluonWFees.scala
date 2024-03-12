@@ -90,8 +90,22 @@ case class GluonWFeesCalculator(
     )
   }
 
+  /**
+    * Due to oracle buyback contract, we have to put the oracle fee first.
+    * https://www.ergoforum.org/t/buying-back-tokens-from-liqudity-pool/4275
+    * @param gluonWFees
+    * @return
+    */
   def getFeesOutBox(gluonWFees: GluonWFees): Seq[FundsToAddressBox] = {
     val outBox: Seq[Option[FundsToAddressBox]] = Seq(
+      if (gluonWFees.oracleFee._1 > 0)
+        Option(
+          FundsToAddressBox(
+            value = gluonWFees.oracleFee._1 + Parameters.MinFee,
+            address = gluonWFees.oracleFee._2
+          )
+        )
+      else None,
       Option(
         FundsToAddressBox(
           value = gluonWFees.devFee._1 + Parameters.MinFee,
@@ -103,14 +117,6 @@ case class GluonWFeesCalculator(
           FundsToAddressBox(
             value = gluonWFees.uiFee._1 + Parameters.MinFee,
             address = gluonWFees.uiFee._2
-          )
-        )
-      else None,
-      if (gluonWFees.oracleFee._1 > 0)
-        Option(
-          FundsToAddressBox(
-            value = gluonWFees.oracleFee._1 + Parameters.MinFee,
-            address = gluonWFees.oracleFee._2
           )
         )
       else None

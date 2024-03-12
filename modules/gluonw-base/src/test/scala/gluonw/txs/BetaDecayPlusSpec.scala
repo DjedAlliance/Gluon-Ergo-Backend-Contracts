@@ -1,7 +1,7 @@
 package gluonw.txs
 
 import edge.boxes.{CustomBoxData, FundsToAddressBox}
-import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox, OracleBuybackBox}
 import gluonw.common.{
   GluonWAlgorithm,
   GluonWBase,
@@ -67,8 +67,16 @@ class BetaDecayPlusSpec extends GluonWBase {
             )
 
           implicit val currentHeight: Long = ctx.getHeight
+          val oracleBuybackBox: InputBox =
+            OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+          val oracleBuybackBoxTopUpRoute: InputBox =
+            OracleBuybackBox.setTopUp(oracleBuybackBox)
           val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
-            inputBoxes = Seq(gluonWBox.getAsInputBox(), paymentBox),
+            inputBoxes = Seq(
+              gluonWBox.getAsInputBox(),
+              paymentBox,
+              oracleBuybackBoxTopUpRoute
+            ),
             protonsToTransmute = protonsToDecay,
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
@@ -162,8 +170,16 @@ class BetaDecayPlusSpec extends GluonWBase {
             )
 
           implicit val currentHeight: Long = ctx.getHeight
+          val oracleBuybackBox: InputBox =
+            OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+          val oracleBuybackBoxTopUpRoute: InputBox =
+            OracleBuybackBox.setTopUp(oracleBuybackBox)
           val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
-            inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
+            inputBoxes = Seq(
+              inGluonWBox.getAsInputBox(),
+              paymentBox,
+              oracleBuybackBoxTopUpRoute
+            ),
             protonsToTransmute = protonsToTransmute,
             changeAddress = changeAddress,
             dataInputs = Seq(oracleBoxInputBox)
@@ -266,8 +282,16 @@ class BetaDecayPlusSpec extends GluonWBase {
         )
 
       implicit val currentHeight: Long = ctx.getHeight
+      val oracleBuybackBox: InputBox =
+        OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+      val oracleBuybackBoxTopUpRoute: InputBox =
+        OracleBuybackBox.setTopUp(oracleBuybackBox)
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
-        inputBoxes = Seq(inGluonWBox.getAsInputBox(), paymentBox),
+        inputBoxes = Seq(
+          inGluonWBox.getAsInputBox(),
+          paymentBox,
+          oracleBuybackBoxTopUpRoute
+        ),
         protonsToTransmute = protonsToTransmute,
         changeAddress = changeAddress,
         dataInputs = Seq(oracleBoxInputBox)
