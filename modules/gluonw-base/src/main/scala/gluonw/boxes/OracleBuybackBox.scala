@@ -1,6 +1,7 @@
 package gluonw.boxes
 
 import commons.configs.OracleConfig
+import commons.node.Client
 import edge.boxes.{Box, BoxWrapper, BoxWrapperHelper}
 import org.ergoplatform.appkit.{
   Address,
@@ -11,6 +12,8 @@ import org.ergoplatform.appkit.{
   Parameters
 }
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
+
+import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 case class OracleBuybackBox(
   value: Long,
@@ -31,6 +34,16 @@ object OracleBuybackBox extends BoxWrapperHelper {
       id = inputBox.getId,
       box = Option(Box(inputBox))
     )
+
+  def getOracleBuyBackBox(client: Client): InputBox =
+    client
+      .getAllUnspentBox(OracleConfig.get().paymentAddress)
+      .filter { box =>
+        box.getTokens.asScala.toSeq.count(token =>
+          token.id.equals(OracleConfig.get().paymentNft.id)
+        ) == 1
+      }
+      .head
 
   /**
     * 1 is top up route

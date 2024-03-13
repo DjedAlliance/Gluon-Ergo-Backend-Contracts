@@ -394,7 +394,7 @@ class GluonW @Inject() (
 
       // 3.5 Get OracleBuyBackBox
       val oracleBuyBackInputBox: InputBox =
-        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+        OracleBuybackBox.getOracleBuyBackBox(client)
       val oracleBuyBackInputBoxWithContextVar: InputBox =
         OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
 
@@ -468,7 +468,7 @@ class GluonW @Inject() (
 
       // 3.5 Get OracleBuyBackBox
       val oracleBuyBackInputBox: InputBox =
-        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+        OracleBuybackBox.getOracleBuyBackBox(client)
       val oracleBuybackBoxTopUpRoute: InputBox =
         OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
 
@@ -624,7 +624,7 @@ class GluonW @Inject() (
 
       // 3.5 Get OracleBuyBackBox
       val oracleBuyBackInputBox: InputBox =
-        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+        OracleBuybackBox.getOracleBuyBackBox(client)
       val oracleBuybackBoxTopUpRoute: InputBox =
         OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
 
@@ -715,7 +715,7 @@ class GluonW @Inject() (
 
       // 3.5 Get OracleBuyBackBox
       val oracleBuyBackInputBox: InputBox =
-        client.getAllUnspentBox(OracleConfig.get().paymentAddress).head
+        OracleBuybackBox.getOracleBuyBackBox(client)
 
       val oracleBuyBackInputBoxWithContextVar: InputBox =
         OracleBuybackBox.setTopUp(oracleBuyBackInputBox)

@@ -1,5 +1,6 @@
 package controllers
 
+import commons.configs.OracleConfig
 import commons.node.Client
 import edge.EIP12Elements.EIP12Tx
 import edge.errors.ExceptionThrowable
@@ -10,12 +11,13 @@ import gluonw.common.{GluonW, GluonWBoxExplorer, TxConverter}
 import gluonw.txs.FissionTx
 import io.circe.Json
 import io.circe.syntax.EncoderOps
-import org.ergoplatform.appkit.Address
+import org.ergoplatform.appkit.{Address, ContextVar}
 import play.api.Logger
 import play.api.libs.circe.Circe
 import play.api.mvc._
 
 import javax.inject.Inject
+import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 /**
   * common.GluonW Controller trait
@@ -188,8 +190,19 @@ class GluonWController @Inject() (
     val txs: Seq[TTx] = txFunc(assetAmount, walletAddress)
 
     if (isEIP12) {
+
       val eip12UnsignedTxs: Seq[EIP12Tx] = txs.map { tx =>
-        EIP12Tx(tx.buildTx, List())
+        val contextVars: Seq[Option[List[ContextVar]]] =
+          tx.inputBoxes.map { inputBox =>
+            val isOracleBox = inputBox.getTokens.asScala.toSeq.count(token =>
+              token.id.equals(OracleConfig.get().paymentNft.id)
+            ) == 1
+            if (isOracleBox)
+              Option(List(ContextVar.of(0.toByte, 1)))
+            else None
+          }
+
+        EIP12Tx(tx.buildTx, contextVars)
       }
 
       Json.fromValues(
