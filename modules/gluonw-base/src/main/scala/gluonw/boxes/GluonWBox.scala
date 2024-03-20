@@ -334,3 +334,23 @@ object GluonWBox extends BoxWrapperHelper {
       )
     )
 }
+
+object BoxHelper {
+
+  def getIdFromJson(json: Json) = {
+    val boxesJson: Seq[Json] = json.hcursor
+      .downField("items")
+      .as[Seq[Json]]
+      .getOrElse(
+        throw ParseException(
+          "CiJson Parse Error at OracleBox.from"
+        )
+      )
+
+    val id: String =
+      boxesJson.head.hcursor.downField("boxId").as[String].getOrElse("")
+
+    id
+  }
+
+}

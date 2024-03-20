@@ -35,16 +35,6 @@ object OracleBuybackBox extends BoxWrapperHelper {
       box = Option(Box(inputBox))
     )
 
-  def getOracleBuyBackBox(client: Client): InputBox =
-    client
-      .getAllUnspentBox(OracleConfig.get().paymentAddress)
-      .filter { box =>
-        box.getTokens.asScala.toSeq.count(token =>
-          token.id.equals(OracleConfig.get().paymentNft.id)
-        ) == 1
-      }
-      .head
-
   /**
     * 1 is top up route
     * @param inputBox
