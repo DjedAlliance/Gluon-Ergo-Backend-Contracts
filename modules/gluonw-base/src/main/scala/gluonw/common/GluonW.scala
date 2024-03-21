@@ -1,17 +1,11 @@
 package gluonw.common
 
-import commons.configs.OracleConfig
 import edge.commons.ErgCommons
 import commons.node.Client
 import edge.pay.ErgoPayResponse
 import gluonw.boxes.{GluonWBox, OracleBox, OracleBuybackBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx, FusionTx}
-import org.ergoplatform.appkit.{
-  Address,
-  BlockchainContext,
-  ContextVar,
-  InputBox
-}
+import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.{TTx, Tx}
 import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
@@ -291,6 +285,11 @@ class GluonW @Inject() (
       // 1. Get the box from the user
       val userBoxes: java.util.List[InputBox] =
         client.getCoveringBoxesFor(walletAddress, ergAmount).getBoxes
+
+//      val boxIds: Seq[String] = userBoxes.map(box => box.getId.toString()).toSeq
+//      val mempoolBoxes: Seq[InputBox] = gluonWBoxexplorer.getmempooloutboxesasinputboxes(boxids, ctx)
+//      val totalergvalue: long = mempoolboxes.foldLeft(0L)((acc, box) => {acc + box.getValue})
+//      val valueToGet =
 
       // 2. Get the Latest GluonWBox
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox

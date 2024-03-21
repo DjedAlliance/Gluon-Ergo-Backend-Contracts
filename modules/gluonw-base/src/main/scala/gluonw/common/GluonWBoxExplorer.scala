@@ -54,7 +54,7 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
           OracleConfig.get().paymentNft.id.toString()
         val mempoolBuybackBox: Seq[InputBox] =
           getMempoolBoxesByTokenIdAsInputBoxes(buybackBoxNFTId, ctx)
-        val gluonWBox: InputBox = if (mempoolBuybackBox.nonEmpty) {
+        val buybackBox: InputBox = if (mempoolBuybackBox.nonEmpty) {
           mempoolBuybackBox.head
         } else {
           // Currently returns Json, change it to inputBox
@@ -63,7 +63,7 @@ class GluonWBoxExplorer @Inject() (implicit client: Client)
           ctx.getBoxesById(boxId).head
         }
 
-        OracleBuybackBox.from(gluonWBox)
+        OracleBuybackBox.from(buybackBox)
       } catch {
         case e: ParseException    => throw ParseException(e.getMessage)
         case e: JsResultException => throw e
