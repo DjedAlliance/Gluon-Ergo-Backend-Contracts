@@ -14,7 +14,6 @@
 
     // ===== Contract Hard-Coded Constants ===== //
     // val _MinFee:                     Long
-    // val _DevPk:                      SigmaProp
     // val _OracleFeePk:                Coll[Byte]
     // val _OraclePoolNFT:              Coll[Byte]
     // val _OracleBuybackNFT:           Coll[Byte]
@@ -27,7 +26,7 @@
     //
     // Registers
     // R4 - (Total Neutrons Supply, Total Protons Supply): (Long, Long)
-    // R5 - (NeutronsTokenId, ProtonsTokenId): (Coll[Byte], Coll[Byte])
+    // R5 - TreasuryMultisig: SigmaProp
     // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Long, Long)
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
@@ -37,15 +36,21 @@
     // val _optUIFeeAddress                    SigmaProp
 
     // ===== Relevant Transactions ===== //
-    // 1. Fission           - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
-    // 2. Fusion            - The user sends Neutrons and Protons to the reactor and receives Ergs
-    // 3. Beta Decay +      - The user sends Protons to the reactor and receives Neutrons
-    // 4. Beta Decay -      - The user sends Neutrons to the reactor and receives Protons
-    //
-    // For all 4 tx:
+    // 1. Fission                   - The user sends Ergs to the reactor (bank) and receives Neutrons and Protons
+    // 2. Fusion                    - The user sends Neutrons and Protons to the reactor and receives Ergs
+    // 3. Beta Decay +              - The user sends Protons to the reactor and receives Neutrons
+    // 4. Beta Decay -              - The user sends Neutrons to the reactor and receives Protons
+    // 5. Update Treasury Multisig  - The current treasury multisig is used to create a new box containing the updated treasury multisig address.
+
+    // For all of the first 4 tx:
     // Inputs: GluonWBox, UserPk
     // DataInputs: GoldOracle
     // Outputs: GluonWBox, UserPk
+
+    // For the fifth transaction:
+    // Inputs: GluonWBox, MultisigUtxo
+    // DataInputs: None
+    // Outputs: GluonWBox
 
     // ====== Tx Definitions ===== //
     // The main way to figure out whether the reactor is going through a specific
@@ -67,6 +72,7 @@
     //                      has an increment in Ergs due to fees
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val > In.val
 
+    val TREASURY_MULTISIG: SigmaProp = SELF.R5[SigmaProp].get
     val IN_GLUONW_BOX: Box = SELF
     val OUT_GLUONW_BOX: Box = OUTPUTS(0)
     val ORACLE_BOX: Box = CONTEXT.dataInputs(0)
@@ -103,7 +109,7 @@
         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
-        IN_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get == OUT_GLUONW_BOX.R5[(Coll[Byte], Coll[Byte])].get,
+        IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
         IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2
     ))
 
@@ -166,6 +172,9 @@
         // Check Erg value preservation
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value
     ))
+
+    val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
+
     // ===== (END) Tx Definition ===== //
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx)))
@@ -272,7 +281,7 @@
             val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
 
             val devFeeAddressAndPayout: (Coll[Byte], BigInt) =
-                (_DevPk.propBytes, devFeePayout)
+                (TREASURY_MULTISIG.propBytes, devFeePayout)
             val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) =
                 (_OracleFeePk, oracleFeePayout)
 
@@ -789,8 +798,38 @@
                 __lastBlockPreserved
             )))
         } else sigmaProp(false)
+    } else if (isUpdateTreasury) {
+
+        val validUpdateTreasuryMultisigTx: Boolean = {
+
+            val newMultisig: SigmaProp = OUT_GLUONW_BOX.R5[SigmaProp].get
+
+            val validSelfRecreation: Boolean = {
+
+                allOf(Coll(
+                    (IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value),
+                    (IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens),
+                    (IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get),
+                    (IN_GLUONW_BOX.R6[(Long, Long)].get == OUT_GLUONW_BOX.R6[(Long, Long)].get),
+                    (IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get),
+                    (IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get),
+                    (IN_GLUONW_BOX.R9[Long].get == OUT_GLUONW_BOX.R9[Long].get)
+                ))
+
+            }
+
+            val validMultisigUpdate: Boolean = (newMultisig != TREASURY_MULTISIG)
+
+            allOf(Coll(
+                validSelfRecreation,
+                validMultisigUpdate
+            ))
+
+        }
+
+        sigmaProp(validUpdateTreasuryMultisigTx) && TREASURY_MULTISIG
+
     } else {
-        // @todo remove once we're ready to make it immutable
-        _DevPk
+        sigmaProp(false)
     }
 }
