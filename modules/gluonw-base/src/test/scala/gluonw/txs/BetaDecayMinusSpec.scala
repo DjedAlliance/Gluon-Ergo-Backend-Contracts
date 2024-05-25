@@ -67,8 +67,10 @@ class BetaDecayMinusSpec extends GluonWBase {
           val paymentBox: InputBox =
             createPaymentBox(
               value = gluonWConstants.neutronsToNanoErg(
-                neutronsToTransmute,
-                oracleBox.getPricePerGrams
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                neutronsAmount = neutronsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceGramsNanoErg = oracleBox.getPricePerGrams
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -179,8 +181,10 @@ class BetaDecayMinusSpec extends GluonWBase {
           val paymentBox: InputBox =
             createPaymentBox(
               value = gluonWConstants.neutronsToNanoErg(
-                neutronsToTransmute,
-                oracleBox.getPricePerGrams
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                neutronsAmount = neutronsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceGramsNanoErg = oracleBox.getPricePerGrams
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -296,8 +300,10 @@ class BetaDecayMinusSpec extends GluonWBase {
       val paymentBox: InputBox =
         createPaymentBox(
           value = gluonWConstants.neutronsToNanoErg(
-            neutronsToTransmute,
-            oracleBox.getPricePerGrams
+            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+            neutronsAmount = neutronsToTransmute,
+            fissionedErg = gluonWBox.ergFissioned,
+            goldPriceGramsNanoErg = oracleBox.getPricePerGrams
           ) / 10,
           neutronsValue = neutronsToTransmute + 1000
         )

@@ -46,7 +46,9 @@ trait TGluonWConstants {
   val precision: Long
 
   def neutronsToNanoErg(
+    neutronsInCirculation: Long,
     neutronsAmount: Long,
+    fissionedErg: Long,
     goldPriceGramsNanoErg: Long
   ): Long
 
@@ -103,15 +105,27 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   }
 
   def neutronsToNanoErg(
+    neutronsInCirculation: Long,
     neutronsAmount: Long,
+    fissionedErg: Long,
     goldPriceGramsNanoErg: Long
-  ): Long =
-    (BigInt(neutronsAmount) * BigInt(goldPriceGramsNanoErg) / GluonWBoxConstants.PRECISION).toLong
+  ): Long = {
+    val fusRation: BigInt =
+      fusionRatio(
+        neutronsInCirculation,
+        goldPriceGramsNanoErg,
+        fissionedErg
+      )
+    val neutronsPrice: BigInt =
+      (fusRation * fissionedErg) / neutronsInCirculation
+
+    ((BigInt(neutronsAmount) * neutronsPrice) / GluonWBoxConstants.PRECISION).toLong
+  }
 
   def protonsToNanoErg(
     neutronsInCirculation: Long,
     protonsInCirculation: Long,
-    protonsToTransmute: Long,
+    protonsAmount: Long,
     fissionedErg: Long,
     goldPriceGramNanoErg: Long
   ): Long = {
@@ -124,9 +138,9 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
 
     val oneMinusFusionRatio: BigInt = GluonWBoxConstants.PRECISION - fusRatio
     val protonsPrice: BigInt =
-      (oneMinusFusionRatio * fissionedErg / protonsInCirculation)
+      (oneMinusFusionRatio * fissionedErg) / protonsInCirculation
 
-    (BigInt(protonsToTransmute) * protonsPrice / GluonWBoxConstants.PRECISION).toLong
+    ((BigInt(protonsAmount) * protonsPrice) / GluonWBoxConstants.PRECISION).toLong
   }
 
 }
@@ -497,7 +511,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       currentHeight = currentHeight,
       lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value,
       mVolumeInErgs = gluonWConstants
-        .neutronsToNanoErg(neutronsToTransmute, oracleBox.getPricePerGrams),
+        .neutronsToNanoErg(
+          neutronsInCirculation = sNeutrons,
+          neutronsAmount = neutronsToTransmute,
+          fissionedErg = rErg,
+          goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+        ),
       volumeListToAdd = inputGluonWBox.volumeMinusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumePlusRegister.value.toList
     )

@@ -59,9 +59,12 @@ class BetaDecayPlusSpec extends GluonWBase {
 
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWConstants.neutronsToNanoErg(
-                protonsToDecay,
-                oracleBox.getPricePerGrams
+              value = gluonWConstants.protonsToNanoErg(
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+                protonsAmount = protonsToDecay,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceGramNanoErg = oracleBox.getPricePerGrams
               ) / 10,
               protonsValue = protonsToDecay
             )
@@ -162,9 +165,12 @@ class BetaDecayPlusSpec extends GluonWBase {
           // Payment box to pay for the transaction
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWConstants.neutronsToNanoErg(
-                protonsToTransmute,
-                oracleBox.getPricePerGrams
+              value = gluonWConstants.protonsToNanoErg(
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+                protonsAmount = protonsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceGramNanoErg = oracleBox.getPricePerGrams
               ) / 10,
               protonsValue = protonsToTransmute
             )
@@ -274,9 +280,12 @@ class BetaDecayPlusSpec extends GluonWBase {
       // Payment box to pay for the transaction
       val paymentBox: InputBox =
         createPaymentBox(
-          value = gluonWConstants.neutronsToNanoErg(
-            protonsToTransmute,
-            oracleBox.getPricePerGrams
+          value = gluonWConstants.protonsToNanoErg(
+            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+            protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+            protonsAmount = protonsToTransmute,
+            fissionedErg = gluonWBox.ergFissioned,
+            goldPriceGramNanoErg = oracleBox.getPricePerGrams
           ) / 10,
           protonsValue = protonsToTransmute
         )

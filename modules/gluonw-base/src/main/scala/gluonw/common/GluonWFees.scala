@@ -74,7 +74,12 @@ case class GluonWFeesCalculator(
     val neutronsNanoErgPrice: BigInt =
       BigInt(
         gluonWConstants
-          .neutronsToNanoErg(neutronsAmount, oracleBox.getPricePerGrams)
+          .neutronsToNanoErg(
+            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+            neutronsAmount = neutronsAmount,
+            fissionedErg = gluonWBox.ergFissioned,
+            goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+          )
       )
     val devFee: Long =
       (neutronsNanoErgPrice * devFeesNumerator / denominator).toLong
