@@ -198,7 +198,7 @@
 
         // Calculate the value based on protons
         // Check Protons reduction in OutBox
-        def getProtonsPrice(protonsValue: Long): BigInt = {
+        def getProtonVolume(protonsValue: Long): BigInt = {
             val oneMinusFusionRatio: BigInt = (precision - fusionRatio).toBigInt
             val protonsPrice: BigInt = oneMinusFusionRatio * RErg / SProtons
             val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision
@@ -206,8 +206,9 @@
             protonsInNanoergs
         }
 
-        def getNeutronsPrice(neutronsValue: Long): BigInt = {
-            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * Pt / precision
+        def getNeutronVolume(neutronsValue: Long): BigInt = {
+            val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
+            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * neutronPrice / precision
 
             neutronsInNanoergs
         }
@@ -250,13 +251,13 @@
                     // Calculate the value based on protons
                     // Check Protons reduction in OutBox
                     val protonsValue: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
-                    val protonsInNanoergs: BigInt = getProtonsPrice(protonsValue)
+                    val protonsInNanoergs: BigInt = getProtonVolume(protonsValue)
 
                     protonsInNanoergs
                 } else {
                     // Calculate the value based on neutrons
                     val neutronsValue: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
-                    val neutronsInNanoergs: BigInt = getNeutronsPrice(neutronsValue)
+                    val neutronsInNanoergs: BigInt = getNeutronVolume(neutronsValue)
 
                     neutronsInNanoergs
                 }
@@ -500,7 +501,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Protons reduction in OutBox
-            val worthOfMInErgs: BigInt = getProtonsPrice(M)
+            val worthOfMInErgs: BigInt = getProtonVolume(M)
 
             // calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
@@ -657,7 +658,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Neutrons reduction in OutBox
-            val worthOfMInErgs: BigInt = getNeutronsPrice(M)
+            val worthOfMInErgs: BigInt = getNeutronVolume(M)
 
             // calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
