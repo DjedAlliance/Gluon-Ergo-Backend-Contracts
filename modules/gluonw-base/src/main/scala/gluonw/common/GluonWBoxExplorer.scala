@@ -4,13 +4,11 @@ import commons.configs.{OracleConfig, TOracleConfig}
 import commons.node.{Client, MainNodeInfo}
 import edge.errors.ParseException
 import edge.explorer.Explorer
-import edge.json.BoxData
 import gluonw.boxes.{BoxHelper, GluonWBox, OracleBox, OracleBuybackBox}
 import org.ergoplatform.appkit.{BlockchainContext, InputBox}
 import play.api.libs.json.JsResultException
 
 import javax.inject.Inject
-import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 class GluonWBoxExplorer @Inject() (implicit client: Client)
     extends IGluonWBoxExplorer {

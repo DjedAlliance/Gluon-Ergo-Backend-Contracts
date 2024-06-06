@@ -7,6 +7,8 @@ This is an application that is built on the Scala and Play framework.
 - [Running this app](#running-this-app)
   - [`.env`](#env)
   - [`run`](#run)
+- [Box Redeployment](docs/Redeployment.md)
+
 
 ## Running this app
 

@@ -31,11 +31,11 @@ Whenever there is a change in the contract, the GluonW box should be redeployed.
     3. Make sure you check the file to get the right nft id
 2. When you get the api, you'll get a box object, the boxId is at the top.
 3. Go to [BoxCreation.scala](../modules/gluonw-base/src/main/scala/gluonw/tools/BoxCreation.scala)
-4. On line 78, change runTx to MUTATE
+4. On line 75, change runTx to MUTATE
 ```scala
     val runTx: String = MUTATE
 ```
-5. Change the boxId on line 134:
+5. Change the boxId on line 129:
 ```scala
       case MUTATE => {
         val boxIdToMutate: String =
