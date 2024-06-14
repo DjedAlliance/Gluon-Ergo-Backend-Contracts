@@ -87,6 +87,24 @@ case class GluonWBox(
     )
   }
 
+  def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = {
+    val rErg: BigInt = BigInt(ergFissioned)
+    val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
+    val fusionRatio: BigInt = GluonWConstants().fusionRatio(
+      neutronsCirculatingSupply,
+      oracleBox.getPricePerGrams,
+      ergFissioned
+    )
+
+    val price: Long = (fusionRatio * rErg / sNeutrons).toLong
+
+    AssetPrice(
+      name = GluonWAsset.NEUTRON.toString,
+      price = price,
+      id = GluonWTokens.neutronId
+    )
+  }
+
   def neutronsTotalSupply: Long = totalSupplyRegister.value._1
   def protonsTotalSupply: Long = totalSupplyRegister.value._2
 
@@ -174,7 +192,7 @@ case class OracleBox(
         ("name", Json.fromString(GluonWAsset.NEUTRON.toString)),
         ("tokenId", Json.fromString(tokens.tail.head.getId.toString)),
         ("epochId", Json.fromLong(getEpochId.toLong)),
-        ("priceInNanoErgPerKg", Json.fromLong(getPrice))
+        ("priceInNanoErgPerGrams", Json.fromLong(getPricePerGrams))
       )
     )
 }
