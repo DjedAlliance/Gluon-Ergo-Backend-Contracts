@@ -117,6 +117,11 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
         fissionedErg
       )
 
+    // Equations for determining the neutron price, Pn, and neutron volume, Vn.
+    // Note that the target price, Pt, i.e. oracle price, is not the same as the neutron price.
+    // q = min(q*, Sn*Pt/R)
+    // Pn = q * R / Sn
+    // Vn = N*Pn
     val neutronsPrice: BigInt =
       (fusRation * fissionedErg) / neutronsInCirculation
 
@@ -137,6 +142,10 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
         fissionedErg
       )
 
+    // Equations for determining the proton price, Pp, and proton volume, Vp.
+    // q  = min(q*, Sn*Pt/R)
+    // Pp = (1-q) * R / Sp
+    // Vp = P*Pp
     val oneMinusFusionRatio: BigInt = GluonWBoxConstants.PRECISION - fusRatio
     val protonsPrice: BigInt =
       (oneMinusFusionRatio * fissionedErg) / protonsInCirculation
