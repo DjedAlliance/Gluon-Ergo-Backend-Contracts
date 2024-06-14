@@ -1,7 +1,7 @@
 package gluonw.boxes
 
 import commons.math.MathUtils
-import gluonw.common.{AssetPrice, GluonWBase}
+import gluonw.common.{AssetPrice, GluonWBase, GluonWConstants}
 import org.ergoplatform.appkit.Parameters
 
 import scala.util.Random
@@ -101,11 +101,8 @@ class GluonWBoxSpec extends GluonWBase {
           gluonWBox.neutronsCirculatingSupply == expectedNeutronsCirculatingSupply
         )
 
-        val expectedPrice: Long =
-          ((expectedErgsFissioned - ((expectedNeutronsCirculatingSupply * BigInt(
-            oracleBox.getPrice / 1000
-          )) / GluonWBoxConstants.PRECISION)) * GluonWBoxConstants.PRECISION / expectedProtonsCirculatingSupply).toLong
-
+        val fusionRatio: BigInt = GluonWConstants().fusionRatio(expectedNeutronsCirculatingSupply, oracleBox.getPricePerGrams, expectedErgsFissioned)
+        val expectedPrice: Long = ((GluonWBoxConstants.PRECISION - fusionRatio)*expectedErgsFissioned / expectedProtonsCirculatingSupply).toLong
         assert(protonPrice.price == expectedPrice)
       }
     }

@@ -501,7 +501,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Protons reduction in OutBox
-            val worthOfMInErgs: BigInt = getProtonVolume(M)
+            val worthOfMInErgs: BigInt = getProtonVolume(M) // This actually represents the volume of protons in units of Erg, M being the amount of protons.
 
             // calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
@@ -658,7 +658,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Neutrons reduction in OutBox
-            val worthOfMInErgs: BigInt = getNeutronVolume(M)
+            val worthOfMInErgs: BigInt = getNeutronVolume(M) // This actually represents the volume of neutrons in units of Erg, M being the amount of neutrons.
 
             // calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1

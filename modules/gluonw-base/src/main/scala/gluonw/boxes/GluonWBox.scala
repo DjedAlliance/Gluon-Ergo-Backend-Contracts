@@ -4,25 +4,12 @@ import commons.configs.OracleConfig
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.errors.ParseException
 import edge.json.{ErgoJson, Register}
-import edge.registers.{
-  CollBytePairRegister,
-  IntRegister,
-  LongPairRegister,
-  LongRegister,
-  NumbersRegister,
-  Register
-}
+import edge.registers.{CollBytePairRegister, IntRegister, LongPairRegister, LongRegister, NumbersRegister, Register}
 import gluonw.boxes.GluonWBoxConstants.BUCKETS
-import gluonw.common.{AssetPrice, GluonWAsset, GluonWTokens}
+import gluonw.common.{AssetPrice, GluonWAsset, GluonWConstants, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
-import org.ergoplatform.appkit.{
-  BlockchainContext,
-  ErgoContract,
-  ErgoValue,
-  InputBox,
-  Parameters
-}
+import org.ergoplatform.appkit.{BlockchainContext, ErgoContract, ErgoValue, InputBox, Parameters}
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
 
@@ -84,11 +71,14 @@ case class GluonWBox(
 
   def getProtonsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
-    val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
     val sProtons: BigInt = BigInt(protonsCirculatingSupply)
+    val fusionRatio: BigInt = GluonWConstants().fusionRatio(
+      neutronsCirculatingSupply,
+      oracleBox.getPricePerGrams,
+      ergFissioned
+    )
 
-    val price: Long =
-      ((rErg - ((sNeutrons * BigInt(oracleBox.getPricePerGrams)) / GluonWBoxConstants.PRECISION)) * GluonWBoxConstants.PRECISION / sProtons).toLong
+    val price: Long = ((GluonWBoxConstants.PRECISION - fusionRatio) * rErg / sProtons).toLong
 
     AssetPrice(
       name = GluonWAsset.PROTON.toString,

@@ -116,6 +116,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
         goldPriceGramsNanoErg,
         fissionedErg
       )
+
     val neutronsPrice: BigInt =
       (fusRation * fissionedErg) / neutronsInCirculation
 
