@@ -3,7 +3,7 @@
     // Name             : GluonW Box Guard Script
     // Description      :
     // Type             : Guard Script
-    // Author           : Kii
+    // Author           : Kii, LGD
     // Last Modified    : June 25th 2023
     // Version          : v 1.1
     // Status           : V1 in Test
@@ -52,19 +52,19 @@
     // tx is by comparing the value of the tokens in the reactor itself.
     // For each Tx:
     // 1. Fission       - the reactor has a reduction in both protons and neutrons but
-    //                      has an increment in Ergs
+    //                    has an increment in Ergs.
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
     // 2. Fusion       - the reactor has a increment in both protons and neutrons but
-    //                      has a reduction in Ergs
+    //                   has a reduction in Ergs.
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val < In.val
     //
     // 3. BetaDecay -    - the reactor has an increment of neutrons and a decrement in protons
-    //                      has an increment in Ergs due to fees
+    //                     has an increment in Ergs due to fees.
     // Out.Neutrons.val > In.Neutrons.val, Out.Protons.val < In.Protons.val, Out.val > In.val
     //
     // 4. BetaDecay +    - the reactor has a decrement of neutrons and a increment in protons
-    //                      has an increment in Ergs due to fees
+    //                     has an increment in Ergs due to fees.
     // Out.Neutrons.val < In.Neutrons.val, Out.Protons.val > In.Protons.val, Out.val > In.val
 
     val IN_GLUONW_BOX: Box = SELF
@@ -233,7 +233,7 @@
         // ===== (END) Oracle Checks ===== //
 
         // ===== (START) Fee Declarations ===== //
-        // reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
+        // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
         val _optUIFeeAddress = getVar[SigmaProp](0)
         val fees: Coll[(Coll[Byte], BigInt)] = {
             val feeDenom: BigInt = 1000L.toBigInt
@@ -392,7 +392,7 @@
 
         val __feesCheck: Boolean = allOf(Coll(
             feesPaid,
-//            devFeeRepaidValueAdded,
+            devFeeRepaidValueAdded,
             maxDevFeeThresholdSame
         ))
         // ===== (END) Fee Declarations ===== //
@@ -417,7 +417,7 @@
 
             val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
 
-            // ** Tx FEE for pool **
+            // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during fission.
             val PhiT: BigInt = (precision / 100).toBigInt
 
@@ -449,7 +449,7 @@
             // ===== FUSION Tx ===== //
             // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] = M (1 - PhiT) [Ergs]
 
-            // ** Tx FEE for pool **
+            // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during fission.
             val PhiFusion: BigInt = (precision / 100).toBigInt
 
@@ -489,7 +489,12 @@
             //===== BetaDecayPlus Tx ===== //
             // Equation: M [Protons] = M * (1 - PhiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
 
-            // proton value
+            // Equations for determining the proton price, Pp, and proton volume, Vp, given N protons.
+            // q  = min(q*, Sn*Pt/R)
+            // Pp = (1-q) * R / Sp
+            // Vp = N*Pp
+
+            // Proton value
             val M: Long = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2)
 
             // The protons increase in output, neutrons decrease in outputs
@@ -497,17 +502,17 @@
             val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
-            // ** VarPhiBeta Calculation **
+            // === VarPhiBeta Calculation === //
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Protons reduction in OutBox
             val worthOfMInErgs: BigInt = getProtonVolume(M) // This actually represents the volume of protons in units of Erg, M being the amount of protons.
 
-            // calculate the amount of days that has been since the last betaDecayTx
+            // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
             val nDays: Int = ((currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET).toInt
 
-            // we don't need to shift it, we just need to check if outVolumePlus is correct.
+            // We don't need to shift it, we just need to check if outVolumePlus is correct.
             // Therefore, if there is a requirement to shift, we just need to check if the
             // value after n is the same for the next 14.
             //
@@ -515,11 +520,11 @@
             // assuming our initial block is this
             // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
             //
-            // if nDays = 4, and worthOfMInErgs = x
+            // If nDays = 4, and worthOfMInErgs = x
             // We should expect:
             // [x, 0, 0 ,0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
             //
-            // if nDays = 0, and worthOfMInErgs = x
+            // If nDays = 0, and worthOfMInErgs = x
             // [1 + x, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
             //
             // The conditions are:
@@ -548,12 +553,12 @@
             val _isSlicedValuedVolumePlusEqual: Boolean = if (nDays > 0) {
                 // When there are multiple days involved, we have to compare the days
                 // that are pushed towards the right in outVolumeMinus, this starts at
-                // nDays and end at the last index
-                // for inVolumeMinus, it would be the first till BUCKETS - nDays
+                // nDays and end at the last index.
+                // For inVolumeMinus, it would be the first till BUCKETS - nDays
                 slicedOutVolumePlus == slicedInVolumePlus
             } else {
                 // When the days are the same, we compare 1 - BUCKETS because only the
-                // first index changed
+                // first index changed.
                 outVolumePlus.slice(1, BUCKETS) == inVolumePlus.slice(1, BUCKETS)
             }
 
@@ -579,12 +584,12 @@
             val _isSlicedValuedVolumeMinusEqual: Boolean = if (nDays > 0) {
                 // When there are multiple days involved, we have to compare the days
                 // that are pushed towards the right in outVolumeMinus, this starts at
-                // nDays and end at the last index
-                // for inVolumeMinus, it would be the first till BUCKETS - nDays
+                // nDays and end at the last index.
+                // For inVolumeMinus, it would be the first till BUCKETS - nDays.
                 slicedOutVolumeMinus == slicedInVolumeMinus
             } else {
-                // When the days are the same, we compare 1 - BUCKETS because only the
-                // first index changed
+                // When the days are the same, we compare 1 - BUCKETS 
+                // because only the first index changed.
                 outVolumeMinus.slice(1, BUCKETS) == inVolumeMinus.slice(1, BUCKETS)
             }
 
@@ -600,7 +605,7 @@
 
             val volume: BigInt = if (volumeMinus > volumePlus) {0L.toBigInt} else {volumePlus - volumeMinus} // integer subtraction
 
-            // ** Tx FEE for pool **
+            // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
             // Phi 0 is 0.01, and Phi1 is 0.5
@@ -609,20 +614,19 @@
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
-            // Due to some issues with moving towards the next block. We should give it a margin of error of +-3 blocks
+            // Due to some issues with moving towards the next block. We should give it a margin of error of +/- 3 blocks.
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
             // then we will always be at day 0 as long as there is a decay that happened within a day before
             // the lastBlockPreserved.
             //
-            // To counteract this situation, we want to only get the currentBlockNumber that is closest to the previous Blocks_Per_volume_bucket
+            // To counteract this situation, we want to only get the currentBlockNumber that is closest to the previous Blocks_Per_volume_bucket.
             val closestPreviousBlockValueViaBuckets: Int = (currentBlockNumber / BLOCKS_PER_VOLUME_BUCKET) * BLOCKS_PER_VOLUME_BUCKET
             val __lastBlockPreserved: Boolean = outLastBucketBlock == closestPreviousBlockValueViaBuckets
 
-            // ** VarPhiBeta Calculation End **
+            // === VarPhiBeta Calculation End === //
 
-            // ** Fusion Ratio **
-            // min(q*, (SNeutrons * Pt / R))
-            // where q* is a constant, Pt is the price of gold in Ergs.
+            // === Fusion Ratio === //
+
             // The steps of multiplication and division done below are to avoid overflow errors.
             val oneMinusPhiBeta: BigInt = (precision - VarPhiBeta)
             val oneMinusFusionRatio: BigInt = (precision - fusionRatio)
@@ -654,13 +658,19 @@
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
             val M: Long = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2)
 
-            // ** VarPhiBeta Calculation **
+            // Equations for determining the neutron price, Pn, and neutron volume, Vn, given N neutrons.
+            // Note that the target price, Pt, i.e. oracle price, is not the same as the neutron price.
+            // q = min(q*, Sn*Pt/R)
+            // Pn = q * R / Sn
+            // Vn = N*Pn
+
+            // === VarPhiBeta Calculation === //
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Neutrons reduction in OutBox
             val worthOfMInErgs: BigInt = getNeutronVolume(M) // This actually represents the volume of neutrons in units of Erg, M being the amount of neutrons.
 
-            // calculate the amount of days that has been since the last betaDecayTx
+            // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - inLastBucketBlock) / BLOCKS_PER_VOLUME_BUCKET).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= BUCKETS) {BUCKETS} else getNDaysPreFilteredValue
@@ -677,18 +687,18 @@
 
             // #3
             // If we slice the correct pieces from in and out, we should get the same
-            // exact value
+            // exact value.
             val slicedOutVolumeMinus: Coll[Long] = outVolumeMinus.slice(nDays, BUCKETS)
             val slicedInVolumeMinus: Coll[Long] = inVolumeMinus.slice(0, BUCKETS - nDays)
             val _isSlicedValuedVolumeMinusEqual: Boolean = if (nDays > 0) {
                 // When there are multiple days involved, we have to compare the days
                 // that are pushed towards the right in outVolumeMinus, this starts at
-                // nDays and end at the last index
-                // for inVolumeMinus, it would be the first till BUCKETS - nDays
+                // nDays and end at the last index.
+                // For inVolumeMinus, it would be the first till BUCKETS - nDays
                 slicedOutVolumeMinus == slicedInVolumeMinus
             } else {
                 // When the days are the same, we compare 1 - BUCKETS because only the
-                // first index changed
+                // first index changed.
                 outVolumeMinus.slice(1, BUCKETS) == inVolumeMinus.slice(1, BUCKETS)
             }
 
@@ -735,7 +745,7 @@
 
             val volume: BigInt = if (volumePlus > volumeMinus) {0L.toBigInt} else {volumeMinus - volumePlus} // integer subtraction
 
-            // ** Tx FEE for pool **
+            // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
             // Phi 0 is 0.01, and Phi1 is 0.5
@@ -744,7 +754,7 @@
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
-            // Due to some issues with moving towards the next block. We should give it a margin of error of +-3 blocks
+            // Due to some issues with moving towards the next block. We should give it a margin of error of +/- 3 blocks.
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
             // then we will always be at day 0 as long as there is a decay that happened within a day before
             // the lastBlockPreserved.
@@ -753,16 +763,15 @@
             val closestPreviousBlockValueViaBuckets: Int = (currentBlockNumber / BLOCKS_PER_VOLUME_BUCKET) * BLOCKS_PER_VOLUME_BUCKET
             val __lastBlockPreserved: Boolean = outLastBucketBlock == closestPreviousBlockValueViaBuckets
 
-            // ** VarPhiBeta Calculation End **
+            // === VarPhiBeta Calculation End === //
 
             // Neutrons increase in output, protons decrease in output.
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
-            // ** Fusion Ratio **
-            // min(q*, (SNeutrons * Pt / R))
-            // where q* is a constant, Pt is the price of gold in Ergs.
+            // === Fusion Ratio === //
+  
             // The steps of multiplication and division done below are to avoid overflow errors.
             val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
             val oneMinusFusionRatio: BigInt = precision - fusionRatio

@@ -62,7 +62,7 @@ class GluonWFeesSpec extends GluonWBase {
           neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
           neutronsAmount = neutronsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramsNanoErg = oracleBox.getPrice / 1000
+          goldPriceNanoErgPerGram = oracleBox.getPrice / 1000
         )
 
       assert(
@@ -77,7 +77,7 @@ class GluonWFeesSpec extends GluonWBase {
       val fusionRatio: Long = gluonWConstants
         .fusionRatio(
           gluonWBox.neutronsCirculatingSupply,
-          oracleBox.getPricePerGrams,
+          oracleBox.getPricePerGram,
           gluonWBox.ergFissioned
         )
         .toLong
@@ -89,7 +89,7 @@ class GluonWFeesSpec extends GluonWBase {
           protonsInCirculation = gluonWBox.protonsCirculatingSupply,
           protonsAmount = protonsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramNanoErg = oracleBox.getPricePerGrams
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
         )
 
       assert(
@@ -142,21 +142,21 @@ class GluonWFeesSpec extends GluonWBase {
         protonsInCirculation = gluonWBox.protonsCirculatingSupply,
         protonsAmount = protonsAmount,
         fissionedErg = gluonWBox.ergFissioned,
-        goldPriceGramNanoErg = oracleBox.getPricePerGrams
+        goldPriceNanoErgPerGram = oracleBox.getPricePerGram
       ) * gluonWFeesCalculator.devFeesNumerator / gluonWFeesCalculator.denominator
       val uiFee: Long = gluonWConstants.protonsToNanoErg(
         neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
         protonsInCirculation = gluonWBox.protonsCirculatingSupply,
         protonsAmount = protonsAmount,
         fissionedErg = gluonWBox.ergFissioned,
-        goldPriceGramNanoErg = oracleBox.getPricePerGrams
+        goldPriceNanoErgPerGram = oracleBox.getPricePerGram
       ) * gluonWFeesCalculator.uiFeesNumerator / gluonWFeesCalculator.denominator
       val oracleFee: Long = gluonWConstants.protonsToNanoErg(
         neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
         protonsInCirculation = gluonWBox.protonsCirculatingSupply,
         protonsAmount = protonsAmount,
         fissionedErg = gluonWBox.ergFissioned,
-        goldPriceGramNanoErg = oracleBox.getPricePerGrams
+        goldPriceNanoErgPerGram = oracleBox.getPricePerGram
       ) * gluonWFeesCalculator.oracleFeesNumerator / gluonWFeesCalculator.denominator
 
       checkGluonWFees(betaDecayPlusFees.devFee, devFee, devAddress)
@@ -191,7 +191,7 @@ class GluonWFeesSpec extends GluonWBase {
           neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
           neutronsAmount = neutronsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
         )
       ) * gluonWFeesCalculator.devFeesNumerator / gluonWFeesCalculator.denominator).toLong
       val uiFee: Long = (BigInt(
@@ -199,7 +199,7 @@ class GluonWFeesSpec extends GluonWBase {
           neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
           neutronsAmount = neutronsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
         )
       ) * gluonWFeesCalculator.uiFeesNumerator / gluonWFeesCalculator.denominator).toLong
       val oracleFee: Long = (BigInt(
@@ -207,7 +207,7 @@ class GluonWFeesSpec extends GluonWBase {
           neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
           neutronsAmount = neutronsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
         )
       ) * gluonWFeesCalculator.oracleFeesNumerator / gluonWFeesCalculator.denominator).toLong
 

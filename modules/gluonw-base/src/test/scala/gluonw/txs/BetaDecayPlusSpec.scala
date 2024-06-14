@@ -64,7 +64,7 @@ class BetaDecayPlusSpec extends GluonWBase {
                 protonsInCirculation = gluonWBox.protonsCirculatingSupply,
                 protonsAmount = protonsToDecay,
                 fissionedErg = gluonWBox.ergFissioned,
-                goldPriceGramNanoErg = oracleBox.getPricePerGrams
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               protonsValue = protonsToDecay
             )
@@ -100,7 +100,7 @@ class BetaDecayPlusSpec extends GluonWBase {
               volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
               protonsToDecay = protonsToDecay
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           assert(
@@ -170,7 +170,7 @@ class BetaDecayPlusSpec extends GluonWBase {
                 protonsInCirculation = gluonWBox.protonsCirculatingSupply,
                 protonsAmount = protonsToTransmute,
                 fissionedErg = gluonWBox.ergFissioned,
-                goldPriceGramNanoErg = oracleBox.getPricePerGrams
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               protonsValue = protonsToTransmute
             )
@@ -204,7 +204,7 @@ class BetaDecayPlusSpec extends GluonWBase {
               volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
               protonsToDecay = protonsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -285,7 +285,7 @@ class BetaDecayPlusSpec extends GluonWBase {
             protonsInCirculation = gluonWBox.protonsCirculatingSupply,
             protonsAmount = protonsToTransmute,
             fissionedErg = gluonWBox.ergFissioned,
-            goldPriceGramNanoErg = oracleBox.getPricePerGrams
+            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
           ) / 10,
           protonsValue = protonsToTransmute
         )

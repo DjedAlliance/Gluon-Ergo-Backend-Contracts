@@ -50,7 +50,7 @@ case class GluonWFeesCalculator(
           protonsInCirculation = gluonWBox.protonsCirculatingSupply,
           protonsAmount = protonsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceGramNanoErg = oracleBox.getPricePerGrams
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
         )
       )
     val devFee: Long =
@@ -78,7 +78,7 @@ case class GluonWFeesCalculator(
             neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
             neutronsAmount = neutronsAmount,
             fissionedErg = gluonWBox.ergFissioned,
-            goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
           )
       )
     val devFee: Long =

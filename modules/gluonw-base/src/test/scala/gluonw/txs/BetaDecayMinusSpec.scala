@@ -70,7 +70,7 @@ class BetaDecayMinusSpec extends GluonWBase {
                 neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
                 neutronsAmount = neutronsToTransmute,
                 fissionedErg = gluonWBox.ergFissioned,
-                goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -108,7 +108,7 @@ class BetaDecayMinusSpec extends GluonWBase {
               volumePlus = outGluonWBox.volumePlusRegister.value.toList,
               neutronsToDecay = neutronsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -184,7 +184,7 @@ class BetaDecayMinusSpec extends GluonWBase {
                 neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
                 neutronsAmount = neutronsToTransmute,
                 fissionedErg = gluonWBox.ergFissioned,
-                goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -220,7 +220,7 @@ class BetaDecayMinusSpec extends GluonWBase {
               volumePlus = outGluonWBox.volumePlusRegister.value.toList,
               neutronsToDecay = neutronsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -303,7 +303,7 @@ class BetaDecayMinusSpec extends GluonWBase {
             neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
             neutronsAmount = neutronsToTransmute,
             fissionedErg = gluonWBox.ergFissioned,
-            goldPriceGramsNanoErg = oracleBox.getPricePerGrams
+            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
           ) / 10,
           neutronsValue = neutronsToTransmute + 1000
         )
