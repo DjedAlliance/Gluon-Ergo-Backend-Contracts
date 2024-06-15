@@ -46,16 +46,18 @@ trait TGluonWConstants {
   val precision: Long
 
   def neutronsToNanoErg(
-    neutronsAmount: Long,
-    goldPriceGramsNanoErg: Long
+                         neutronsInCirculation: Long,
+                         neutronsAmount: Long,
+                         fissionedErg: Long,
+                         goldPriceNanoErgPerGram: Long
   ): Long
 
   def protonsToNanoErg(
-    neutronsInCirculation: Long,
-    protonsInCirculation: Long,
-    protonsAmount: Long,
-    fissionedErg: Long,
-    goldPriceGramNanoErg: Long
+                        neutronsInCirculation: Long,
+                        protonsInCirculation: Long,
+                        protonsAmount: Long,
+                        fissionedErg: Long,
+                        goldPriceNanoErgPerGram: Long
   ): Long
 }
 
@@ -103,30 +105,52 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   }
 
   def neutronsToNanoErg(
-    neutronsAmount: Long,
-    goldPriceGramsNanoErg: Long
-  ): Long =
-    (BigInt(neutronsAmount) * BigInt(goldPriceGramsNanoErg) / GluonWBoxConstants.PRECISION).toLong
-
-  def protonsToNanoErg(
-    neutronsInCirculation: Long,
-    protonsInCirculation: Long,
-    protonsToTransmute: Long,
-    fissionedErg: Long,
-    goldPriceGramNanoErg: Long
+                         neutronsInCirculation: Long,
+                         neutronsAmount: Long,
+                         fissionedErg: Long,
+                         goldPriceNanoErgPerGram: Long
   ): Long = {
     val fusRatio: BigInt =
       fusionRatio(
         neutronsInCirculation,
-        goldPriceGramNanoErg,
+        goldPriceNanoErgPerGram,
         fissionedErg
       )
 
+    // Equations for determining the neutron price, Pn, and neutron volume, Vn, given N neutrons.
+    // Note that the target price, Pt, i.e. oracle price, is not the same as the neutron price.
+    // q = min(q*, Sn*Pt/R)
+    // Pn = q * R / Sn
+    // Vn = N*Pn
+    val neutronsPrice: BigInt =
+      (fusRatio * fissionedErg) / neutronsInCirculation
+
+    ((BigInt(neutronsAmount) * neutronsPrice) / GluonWBoxConstants.PRECISION).toLong
+  }
+
+  def protonsToNanoErg(
+                        neutronsInCirculation: Long,
+                        protonsInCirculation: Long,
+                        protonsAmount: Long,
+                        fissionedErg: Long,
+                        goldPriceNanoErgPerGram: Long
+  ): Long = {
+    val fusRatio: BigInt =
+      fusionRatio(
+        neutronsInCirculation,
+        goldPriceNanoErgPerGram,
+        fissionedErg
+      )
+
+    // Equations for determining the proton price, Pp, and proton volume, Vp, given N protons.
+    // q  = min(q*, Sn*Pt/R)
+    // Pp = (1-q) * R / Sp
+    // Vp = N*Pp
     val oneMinusFusionRatio: BigInt = GluonWBoxConstants.PRECISION - fusRatio
     val protonsPrice: BigInt =
-      (oneMinusFusionRatio * fissionedErg / protonsInCirculation)
+      (oneMinusFusionRatio * fissionedErg) / protonsInCirculation
 
-    (BigInt(protonsToTransmute) * protonsPrice / GluonWBoxConstants.PRECISION).toLong
+    ((BigInt(protonsAmount) * protonsPrice) / GluonWBoxConstants.PRECISION).toLong
   }
 
 }
@@ -452,7 +476,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         neutronsInCirculation = sNeutrons,
         protonsInCirculation = sProtons,
         fissionedErg = rErg,
-        goldPriceGramNanoErg = oracleBox.getPricePerGrams,
+        goldPriceNanoErgPerGram = oracleBox.getPricePerGram,
         protonsAmount = protonsToTransmute
       ),
       volumeListToAdd = inputGluonWBox.volumePlusRegister.value.toList,
@@ -470,7 +494,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         rErg = rErg,
         volumePlus = volumePlus,
         volumeMinus = volumeMinus
-      )(oracleBox.getPricePerGrams)
+      )(oracleBox.getPricePerGram)
 
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
@@ -497,7 +521,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       currentHeight = currentHeight,
       lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value,
       mVolumeInErgs = gluonWConstants
-        .neutronsToNanoErg(neutronsToTransmute, oracleBox.getPricePerGrams),
+        .neutronsToNanoErg(
+          neutronsInCirculation = sNeutrons,
+          neutronsAmount = neutronsToTransmute,
+          fissionedErg = rErg,
+          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+        ),
       volumeListToAdd = inputGluonWBox.volumeMinusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumePlusRegister.value.toList
     )
@@ -513,7 +542,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         volumePlus = volumePlus,
         volumeMinus = volumeMinus,
         neutronsToDecay = neutronsToTransmute
-      )(oracleBox.getPricePerGrams)
+      )(oracleBox.getPricePerGram)
 
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET

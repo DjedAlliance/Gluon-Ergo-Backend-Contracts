@@ -59,9 +59,12 @@ class BetaDecayPlusSpec extends GluonWBase {
 
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWConstants.neutronsToNanoErg(
-                protonsToDecay,
-                oracleBox.getPricePerGrams
+              value = gluonWConstants.protonsToNanoErg(
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+                protonsAmount = protonsToDecay,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               protonsValue = protonsToDecay
             )
@@ -97,7 +100,7 @@ class BetaDecayPlusSpec extends GluonWBase {
               volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
               protonsToDecay = protonsToDecay
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           assert(
@@ -162,9 +165,12 @@ class BetaDecayPlusSpec extends GluonWBase {
           // Payment box to pay for the transaction
           val paymentBox: InputBox =
             createPaymentBox(
-              value = gluonWConstants.neutronsToNanoErg(
-                protonsToTransmute,
-                oracleBox.getPricePerGrams
+              value = gluonWConstants.protonsToNanoErg(
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+                protonsAmount = protonsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               protonsValue = protonsToTransmute
             )
@@ -198,7 +204,7 @@ class BetaDecayPlusSpec extends GluonWBase {
               volumeMinus = outGluonWBox.volumeMinusRegister.value.toList,
               protonsToDecay = protonsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -274,9 +280,12 @@ class BetaDecayPlusSpec extends GluonWBase {
       // Payment box to pay for the transaction
       val paymentBox: InputBox =
         createPaymentBox(
-          value = gluonWConstants.neutronsToNanoErg(
-            protonsToTransmute,
-            oracleBox.getPricePerGrams
+          value = gluonWConstants.protonsToNanoErg(
+            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+            protonsInCirculation = gluonWBox.protonsCirculatingSupply,
+            protonsAmount = protonsToTransmute,
+            fissionedErg = gluonWBox.ergFissioned,
+            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
           ) / 10,
           protonsValue = protonsToTransmute
         )

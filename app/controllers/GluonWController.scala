@@ -25,6 +25,12 @@ import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 trait TGluonWController {
 
   /**
+   * Target price of neutrons against erg, i.e. price from the oracle.
+   * @return
+   */
+  def neutronTargetPrice(): Action[AnyContent]
+
+  /**
     * Price of neutrons against erg
     * @return
     */
@@ -223,11 +229,19 @@ class GluonWController @Inject() (
     }
   }
 
-  override def neutronPrice(): Action[AnyContent] =
+  override def neutronTargetPrice(): Action[AnyContent] =
     Action { implicit request: Request[AnyContent] =>
       Ok(
         gluonWBoxExplorer.getOracleBox
           .toJson()
+      ).as("application/json")
+    }
+
+  override def neutronPrice(): Action[AnyContent] =
+    Action { implicit request: Request[AnyContent] =>
+      val oracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
+      Ok(
+        gluonWBoxExplorer.getGluonWBox.getNeutronsPrice(oracleBox).toJson
       ).as("application/json")
     }
 

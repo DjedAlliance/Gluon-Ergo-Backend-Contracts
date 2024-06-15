@@ -67,8 +67,10 @@ class BetaDecayMinusSpec extends GluonWBase {
           val paymentBox: InputBox =
             createPaymentBox(
               value = gluonWConstants.neutronsToNanoErg(
-                neutronsToTransmute,
-                oracleBox.getPricePerGrams
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                neutronsAmount = neutronsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -106,7 +108,7 @@ class BetaDecayMinusSpec extends GluonWBase {
               volumePlus = outGluonWBox.volumePlusRegister.value.toList,
               neutronsToDecay = neutronsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -179,8 +181,10 @@ class BetaDecayMinusSpec extends GluonWBase {
           val paymentBox: InputBox =
             createPaymentBox(
               value = gluonWConstants.neutronsToNanoErg(
-                neutronsToTransmute,
-                oracleBox.getPricePerGrams
+                neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+                neutronsAmount = neutronsToTransmute,
+                fissionedErg = gluonWBox.ergFissioned,
+                goldPriceNanoErgPerGram = oracleBox.getPricePerGram
               ) / 10,
               neutronsValue = neutronsToTransmute
             )
@@ -216,7 +220,7 @@ class BetaDecayMinusSpec extends GluonWBase {
               volumePlus = outGluonWBox.volumePlusRegister.value.toList,
               neutronsToDecay = neutronsToTransmute
             )(
-              oracleBox.getPricePerGrams
+              oracleBox.getPricePerGram
             )
 
           val outServiceFeeBox: FundsToAddressBox =
@@ -296,8 +300,10 @@ class BetaDecayMinusSpec extends GluonWBase {
       val paymentBox: InputBox =
         createPaymentBox(
           value = gluonWConstants.neutronsToNanoErg(
-            neutronsToTransmute,
-            oracleBox.getPricePerGrams
+            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+            neutronsAmount = neutronsToTransmute,
+            fissionedErg = gluonWBox.ergFissioned,
+            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
           ) / 10,
           neutronsValue = neutronsToTransmute + 1000
         )

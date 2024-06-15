@@ -61,7 +61,7 @@ class GluonWCalculatorSpec extends GluonWBase {
           volumeMinus = List.fill(7)(0L),
           protonsToDecay = protonToDecay
         )(
-          oracleBox.getPricePerGrams
+          oracleBox.getPricePerGram
         )
 
       val neutronsAtPrecision: Float =
@@ -82,7 +82,7 @@ class GluonWCalculatorSpec extends GluonWBase {
           volumeMinus = List.fill(7)(10L * GluonWBoxConstants.PRECISION),
           protonsToDecay = protonToDecay
         )(
-          oracleBox.getPricePerGrams
+          oracleBox.getPricePerGram
         )
 
       val neutronsAtPrecision: Float =
@@ -105,7 +105,7 @@ class GluonWCalculatorSpec extends GluonWBase {
           volumeMinus = List.fill(7)(0L),
           neutronsToDecay = neutronToDecay
         )(
-          oracleBox.getPricePerGrams
+          oracleBox.getPricePerGram
         )
 
       val protonsAtPrecision: Float =
@@ -126,7 +126,7 @@ class GluonWCalculatorSpec extends GluonWBase {
           volumePlus = List.fill(7)(10L * GluonWBoxConstants.PRECISION),
           neutronsToDecay = neutronToDecay
         )(
-          oracleBox.getPricePerGrams
+          oracleBox.getPricePerGram
         )
 
       val protonsAtPrecision: Float =

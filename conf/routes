@@ -4,6 +4,7 @@
 
 # https://www.playframework.com/documentation/latest/ScalaRouting
 
+GET /api/v1/neutrons/targetPrice                                    controllers.GluonWController.neutronTargetPrice()
 GET /api/v1/neutrons/price                                          controllers.GluonWController.neutronPrice()
 GET /api/v1/protons/price                                           controllers.GluonWController.protonPrice()
 GET /api/v1/fission/:ergAmount                                      controllers.GluonWController.fissionPrice(ergAmount: Long)
