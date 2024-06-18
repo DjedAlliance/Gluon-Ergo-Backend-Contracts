@@ -1,15 +1,30 @@
 package gluonw.boxes
 
-import commons.configs.OracleConfig
+import commons.configs.GetServiceConfig.getServiceOwner
+import commons.configs.MultiSig.getServiceMultiSig
+import commons.configs.{NodeConfig, OracleConfig}
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.errors.ParseException
 import edge.json.{ErgoJson, Register}
-import edge.registers.{CollBytePairRegister, IntRegister, LongPairRegister, LongRegister, NumbersRegister, Register}
+import edge.registers.{
+  IntRegister,
+  LongPairRegister,
+  LongRegister,
+  NumbersRegister,
+  Register
+}
 import gluonw.boxes.GluonWBoxConstants.BUCKETS
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWConstants, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
-import org.ergoplatform.appkit.{BlockchainContext, ErgoContract, ErgoValue, InputBox, Parameters}
+import org.ergoplatform.appkit.{
+  BlockchainContext,
+  ErgoContract,
+  ErgoValue,
+  InputBox,
+  NetworkType,
+  Parameters
+}
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
 
@@ -37,8 +52,10 @@ case class GluonWBox(
       GluonWBoxConstants.PROTONS_TOTAL_CIRCULATING_SUPPLY
     )
   ),
-  tokenIdRegister: CollBytePairRegister = new CollBytePairRegister(
-    (GluonWTokens.neutronId.getBytes, GluonWTokens.protonId.getBytes)
+  treasuryMultisigRegister: SigmaPropRegister = new SigmaPropRegister(
+    SigmaPropRegister.from(
+      getServiceMultiSig(NodeConfig.networkType == NetworkType.MAINNET)
+    )
   ),
   feeRegister: LongPairRegister = new LongPairRegister(
     0L,
@@ -78,7 +95,8 @@ case class GluonWBox(
       ergFissioned
     )
 
-    val price: Long = ((GluonWBoxConstants.PRECISION - fusionRatio) * rErg / sProtons).toLong
+    val price: Long =
+      ((GluonWBoxConstants.PRECISION - fusionRatio) * rErg / sProtons).toLong
 
     AssetPrice(
       name = GluonWAsset.PROTON.toString,
@@ -119,7 +137,7 @@ case class GluonWBox(
 
   override def R4: Option[Register[_]] = Option(totalSupplyRegister)
 
-  override def R5: Option[Register[_]] = Option(tokenIdRegister)
+  override def R5: Option[Register[_]] = Option(treasuryMultisigRegister)
 
   override def R6: Option[Register[_]] = Option(feeRegister)
   override def R7: Option[Register[_]] = Option(volumePlusRegister)
@@ -289,11 +307,11 @@ object OracleBox extends BoxWrapperHelper {
 object GluonWBox extends BoxWrapperHelper {
 
   override def from(inputBox: InputBox): GluonWBox = {
-    val tokenIdRegisterTuple: (Coll[Byte], Coll[Byte]) =
-      inputBox.getRegisters
-        .get(1)
-        .getValue
-        .asInstanceOf[(Coll[Byte], Coll[Byte])]
+//    val multiSigRegister: Array[Byte] =
+//      inputBox.getRegisters
+//        .get(1)
+//        .getValue
+//        .asInstanceOf[SigmaProp]
 
     val feeRegisterTuple: (Long, Long) = if (inputBox.getRegisters.size() > 2) {
       inputBox.getRegisters
@@ -312,8 +330,10 @@ object GluonWBox extends BoxWrapperHelper {
       totalSupplyRegister = new LongPairRegister(
         inputBox.getRegisters.get(0).getValue.asInstanceOf[(Long, Long)]
       ),
-      tokenIdRegister = new CollBytePairRegister(
-        (tokenIdRegisterTuple._1.toArray, tokenIdRegisterTuple._2.toArray)
+      treasuryMultisigRegister = new SigmaPropRegister(
+        SigmaPropRegister.from(
+          getServiceMultiSig(NodeConfig.networkType == NetworkType.MAINNET)
+        )
       ),
       feeRegister = new LongPairRegister(feeRegisterTuple),
       volumePlusRegister = new NumbersRegister(

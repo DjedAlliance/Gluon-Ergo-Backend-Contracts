@@ -1,12 +1,12 @@
 package gluonw.common
 
-import commons.configs.{GetServiceConfig, OracleConfig}
+import commons.configs.{GetServiceConfig, MultiSig, OracleConfig}
 import edge.boxes.FundsToAddressBox
 import gluonw.boxes.{GluonWBox, OracleBox}
 import org.ergoplatform.appkit.{Address, Parameters}
 
 case class GluonWFeesCalculator(
-  devAddress: Address = GetServiceConfig.getServiceOwner(),
+  devAddress: Address = MultiSig.getServiceMultiSigAddress,
   uiAddress: Address = null,
   oraclePaymentAddress: Address = OracleConfig.get().paymentAddress
 )(gluonWBox: GluonWBox, gluonWConstants: TGluonWConstants) {

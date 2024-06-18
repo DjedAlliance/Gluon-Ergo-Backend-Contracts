@@ -25,9 +25,9 @@ import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 trait TGluonWController {
 
   /**
-   * Target price of neutrons against erg, i.e. price from the oracle.
-   * @return
-   */
+    * Target price of neutrons against erg, i.e. price from the oracle.
+    * @return
+    */
   def neutronTargetPrice(): Action[AnyContent]
 
   /**
@@ -217,13 +217,13 @@ class GluonWController @Inject() (
     } else {
       // Send ergoPayResponse back
       val ergoPayResponses: Seq[ErgoPayResponse] =
-        txs.zipWithIndex.map((indexedTx) =>
+        txs.zipWithIndex.map { (indexedTx) =>
           ErgoPayResponse.getResponse(
             reducedTx = indexedTx._1.reduceTx,
             message = s"${indexedTx._2}: ${indexedTx._1.getClass.getName}",
             recipient = walletAddress
           )
-        )
+        }
 
       Json.fromValues(ergoPayResponses.map(r => r.asJson))
     }

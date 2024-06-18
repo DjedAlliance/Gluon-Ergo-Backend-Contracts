@@ -76,6 +76,7 @@ class FissionTxSpec extends GluonWBase {
             dataInputs = Seq(oracleBoxInputBox)
           )
 
+          println(fissionTx.visualizeTx)
           fissionTx.signTx
 
           val outBoxes: Seq[InputBox] = fissionTx.getOutBoxesAsInputBoxes()

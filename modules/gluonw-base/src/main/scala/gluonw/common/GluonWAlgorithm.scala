@@ -46,18 +46,18 @@ trait TGluonWConstants {
   val precision: Long
 
   def neutronsToNanoErg(
-                         neutronsInCirculation: Long,
-                         neutronsAmount: Long,
-                         fissionedErg: Long,
-                         goldPriceNanoErgPerGram: Long
+    neutronsInCirculation: Long,
+    neutronsAmount: Long,
+    fissionedErg: Long,
+    goldPriceNanoErgPerGram: Long
   ): Long
 
   def protonsToNanoErg(
-                        neutronsInCirculation: Long,
-                        protonsInCirculation: Long,
-                        protonsAmount: Long,
-                        fissionedErg: Long,
-                        goldPriceNanoErgPerGram: Long
+    neutronsInCirculation: Long,
+    protonsInCirculation: Long,
+    protonsAmount: Long,
+    fissionedErg: Long,
+    goldPriceNanoErgPerGram: Long
   ): Long
 }
 
@@ -105,10 +105,10 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   }
 
   def neutronsToNanoErg(
-                         neutronsInCirculation: Long,
-                         neutronsAmount: Long,
-                         fissionedErg: Long,
-                         goldPriceNanoErgPerGram: Long
+    neutronsInCirculation: Long,
+    neutronsAmount: Long,
+    fissionedErg: Long,
+    goldPriceNanoErgPerGram: Long
   ): Long = {
     val fusRatio: BigInt =
       fusionRatio(
@@ -129,11 +129,11 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
   }
 
   def protonsToNanoErg(
-                        neutronsInCirculation: Long,
-                        protonsInCirculation: Long,
-                        protonsAmount: Long,
-                        fissionedErg: Long,
-                        goldPriceNanoErgPerGram: Long
+    neutronsInCirculation: Long,
+    protonsInCirculation: Long,
+    protonsAmount: Long,
+    fissionedErg: Long,
+    goldPriceNanoErgPerGram: Long
   ): Long = {
     val fusRatio: BigInt =
       fusionRatio(

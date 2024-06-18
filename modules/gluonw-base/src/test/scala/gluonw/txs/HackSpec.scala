@@ -1,12 +1,19 @@
 package gluonw.txs
 
+import commons.configs.GetServiceConfig.getServiceOwner
+import commons.configs.NodeConfig
 import edge.boxes.FundsToAddressBox
 import edge.commons.ErgCommons
-import edge.registers.{CollBytePairRegister, LongPairRegister}
+import edge.registers.{AddressRegister, CollBytePairRegister, LongPairRegister}
 import edge.txs.Tx
-import gluonw.boxes.{GluonWBox, OracleBox}
+import gluonw.boxes.{
+  GluonWBox,
+  OracleBox,
+  SigmaPropRegister,
+  SingleAddressRegister
+}
 import gluonw.common.{GluonWBase, GluonWTokens}
-import org.ergoplatform.appkit.{Address, Parameters}
+import org.ergoplatform.appkit.{Address, NetworkType, Parameters, SigmaProp}
 import org.ergoplatform.sdk.ErgoToken
 
 class HackSpec extends GluonWBase {
@@ -191,9 +198,12 @@ class HackSpec extends GluonWBase {
         val outGluonBox: GluonWBox = gluonWBox.copy(
           value = gluonWBox.value - ErgCommons.MinMinerFee,
           totalSupplyRegister = new LongPairRegister(100, 85),
-          tokenIdRegister = new CollBytePairRegister(
-            GluonWTokens.gluonWBoxNFTId.getBytes,
-            GluonWTokens.gluonWBoxNFTId.getBytes
+          treasuryMultisigRegister = new SigmaPropRegister(
+            SigmaProp.createFromAddress(
+              getServiceOwner(isMainNet =
+                NetworkType.MAINNET == NodeConfig.networkType
+              )
+            )
           )
         )
 

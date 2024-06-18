@@ -98,7 +98,7 @@
     val outVolumeMinus: Coll[Long] = OUT_GLUONW_BOX.R8[Coll[Long]].get
 
     val inLastBucketBlock: Long = IN_GLUONW_BOX.R9[Long].get
-    val outLastBucketBlock: Long = OUT_GLUONW_BOX.R9[Long].get 
+    val outLastBucketBlock: Long = OUT_GLUONW_BOX.R9[Long].get
 
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
@@ -597,7 +597,7 @@
                 // For inVolumeMinus, it would be the first till BUCKETS - nDays.
                 slicedOutVolumeMinus == slicedInVolumeMinus
             } else {
-                // When the days are the same, we compare 1 - BUCKETS 
+                // When the days are the same, we compare 1 - BUCKETS
                 // because only the first index changed.
                 outVolumeMinus.slice(1, BUCKETS) == inVolumeMinus.slice(1, BUCKETS)
             }
@@ -780,12 +780,12 @@
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
 
             // === Fusion Ratio === //
-  
+
             // The steps of multiplication and division done below are to avoid overflow errors.
             val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
             val oneMinusFusionRatio: BigInt = precision - fusionRatio
             val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / SNeutrons
-            val ratio2: BigInt = (fusionRatio * SProtons) / precision 
+            val ratio2: BigInt = (fusionRatio * SProtons) / precision
             val outProtonsAmount: BigInt = (ratio1 * ratio2) / oneMinusFusionRatio
 
             val NeutronsExpectedValue: BigInt = M.toBigInt

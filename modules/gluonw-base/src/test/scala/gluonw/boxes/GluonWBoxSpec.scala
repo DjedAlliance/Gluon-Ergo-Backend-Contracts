@@ -101,8 +101,13 @@ class GluonWBoxSpec extends GluonWBase {
           gluonWBox.neutronsCirculatingSupply == expectedNeutronsCirculatingSupply
         )
 
-        val fusionRatio: BigInt = GluonWConstants().fusionRatio(expectedNeutronsCirculatingSupply, oracleBox.getPricePerGram, expectedErgsFissioned)
-        val expectedPrice: Long = ((GluonWBoxConstants.PRECISION - fusionRatio)*expectedErgsFissioned / expectedProtonsCirculatingSupply).toLong
+        val fusionRatio: BigInt = GluonWConstants().fusionRatio(
+          expectedNeutronsCirculatingSupply,
+          oracleBox.getPricePerGram,
+          expectedErgsFissioned
+        )
+        val expectedPrice: Long =
+          ((GluonWBoxConstants.PRECISION - fusionRatio) * expectedErgsFissioned / expectedProtonsCirculatingSupply).toLong
         assert(protonPrice.price == expectedPrice)
       }
     }
