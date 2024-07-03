@@ -316,9 +316,7 @@ object GluonWBox extends BoxWrapperHelper {
         inputBox.getRegisters.get(0).getValue.asInstanceOf[(Long, Long)]
       ),
       treasuryMultisigRegister = new SigmaPropRegister(
-        SigmaPropRegister.from(
-          getServiceMultiSig(NodeConfig.networkType == NetworkType.MAINNET)
-        )
+        SigmaProp.createFromAddress(GetServiceConfig.getServiceOwner())
       ),
       feeRegister = new LongPairRegister(feeRegisterTuple),
       volumePlusRegister = new NumbersRegister(
