@@ -46,21 +46,21 @@ object BoxCreation extends App {
 
   val tokens: Seq[(String, (String, Long))] = Seq(
     (
-      "GluonW Test NFT 1.4",
+      "GluonW Test NFT 1.5",
       (
         "GluonW NFTby DJed Alliance v1.4: VarPhiBeta Implemented. This is a test Token.",
         1L
       )
     ),
     (
-      "GluonW Test GAU 1.4",
+      "GluonW Test GAU 1.5",
       (
         "GluonW GAU Neutrons by DJed Alliance v1.4: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
       )
     ),
     (
-      "GluonW Test GAUC 1.4",
+      "GluonW Test GAUC 1.5",
       (
         "GluonW GAUC Protons by DJed Alliance v1.4: VarPhiBeta Implemented. This is a test Token.",
         GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -76,7 +76,7 @@ object BoxCreation extends App {
     val BURN: String = "burn"
 
     // SET RUN TX HERE
-    val runTx: String = SIGN_REDUCED
+    val runTx: String = BURN
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -101,7 +101,7 @@ object BoxCreation extends App {
           tokens.head._2._2
         )(client, conf, nodeConf)
 
-        protonsMintTx
+        gluonWNFTMintTx
       }
       case MERGE => {
         val nftToken = ErgoToken(GluonWTokens.gluonWBoxNFTId, 1)

@@ -428,7 +428,7 @@
 
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during fission.
-            val PhiT: BigInt = (precision / 100).toBigInt
+            val PhiT: BigInt = (precision / 1000).toBigInt
 
             // The protons and neutrons are lesser in outbox than inputbox
             val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -460,7 +460,7 @@
 
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during fission.
-            val PhiFusion: BigInt = (precision / 100).toBigInt
+            val PhiFusion: BigInt = (precision / 200).toBigInt
 
             // The protons and neutrons are more in outbox than inputbox
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -617,9 +617,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.01, and Phi1 is 0.5
-            val Phi0 = precision / 100
-            val Phi1 = precision / 2
+            // Phi 0 is 0.01, and Phi1 is 0.005
+            val Phi0 = precision / 200
+            val Phi1 = precision / 200
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -757,9 +757,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.01, and Phi1 is 0.5
-            val Phi0 = precision / 100
-            val Phi1 = precision / 2
+            // Phi 0 is 0.01, and Phi1 is 0.005
+            val Phi0 = precision / 200
+            val Phi1 = precision / 200
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 

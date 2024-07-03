@@ -78,17 +78,17 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     rightHandMinVal.min(BigInt(qStar))
   }
 
-  override def phiFission: Long = (0.01 * precision).toLong
+  override def phiFission: Long = (0.001 * precision).toLong
 
-  override def phiFusion: Long = (0.01 * precision).toLong
+  override def phiFusion: Long = (0.005 * precision).toLong
 
   override def varPhiBeta(
     rErg: Long,
     volumeToBeNegate: List[Long],
     volumeToMinus: List[Long]
   ): Long = {
-    val phi0: Long = (0.01 * precision).toLong
-    val phi1: Long = precision / 2
+    val phi0: Long = (0.005 * precision).toLong
+    val phi1: Long = (precision * 0.005).toLong
 
     val sumVolumeToBeNegate: BigInt =
       volumeToBeNegate.fold(0L)((acc: Long, x: Long) => acc + x).toBigInt

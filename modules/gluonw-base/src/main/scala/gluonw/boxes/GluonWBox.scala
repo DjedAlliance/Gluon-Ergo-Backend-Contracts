@@ -2,29 +2,16 @@ package gluonw.boxes
 
 import commons.configs.GetServiceConfig.getServiceOwner
 import commons.configs.MultiSig.getServiceMultiSig
-import commons.configs.{NodeConfig, OracleConfig}
+import commons.configs.{GetServiceConfig, NodeConfig, OracleConfig, ServiceConfig}
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.errors.ParseException
 import edge.json.{ErgoJson, Register}
-import edge.registers.{
-  IntRegister,
-  LongPairRegister,
-  LongRegister,
-  NumbersRegister,
-  Register
-}
+import edge.registers.{IntRegister, LongPairRegister, LongRegister, NumbersRegister, Register}
 import gluonw.boxes.GluonWBoxConstants.BUCKETS
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWConstants, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
-import org.ergoplatform.appkit.{
-  BlockchainContext,
-  ErgoContract,
-  ErgoValue,
-  InputBox,
-  NetworkType,
-  Parameters
-}
+import org.ergoplatform.appkit.{BlockchainContext, ErgoContract, ErgoValue, InputBox, NetworkType, Parameters, SigmaProp}
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
 
@@ -38,7 +25,7 @@ object GluonWBoxConstants {
   // This is the required fee for the box to be in existence. It's the minimum
   // amount a box require to have to exist on the ergo blockchain
   val GLUONWBOX_BOX_EXISTENCE_FEE: Long = Parameters.MinFee
-  val GLUONWBOX_MAX_FEE: Long = 2_500_000L * Parameters.OneErg
+  val GLUONWBOX_MAX_FEE: Long = 10_000_000L * Parameters.OneErg
   val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
   val BLOCKS_PER_VOLUME_BUCKET
     : Int = 720 // Approximately 1 day per volume bucket
@@ -53,9 +40,7 @@ case class GluonWBox(
     )
   ),
   treasuryMultisigRegister: SigmaPropRegister = new SigmaPropRegister(
-    SigmaPropRegister.from(
-      getServiceMultiSig(NodeConfig.networkType == NetworkType.MAINNET)
-    )
+      SigmaProp.createFromAddress(GetServiceConfig.getServiceOwner())
   ),
   feeRegister: LongPairRegister = new LongPairRegister(
     0L,
