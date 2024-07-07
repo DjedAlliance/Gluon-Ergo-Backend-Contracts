@@ -617,9 +617,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.01, and Phi1 is 0.005
+            // Phi 0 is 0.005, and Phi1 is 0.5
             val Phi0 = precision / 200
-            val Phi1 = precision / 200
+            val Phi1 = precision / 2
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -757,9 +757,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.01, and Phi1 is 0.005
+            // Phi 0 is 0.005, and Phi1 is 0.5
             val Phi0 = precision / 200
-            val Phi1 = precision / 200
+            val Phi1 = precision / 2
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 

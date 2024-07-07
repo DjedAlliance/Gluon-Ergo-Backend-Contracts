@@ -88,7 +88,7 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     volumeToMinus: List[Long]
   ): Long = {
     val phi0: Long = (0.005 * precision).toLong
-    val phi1: Long = (precision * 0.005).toLong
+    val phi1: Long = (precision * 0.5).toLong
 
     val sumVolumeToBeNegate: BigInt =
       volumeToBeNegate.fold(0L)((acc: Long, x: Long) => acc + x).toBigInt

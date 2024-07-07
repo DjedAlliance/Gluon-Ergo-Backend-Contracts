@@ -6,7 +6,7 @@ import gluonw.boxes.{GluonWBox, OracleBox}
 import org.ergoplatform.appkit.{Address, Parameters}
 
 case class GluonWFeesCalculator(
-  devAddress: Address = MultiSig.getServiceMultiSigAddress,
+  devAddress: Address = GetServiceConfig.getServiceFeeAddress(),
   uiAddress: Address = null,
   oraclePaymentAddress: Address = OracleConfig.get().paymentAddress
 )(gluonWBox: GluonWBox, gluonWConstants: TGluonWConstants) {
