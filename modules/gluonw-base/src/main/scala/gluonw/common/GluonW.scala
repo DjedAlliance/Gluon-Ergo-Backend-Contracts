@@ -7,6 +7,7 @@ import gluonw.boxes.{GluonWBox, OracleBox, OracleBuybackBox}
 import gluonw.txs.{BetaDecayMinusTx, BetaDecayPlusTx, FissionTx, FusionTx}
 import org.ergoplatform.appkit.{Address, BlockchainContext, InputBox}
 import edge.txs.{TTx, Tx}
+import org.ergoplatform.sdk.ErgoToken
 import play.twirl.api.TwirlHelperImports.twirlJavaCollectionToScala
 
 import javax.inject.Inject
@@ -325,11 +326,29 @@ class GluonW @Inject() (
   override def fusion(ergAmount: Long, walletAddress: Address): Seq[TTx] =
     client.getClient.execute { (ctx: BlockchainContext) =>
       // 1. Get the box from the user
-      val userBoxes: java.util.List[InputBox] =
-        client.getCoveringBoxesFor(walletAddress, ergAmount).getBoxes
+      val minerFeeAndReturnBoxFee: Long =
+        ErgCommons.MinMinerFee + 8 * ErgCommons.MinBoxFee
 
       // 2. Get the Latest GluonWBox
       val gluonWBox: GluonWBox = gluonWBoxExplorer.getGluonWBox
+      val outGluonWBox: GluonWBox =
+        algorithm.fusion(gluonWBox, ergAmount)
+      val neutronsCost: Long =
+        outGluonWBox.Neutrons.getValue - gluonWBox.Neutrons.getValue
+      val protonsCost: Long =
+        outGluonWBox.Protons.getValue - gluonWBox.Protons.getValue
+
+      val protonTokens = Option(ErgoToken(gluonWBox.Protons.getId, protonsCost))
+      val neutronTokens =
+        Option(ErgoToken(gluonWBox.Neutrons.getId, neutronsCost))
+      val tokens: Seq[ErgoToken] = Seq(neutronTokens, protonTokens).flatten
+
+      val userBoxesWithTokens: List[InputBox] =
+        client.getCoveringBoxesFor(
+          walletAddress,
+          minerFeeAndReturnBoxFee,
+          tokens.asJava
+        )
 
       // 3. Get the Oracle Box
       val neutronOracleBox: OracleBox = gluonWBoxExplorer.getOracleBox
@@ -340,7 +359,7 @@ class GluonW @Inject() (
       // 4. Create FissionTx
       val fusionTx: FusionTx = FusionTx(
         ergToRetrieve = ergAmount,
-        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq,
+        inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxesWithTokens.toSeq,
         changeAddress = walletAddress,
         dataInputs = Seq(neutronOracleBox.box.get.input)
       )(ctx, algorithm, gluonWFeesCalculator)
@@ -378,8 +397,10 @@ class GluonW @Inject() (
         .getBetaDecayMinusFees(neutronsAmount, neutronOracleBox)
 
       val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
+      // The total boxes out are around 5. However we put 8 to
+      // have overflow
       val minerFeeAndReturnBoxFee: Long =
-        ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+        ErgCommons.MinMinerFee + 8 * ErgCommons.MinBoxFee
 
       // 3. Get the box from the user
       val userBoxes: List[InputBox] =
@@ -453,7 +474,7 @@ class GluonW @Inject() (
 
       val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
       val minerFeeAndReturnBoxFee: Long =
-        ErgCommons.MinMinerFee + ErgCommons.MinBoxFee
+        ErgCommons.MinMinerFee + 8 * ErgCommons.MinBoxFee
 
       // 3. Get the box from the user
       val userBoxes: List[InputBox] =

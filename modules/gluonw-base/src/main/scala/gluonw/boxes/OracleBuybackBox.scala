@@ -14,13 +14,14 @@ import org.ergoplatform.appkit.{
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 
 import scala.collection.JavaConverters.collectionAsScalaIterableConverter
+import scala.collection.convert.ImplicitConversions.`iterable AsScalaIterable`
 
 case class OracleBuybackBox(
   value: Long,
   override val id: ErgoId = ErgoId.create(""),
-  override val box: Option[Box] = Option(null)
-) extends BoxWrapper {
+  override val box: Option[Box] = Option(null),
   override val tokens: Seq[ErgoToken] = Seq(OracleConfig.get().paymentNft)
+) extends BoxWrapper {
 
   override def getContract(implicit ctx: BlockchainContext): ErgoContract =
     OracleConfig.get().paymentAddress.toErgoContract
@@ -32,7 +33,8 @@ object OracleBuybackBox extends BoxWrapperHelper {
     OracleBuybackBox(
       value = inputBox.getValue,
       id = inputBox.getId,
-      box = Option(Box(inputBox))
+      box = Option(Box(inputBox)),
+      tokens = inputBox.getTokens.toSeq
     )
 
   /**

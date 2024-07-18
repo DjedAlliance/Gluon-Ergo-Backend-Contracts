@@ -2,16 +2,35 @@ package gluonw.boxes
 
 import commons.configs.GetServiceConfig.getServiceOwner
 import commons.configs.MultiSig.getServiceMultiSig
-import commons.configs.{GetServiceConfig, NodeConfig, OracleConfig, ServiceConfig}
+import commons.configs.{
+  GetServiceConfig,
+  NodeConfig,
+  OracleConfig,
+  ServiceConfig
+}
 import edge.boxes.{Box, BoxWrapperHelper, BoxWrapperJson}
 import edge.errors.ParseException
 import edge.json.{ErgoJson, Register}
-import edge.registers.{IntRegister, LongPairRegister, LongRegister, NumbersRegister, Register}
+import edge.registers.{
+  IntRegister,
+  LongPairRegister,
+  LongRegister,
+  NumbersRegister,
+  Register
+}
 import gluonw.boxes.GluonWBoxConstants.BUCKETS
 import gluonw.common.{AssetPrice, GluonWAsset, GluonWConstants, GluonWTokens}
 import gluonw.contracts.GluonWBoxContract
 import io.circe.Json
-import org.ergoplatform.appkit.{BlockchainContext, ErgoContract, ErgoValue, InputBox, NetworkType, Parameters, SigmaProp}
+import org.ergoplatform.appkit.{
+  BlockchainContext,
+  ErgoContract,
+  ErgoValue,
+  InputBox,
+  NetworkType,
+  Parameters,
+  SigmaProp
+}
 import org.ergoplatform.sdk.{ErgoId, ErgoToken}
 import special.collection.Coll
 
@@ -40,7 +59,7 @@ case class GluonWBox(
     )
   ),
   treasuryMultisigRegister: SigmaPropRegister = new SigmaPropRegister(
-      SigmaProp.createFromAddress(GetServiceConfig.getServiceOwner())
+    SigmaProp.createFromAddress(GetServiceConfig.getServiceOwner())
   ),
   feeRegister: LongPairRegister = new LongPairRegister(
     0L,

@@ -46,8 +46,14 @@ class GluonWCalculatorSpec extends GluonWBase {
       val protonsAtPrecision: Float =
         outputAssetAmount.protonsAmount.toFloat / GluonWBoxConstants.PRECISION.toFloat
 
-      assert(MathUtils.~=(neutronsAtPrecision, -0.050251257, 6), s"Neutrons at Precision: ${neutronsAtPrecision}")
-      assert(MathUtils.~=(protonsAtPrecision, -0.050251257, 5), s"Protons at precision: ${protonsAtPrecision}")
+      assert(
+        MathUtils.~=(neutronsAtPrecision, -0.050251257, 6),
+        s"Neutrons at Precision: ${neutronsAtPrecision}"
+      )
+      assert(
+        MathUtils.~=(protonsAtPrecision, -0.050251257, 5),
+        s"Protons at precision: ${protonsAtPrecision}"
+      )
     }
   }
 

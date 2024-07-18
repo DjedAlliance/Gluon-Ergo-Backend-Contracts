@@ -302,7 +302,7 @@ case class BetaDecayPlusTx(
       .copy(value = oracleBuybackInputBox.value + oracleFeeBoxValue)
 
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
+      value = userBox.value - ergsCost - 2 * ErgCommons.MinMinerFee - totalFees,
       tokens = finalCalculatedGluonTokens
     )
 
@@ -392,7 +392,7 @@ case class BetaDecayMinusTx(
       .copy(value = oracleBuybackInputBox.value + oracleFeeBoxValue)
 
     val outUserBox: FundsToAddressBox = userBox.copy(
-      value = userBox.value - ergsCost - ErgCommons.MinMinerFee - totalFees,
+      value = userBox.value - ergsCost - 2 * ErgCommons.MinMinerFee - totalFees,
       tokens = finalCalculatedGluonTokens
     )
 
