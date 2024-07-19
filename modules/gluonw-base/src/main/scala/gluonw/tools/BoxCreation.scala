@@ -25,7 +25,7 @@ import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 object BoxCreation extends App {
 
-  val isMainNet: Boolean = false
+  val isMainNet: Boolean = true
   val configFileName = "ergo_config.json"
   val testNetConfigFileName = "ergo_config_testnet.json"
 
@@ -76,7 +76,7 @@ object BoxCreation extends App {
     val BURN: String = "burn"
 
     // SET RUN TX HERE
-    val runTx: String = BURN
+    val runTx: String = MUTATE
 
     System.out.println(s"Running $runTx tx")
     val totalSupply: Long = GluonWBoxConstants.TOTAL_CIRCULATING_SUPPLY
@@ -132,7 +132,7 @@ object BoxCreation extends App {
       }
       case MUTATE => {
         val boxIdToMutate: String =
-          "01c2a8e870804d1eb85bbb1e369e00c6ad3e20de4f1457afc88498c9f7f4f826"
+          "b113a6af2ef81c5e17ecaed20fe9165c338861b18a8c5be44bfaebe12df76383"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
 //        val mutatedGluonWBox: FundsToAddressBox = FundsToAddressBox.from(gluonWBox).copy(address = getServiceOwner(isMainNet = NodeConfig.networkType == NetworkType.MAINNET))
