@@ -433,7 +433,7 @@ class GluonW @Inject() (
 
   /**
     * Transmute Neutrons to Protons Price
-    * Beta Decay Plus Tx
+    * Beta Decay Minus Tx
     *
     * @param neutronsAmount Amount of Neutrons to be transacted
     * @return AssetPrice of Protons
@@ -445,11 +445,11 @@ class GluonW @Inject() (
     getPriceFromAlgorithmWithOracleBox(
       neutronsAmount,
       currentHeight = client.getHeight,
-      algorithm.betaDecayPlusPrice
+      algorithm.betaDecayMinusPrice
     )
 
   /**
-    * Transmute Protons to Protons
+    * Transmute Protons to Neutrons
     * Beta Decay Plus Tx
     *
     * @param protonsAmount     Amount of Neutrons to be transacted
@@ -469,10 +469,10 @@ class GluonW @Inject() (
       val gluonWFeesCalculator: GluonWFeesCalculator =
         GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-      val betaDecayMinusFee: GluonWFees = gluonWFeesCalculator
-        .getBetaDecayMinusFees(protonsAmount, neutronOracleBox)
+      val betaDecayPlusFee: GluonWFees = gluonWFeesCalculator
+        .getBetaDecayPlusFees(protonsAmount, neutronOracleBox)
 
-      val totalFees: Long = betaDecayMinusFee.getTotalFeeAmount
+      val totalFees: Long = betaDecayPlusFee.getTotalFeeAmount
       val minerFeeAndReturnBoxFee: Long =
         ErgCommons.MinMinerFee + 8 * ErgCommons.MinBoxFee
 
@@ -492,7 +492,7 @@ class GluonW @Inject() (
       val oracleBuybackBoxTopUpRoute: InputBox =
         OracleBuybackBox.setTopUp(oracleBuyBackInputBox)
 
-      // 4. Create BetaDecayMinusTx
+      // 4. Create BetaDecayPlusTx
       val betaDecayPlusTx: BetaDecayPlusTx = BetaDecayPlusTx(
         protonsToTransmute = protonsAmount,
         inputBoxes = Seq(gluonWBox.box.get.input) ++ userBoxes.toSeq ++ Seq(
@@ -507,7 +507,7 @@ class GluonW @Inject() (
 
   /**
     * Transmute Protons to Neutrons Price
-    * Beta Decay Minus Tx
+    * Beta Decay Plus Tx
     *
     * @param protonsAmount Amount of Protons to be transacted
     * @return
@@ -519,7 +519,7 @@ class GluonW @Inject() (
     getPriceFromAlgorithmWithOracleBox(
       protonsAmount,
       currentHeight = client.getHeight,
-      algorithm.betaDecayMinusPrice
+      algorithm.betaDecayPlusPrice
     )
 
   /**
