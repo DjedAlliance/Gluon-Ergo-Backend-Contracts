@@ -370,7 +370,9 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         .slice(0, GluonWBoxConstants.BUCKETS - nDays)
     }
 
-    (volumeListToAddResult, volumeListToPreservedResult)
+    val volumes = (volumeListToAddResult, volumeListToPreservedResult)
+    System.out.println("Volumes: " + volumes)
+    volumes
   }
 
   def outputGluonWBox(
