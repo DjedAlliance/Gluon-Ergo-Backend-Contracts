@@ -75,7 +75,9 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
       (BigInt(neutronsInCirculation) * BigInt(pt) / fissionedErg).toLong
     }
 
-    rightHandMinVal.min(BigInt(qStar))
+    val ratio = rightHandMinVal.min(BigInt(qStar))
+    System.out.println("Fusion Ratio: " + ratio + "; Reserve Ratio: " + 1 / ratio)
+    ratio
   }
 
   override def phiFission: Long = (0.001 * precision).toLong
@@ -101,7 +103,9 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
       sumVolumeToBeNegate - sumVolumeToMinus
     }
 
-    (phi0 + phi1 * volume / rErg).toLong
+    val phi = (phi0 + phi1 * volume / rErg).toLong
+    System.out.println("Volume: " + volume + "; R:" + rErg + "; TransmutationFee: " + phi)
+    phi
   }
 
   def neutronsToNanoErg(
@@ -501,6 +505,8 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
 
+    System.out.println("Oracle: " + oracleBox.getPricePerGram)
+
     outputGluonWBox(
       inputGluonWBox,
       gluonWBoxOutputAssetAmount,
@@ -548,6 +554,8 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
 
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+
+    System.out.println("Oracle: " + oracleBox.getPricePerGram)
 
     outputGluonWBox(
       inputGluonWBox,
