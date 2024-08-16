@@ -76,7 +76,13 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     }
 
     val ratio = rightHandMinVal.min(BigInt(qStar))
-    System.out.println("Fusion Ratio: " + ratio + "; Reserve Ratio: " + 1 / ratio)
+
+    // Begin logging
+    val r = ratio.toFloat
+    val nPrice = fissionedErg * r / neutronsInCirculation;
+    System.out.println("Fusion Ratio: " + r + "; Reserve Ratio: " + 1 / r + "; Neutron price: " + nPrice)
+    // End logging
+    
     ratio
   }
 
@@ -153,6 +159,8 @@ case class GluonWConstants(precision: Long = GluonWBoxConstants.PRECISION)
     val oneMinusFusionRatio: BigInt = GluonWBoxConstants.PRECISION - fusRatio
     val protonsPrice: BigInt =
       (oneMinusFusionRatio * fissionedErg) / protonsInCirculation
+
+    System.out.println("Proton Price: " + protonsPrice)
 
     ((BigInt(protonsAmount) * protonsPrice) / GluonWBoxConstants.PRECISION).toLong
   }
