@@ -383,8 +383,8 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     }
 
     val volumes = (volumeListToAddResult, volumeListToPreservedResult)
-    System.out.println("Volumes Plus: " + volumes._1.map(_.toFloat/1e9))
-    System.out.println("Volumes Minus: " + volumes._2.map(_.toFloat/1e9))
+    System.out.println("Volumes Plus: " + volumes._1.map(_.toFloat/1e9) + " ; Total: " + volumes._1.sum.toFloat/1e9)
+    System.out.println("Volumes Minus: " + volumes._2.map(_.toFloat/1e9) + " ; Total: " + volumes._2.sum.toFloat/1e9)
     volumes
   }
 
