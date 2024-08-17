@@ -383,7 +383,8 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     }
 
     val volumes = (volumeListToAddResult, volumeListToPreservedResult)
-    System.out.println("Volumes: " + volumes)
+    System.out.println("Volumes Plus: " + volumes._1.map(_.toFloat/1e9))
+    System.out.println("Volumes Minus: " + volumes._2.map(_.toFloat/1e9))
     volumes
   }
 
@@ -513,7 +514,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
 
-    System.out.println("Oracle: " + oracleBox.getPricePerGram)
+    System.out.println("Oracle: " + oracleBox.getPricePerGram.toFloat/1e9)
 
     outputGluonWBox(
       inputGluonWBox,
