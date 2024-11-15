@@ -450,7 +450,8 @@
                 __outProtonsValueValid,
                 __inErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling
+                __validVolumeHandling,
+                __oracleCheck
             )))
         }
         else if (isFusionTx)
@@ -490,7 +491,8 @@
                 __inProtonsValueValid,
                 __outErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling
+                __validVolumeHandling,
+                __oracleCheck
             )))
         }
         else if (isBetaDecayPlusTx)
@@ -660,7 +662,8 @@
                 __feesCheck,
                 __outVolumeMinusValidated,
                 __outVolumePlusValidated,
-                __lastBlockPreserved
+                __lastBlockPreserved,
+                __oracleCheck
             )))
         } else if (isBetaDecayMinusTx) {
             // ===== BetaDecayMinus Tx ===== //
@@ -805,7 +808,8 @@
                 __feesCheck,
                 __outVolumePlusValidated,
                 __outVolumeMinusValidated,
-                __lastBlockPreserved
+                __lastBlockPreserved,
+                __oracleCheck
             )))
         } else sigmaProp(false)
     } else if (isUpdateTreasury) {
