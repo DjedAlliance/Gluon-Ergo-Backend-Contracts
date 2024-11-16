@@ -4,13 +4,14 @@
     // Description      :
     // Type             : Guard Script
     // Author           : Kii, LGD
-    // Last Modified    : June 25th 2023
-    // Version          : v 1.1
-    // Status           : V1 in Test
+    // Last Modified    : 2024-11-16
+    // Version          : v 2.0
+    // Status           : V2 in Test
 
     // ===== Version Logs ===== //
     // - 1.0: GluonWBox implemented without dev fees
     // - 1.1: Dev fees and UI fees implemented
+    // - 2.0: Oracle check is enforced.
 
     // ===== Contract Hard-Coded Constants ===== //
     // val _MinFee:                     Long
@@ -236,7 +237,7 @@
         val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
 
         val __oracleCheck: Boolean = allOf(Coll(
-            oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow > 0,
+            oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
             oracleBoxPoolNFT._1 == _OraclePoolNFT
         ))
         // ===== (END) Oracle Checks ===== //
@@ -450,7 +451,8 @@
                 __outProtonsValueValid,
                 __inErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling
+                __validVolumeHandling,
+                __oracleCheck
             )))
         }
         else if (isFusionTx)
@@ -490,7 +492,8 @@
                 __inProtonsValueValid,
                 __outErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling
+                __validVolumeHandling,
+                __oracleCheck
             )))
         }
         else if (isBetaDecayPlusTx)
@@ -660,7 +663,8 @@
                 __feesCheck,
                 __outVolumeMinusValidated,
                 __outVolumePlusValidated,
-                __lastBlockPreserved
+                __lastBlockPreserved,
+                __oracleCheck
             )))
         } else if (isBetaDecayMinusTx) {
             // ===== BetaDecayMinus Tx ===== //
@@ -805,7 +809,8 @@
                 __feesCheck,
                 __outVolumePlusValidated,
                 __outVolumeMinusValidated,
-                __lastBlockPreserved
+                __lastBlockPreserved,
+                __oracleCheck
             )))
         } else sigmaProp(false)
     } else if (isUpdateTreasury) {

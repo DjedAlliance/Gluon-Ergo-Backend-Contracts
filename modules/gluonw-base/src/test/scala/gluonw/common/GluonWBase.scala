@@ -154,7 +154,7 @@ trait GluonWBase extends UnitSpec {
       tokens = Seq(
         ErgoToken(
           ErgoId.create(
-            "001e182cc3f04aec4486c7a5018d198e9591a7cfb0b372f5f95fa3e5ddbd24d3"
+            "3c45f29a5165b030fdb5eaf5d81f8108f9d8f507b31487dd51f4ae08fe07cf4a"
           ),
           1
         ),
