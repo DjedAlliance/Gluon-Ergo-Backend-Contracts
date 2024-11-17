@@ -133,7 +133,7 @@ object BoxCreation extends App {
       case MUTATE => {
         // mainnet: e6f7fd7a0ecf9c33bd95f23e747865670ef6e5ff430f925fb46ffbecc4ab8508
         val boxIdToMutate: String =
-          "e75f65f93758af468f72936c6d1af640d776c6b4dcaf0f1f8aa5c7269493aa50"
+          "2c89f574973abb6ba0b2f5b197e8a97fc1fdcff257316695750058d2437a37c7"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
 //        val mutatedGluonWBox: FundsToAddressBox = FundsToAddressBox.from(gluonWBox).copy(address = getServiceOwner(isMainNet = NodeConfig.networkType == NetworkType.MAINNET))
