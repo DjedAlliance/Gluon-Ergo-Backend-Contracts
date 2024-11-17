@@ -451,8 +451,7 @@
                 __outProtonsValueValid,
                 __inErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling,
-                __oracleCheck
+                __validVolumeHandling
             )))
         }
         else if (isFusionTx)
@@ -492,8 +491,7 @@
                 __inProtonsValueValid,
                 __outErgsValueValid,
                 __feesCheck,
-                __validVolumeHandling,
-                __oracleCheck
+                __validVolumeHandling
             )))
         }
         else if (isBetaDecayPlusTx)
