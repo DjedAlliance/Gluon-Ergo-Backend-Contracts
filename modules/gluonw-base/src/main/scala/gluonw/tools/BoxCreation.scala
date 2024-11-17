@@ -35,9 +35,9 @@ object BoxCreation extends App {
     ErgoToolConfig.load(testNetConfigFileName)
   }
   val nodeConf: ErgoNodeConfig = conf.getNode
-  val client: BaseClient = new TestClient(nodeConf.getNetworkType)
+  val client: Client = new Client()
 
-//  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
+  val explorer: GluonWBoxExplorer = new GluonWBoxExplorer()(client)
   val reducedTxBytes: Seq[String] = Seq(
     ""
   )
@@ -131,8 +131,9 @@ object BoxCreation extends App {
         )(client, conf, nodeConf)
       }
       case MUTATE => {
+        // mainnet: e6f7fd7a0ecf9c33bd95f23e747865670ef6e5ff430f925fb46ffbecc4ab8508
         val boxIdToMutate: String =
-          "b113a6af2ef81c5e17ecaed20fe9165c338861b18a8c5be44bfaebe12df76383"
+          "e75f65f93758af468f72936c6d1af640d776c6b4dcaf0f1f8aa5c7269493aa50"
         val gluonWBox: InputBox = ctx.getBoxesById(boxIdToMutate).head
         val mutatedGluonWBox: GluonWBox = GluonWBox.from(gluonWBox)
 //        val mutatedGluonWBox: FundsToAddressBox = FundsToAddressBox.from(gluonWBox).copy(address = getServiceOwner(isMainNet = NodeConfig.networkType == NetworkType.MAINNET))
@@ -150,12 +151,12 @@ object BoxCreation extends App {
             .asScala
             .toSeq
             .filter(_.getTokens.isEmpty)
-//        val oracleBox: OracleBox = explorer.getOracleBox
+        val oracleBox: OracleBox = explorer.getOracleBox
 
         BoxTools.mutate(
           boxIdToMutate = boxIdToMutate,
           Seq(mutatedGluonWBox),
-//          dataInputs = Seq(oracleBox.box.get.input),
+            dataInputs = Seq(oracleBox.box.get.input),
           inputBoxes = spendingBoxes
         )(
           client,

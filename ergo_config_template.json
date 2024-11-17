@@ -1,0 +1,17 @@
+{
+  "node": {
+    "nodeApi": {
+      "apiUrl": "http://213.239.193.208:9053/",
+      "apiKey": ""
+    },
+    "wallet": {
+      "mnemonic": "",
+      "password": "",
+      "mnemonicPassword": ""
+    },
+    "networkType": "MAINNET"
+  },
+  "parameters": {
+    "addressIndex": 0
+  }
+}
