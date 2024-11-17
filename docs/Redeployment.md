@@ -23,7 +23,7 @@ Whenever there is a change in the contract, the GluonW box should be redeployed.
 ```scala
     val runTx: String = MUTATE
 ```
-6. Change the boxId on line 129:
+6. Change the boxId on line 136:
 ```scala
       case MUTATE => {
         val boxIdToMutate: String =
