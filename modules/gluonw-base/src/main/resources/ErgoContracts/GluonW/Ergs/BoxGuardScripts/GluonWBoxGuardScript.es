@@ -31,7 +31,7 @@
     // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Long, Long)
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
-    // R9 - LastBucketBlock: Long
+    // R9 - (LastBucketBlock, Alpha): (Long, Long)
 
     // ===== Context Vars ===== //
     // val _optUIFeeAddress                    SigmaProp
@@ -98,8 +98,12 @@
     val outVolumePlus: Coll[Long] = OUT_GLUONW_BOX.R7[Coll[Long]].get
     val outVolumeMinus: Coll[Long] = OUT_GLUONW_BOX.R8[Coll[Long]].get
 
-    val inLastBucketBlock: Long = IN_GLUONW_BOX.R9[Long].get
-    val outLastBucketBlock: Long = OUT_GLUONW_BOX.R9[Long].get
+    val inR9: (Long, Long) = IN_GLUONW_BOX.R9[(Long, Long)].get
+    val outR9: (Long, Long) = OUT_GLUONW_BOX.R9[(Long, Long)].get
+    val inLastBucketBlock: Long = inR9._1
+    val outLastBucketBlock: Long = outR9._1
+    val inAlpha: Long = inR9._2
+    val outAlpha: Long = outR9._2
 
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
@@ -826,7 +830,7 @@
                     (IN_GLUONW_BOX.R6[(Long, Long)].get == OUT_GLUONW_BOX.R6[(Long, Long)].get),
                     (IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get),
                     (IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get),
-                    (IN_GLUONW_BOX.R9[Long].get == OUT_GLUONW_BOX.R9[Long].get)
+                    (IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get)
                 ))
 
             }

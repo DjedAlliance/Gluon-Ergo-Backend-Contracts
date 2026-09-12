@@ -71,7 +71,9 @@ case class GluonWBox(
   volumeMinusRegister: NumbersRegister = new NumbersRegister(
     new Array[Long](BUCKETS)
   ),
-  lastDayBlockRegister: LongRegister = new LongRegister(0L),
+  lastDayBlockRegister: LongPairRegister = new LongPairRegister(
+    (0L, GluonWBoxConstants.PRECISION)
+  ),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -147,6 +149,12 @@ case class GluonWBox(
   override def R7: Option[Register[_]] = Option(volumePlusRegister)
   override def R8: Option[Register[_]] = Option(volumeMinusRegister)
   override def R9: Option[Register[_]] = Option(lastDayBlockRegister)
+
+  /** Convenience accessor for the last bucket block component of R9. */
+  def lastBucketBlock: Long = lastDayBlockRegister.value._1
+
+  /** Convenience accessor for the current alpha component of R9 (scaled by PRECISION). */
+  def alpha: Long = lastDayBlockRegister.value._2
 
   override def toJson(): Json =
     Json.fromFields(
@@ -344,8 +352,8 @@ object GluonWBox extends BoxWrapperHelper {
       volumeMinusRegister = new NumbersRegister(
         inputBox.getRegisters.get(4).getValue.asInstanceOf[Coll[Long]].toArray
       ),
-      lastDayBlockRegister = new LongRegister(
-        inputBox.getRegisters.get(5).getValue.asInstanceOf[Long]
+      lastDayBlockRegister = new LongPairRegister(
+        inputBox.getRegisters.get(5).getValue.asInstanceOf[(Long, Long)]
       )
     )
   }

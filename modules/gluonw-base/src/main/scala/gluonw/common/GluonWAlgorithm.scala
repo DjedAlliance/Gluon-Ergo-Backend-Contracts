@@ -420,7 +420,9 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
       volumeMinusRegister = if (volumeMinus != null) {
         new NumbersRegister(volumeMinus.toArray)
       } else inputGluonWBox.volumeMinusRegister,
-      lastDayBlockRegister = new LongRegister(dayBlockHeight)
+      lastDayBlockRegister = new LongPairRegister(
+        (dayBlockHeight, inputGluonWBox.alpha)
+      )
     )
   }
 
@@ -446,7 +448,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     outputGluonWBox(
       inputGluonWBox,
       gluonWBoxOutputAssetAmount,
-      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value
+      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value._1
     )
   }
 
@@ -472,7 +474,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     outputGluonWBox(
       inputGluonWBox,
       gluonWBoxOutputAssetAmount,
-      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value
+      dayBlockHeight = inputGluonWBox.lastDayBlockRegister.value._1
     )
   }
 
@@ -486,7 +488,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     val rErg: Long = inputGluonWBox.ergFissioned
     val (volumePlus, volumeMinus): (List[Long], List[Long]) = getVolumes(
       currentHeight = currentHeight,
-      lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value,
+      lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value._1,
       mVolumeInErgs = gluonWConstants.protonsToNanoErg(
         neutronsInCirculation = sNeutrons,
         protonsInCirculation = sProtons,
@@ -536,7 +538,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
 
     val (volumeMinus, volumePlus): (List[Long], List[Long]) = getVolumes(
       currentHeight = currentHeight,
-      lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value,
+      lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value._1,
       mVolumeInErgs = gluonWConstants
         .neutronsToNanoErg(
           neutronsInCirculation = sNeutrons,

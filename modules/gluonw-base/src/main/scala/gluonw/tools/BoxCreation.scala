@@ -5,7 +5,7 @@ import commons.configs.NodeConfig
 import commons.node.{Client, TestClient}
 import edge.boxes.FundsToAddressBox
 import edge.node.BaseClient
-import edge.registers.LongRegister
+import edge.registers.{LongPairRegister, LongRegister}
 import edge.tools.BoxTools
 import edge.tools.BoxTools.{mergeBox, mintTokens}
 import gluonw.common.{GluonWBoxExplorer, GluonWTokens}
@@ -122,7 +122,9 @@ object BoxCreation extends App {
               totalSupply - (GluonWBoxConstants.PRECISION / 100)
             )
           ),
-          lastDayBlockRegister = new LongRegister(client.getHeight)
+          lastDayBlockRegister = new LongPairRegister(
+            (client.getHeight, GluonWBoxConstants.PRECISION)
+          )
         )
 
         mergeBox(

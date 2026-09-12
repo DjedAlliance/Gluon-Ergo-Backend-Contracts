@@ -318,8 +318,11 @@ case class BetaDecayPlusTx(
 
     val outGluonWBoxWithLastBlockUpdated: GluonWBox =
       outGluonWBoxWithFeeRepaidUpdated.copy(
-        lastDayBlockRegister = new LongRegister(
-          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        lastDayBlockRegister = new LongPairRegister(
+          (
+            (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET,
+            inGluonWBox.alpha
+          )
         )
       )
 
@@ -408,8 +411,11 @@ case class BetaDecayMinusTx(
 
     val outGluonWBoxWithLastBlockUpdated: GluonWBox =
       outGluonWBoxWithFeeRepaidUpdated.copy(
-        lastDayBlockRegister = new LongRegister(
-          (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
+        lastDayBlockRegister = new LongPairRegister(
+          (
+            (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET,
+            inGluonWBox.alpha
+          )
         )
       )
 
