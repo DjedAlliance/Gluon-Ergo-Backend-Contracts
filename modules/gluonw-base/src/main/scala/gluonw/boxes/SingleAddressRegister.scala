@@ -2,7 +2,7 @@ package gluonw.boxes
 
 import commons.configs.MultiSig
 import edge.registers.{AddressRegister, Register}
-import org.ergoplatform.appkit.{Address, NetworkType, SigmaProp}
+import org.ergoplatform.appkit.{Address, ErgoValue, NetworkType, SigmaProp}
 import org.ergoplatform.sdk.JavaHelpers
 import org.ergoplatform.sdk.JavaHelpers.SigmaDsl
 import sigmastate.eval.CostingSigmaDslBuilder.proveDlog
@@ -14,7 +14,10 @@ class SingleAddressRegister(override val address: String)
   )
 }
 
-class SigmaPropRegister(override val value: SigmaProp) extends Register(value)
+class SigmaPropRegister(override val value: SigmaProp) extends Register(value) {
+  override def toErgoValue: Option[ErgoValue[_]] =
+    Option(ErgoValue.of(value.getSigmaBoolean))
+}
 
 object SigmaPropRegister {
 
