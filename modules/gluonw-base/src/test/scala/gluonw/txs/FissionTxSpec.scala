@@ -33,7 +33,7 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
     val gluonWBox: GluonWBox = genesisGluonWBox()
     "loop through multiple fissionTx correctly" in {
       client.getClient.execute { implicit ctx =>

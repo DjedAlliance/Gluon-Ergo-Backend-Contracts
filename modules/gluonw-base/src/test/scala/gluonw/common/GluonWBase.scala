@@ -167,6 +167,20 @@ trait GluonWBase extends UnitSpec {
       )
     )
 
+  /**
+    * createHealthyOracleBox
+    *
+    * Returns an oracle box whose price places q = 0.66 for the default genesis box
+    * (200_000 ERG, 1_000_000 neutrons in circulation), which is inside the healthy
+    * operating range [0.50, 0.98].
+    *
+    * Raw price = 132_000_000_000 nanoErg/kg => getPricePerGram = 132_000_000 nanoErg/g.
+    */
+  def createHealthyOracleBox: OracleBox =
+    createTestOracleBox.copy(
+      priceRegister = new LongRegister(132_000_000_000L)
+    )
+
   def genesisGluonWBox(
     ergAmount: Double = 200_000L,
     neutronAmount: Double = 1_000_000L,

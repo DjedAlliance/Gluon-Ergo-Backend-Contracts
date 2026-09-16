@@ -108,6 +108,24 @@
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
 
+    // ===== Healthy Range Pre-computation ===== //
+    // These must be declared at top-level scope so isFissionTx / isFusionTx /
+    // isBetaDecayPlusTx / isBetaDecayMinusTx can reference isHealthyRange.
+    val __precision: BigInt        = (1000000000).toBigInt
+    val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+    val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
+    // Raw price from oracle: nanoErg/kg -> nanoErg/g
+    val __Pt: BigInt               = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000
+    // Alpha-normalised oracle price: P' = Pt * alpha / precision
+    val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __precision
+    // Current fusion ratio using normalized price
+    val __q: BigInt                = __SNeutrons * __normalizedPt / __RErg
+    // Healthy range thresholds
+    val __qStarUpper: BigInt       = (98 * __precision / 100)  // 0.98 * precision
+    val __qStarLower: BigInt       = __precision / 2           // 0.50 * precision
+    // Normal operations are only permitted when 0.50 <= q <= 0.98
+    val isHealthyRange: Boolean    = (__q >= __qStarLower) && (__q <= __qStarUpper)
+
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
         IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
@@ -120,6 +138,7 @@
 
     val isFissionTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons reduction in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -132,6 +151,7 @@
 
     val isFusionTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons increment in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -150,6 +170,7 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons decrease in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -168,6 +189,7 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons increase in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -179,6 +201,43 @@
     ))
 
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
+
+    // isAdjustPegTx: callable by anyone when the box is outside the healthy range.
+    // Re-uses the top-level __q, __qStarUpper, __qStarLower computed above.
+    val isAdjustPegTx: Boolean = {
+        val _outsideRange: Boolean = !isHealthyRange
+
+        val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens
+        val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
+        val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
+        val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
+        val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
+        val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
+        val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+        // R9._1 (lastBucketBlock) must be preserved; only R9._2 (alpha) may change.
+        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock
+
+        // Alpha update direction must match the range violation.
+        val _alphaDecreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 99 / 100
+        val _alphaIncreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 101 / 100
+        val _alphaCorrect: Boolean   =
+            if (__q > __qStarUpper) _alphaDecreased
+            else _alphaIncreased
+
+        allOf(Coll(
+            _outsideRange,
+            _tokensSame,
+            _valueSame,
+            _r4Same,
+            _r5Same,
+            _r6Same,
+            _r7Same,
+            _r8Same,
+            _r9Block1Same,
+            _alphaCorrect,
+            IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+        ))
+    }
 
     // ===== (END) Tx Definition ===== //
 
@@ -205,10 +264,13 @@
         // We're using 1,000,000,000 because the precision is based on nanoErgs
         val precision: BigInt = (1000000000).toBigInt
 
-        // q* = 0.99
-        val qStar: BigInt = (99 * precision / 100)
-        val q: BigInt = SNeutrons * Pt / RErg
-        val fusionRatio: BigInt = min(precision * q / (q + precision - qStar), q)
+        // Reuse the top-level normalized price for the inner fusionRatio computation.
+        val normalizedPt: BigInt = __normalizedPt
+
+        // q* = 0.66 (matches GluonWConstants.fusionRatio in Scala: fusionRatio = min(q, qStar))
+        val qStar: BigInt = (66 * precision / 100)
+        val q: BigInt = SNeutrons * normalizedPt / RErg
+        val fusionRatio: BigInt = min(q, qStar)
 
         // Calculate the value based on protons
         // Check Protons reduction in OutBox
@@ -622,9 +684,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.005, and Phi1 is 1
+            // Phi 0 is 0.005, and Phi1 is 0.5
             val Phi0 = precision / 200
-            val Phi1 = precision
+            val Phi1 = precision / 2
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -815,6 +877,11 @@
                 __oracleCheck
             )))
         } else sigmaProp(false)
+    } else if (isAdjustPegTx) {
+        // Anyone can call adjustPeg when outside the healthy range.
+        // All state is preserved except R9._2 (alpha). No sigma required.
+        sigmaProp(true)
+
     } else if (isUpdateTreasury) {
 
         val validUpdateTreasuryMultisigTx: Boolean = {

@@ -192,6 +192,10 @@ trait TGluonWAlgorithm {
     currentHeight: Long
   ): GluonWBox
 
+  def adjustPeg(
+    inputGluonWBox: GluonWBox
+  )(implicit oracleBox: OracleBox): GluonWBox
+
   def fissionPrice(
     inputGluonWBox: GluonWBox,
     ergAmount: Long
@@ -426,6 +430,85 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
     )
   }
 
+  // ============================================================
+  // Healthy Range Enforcement
+  // ============================================================
+
+  /** Critical fusion-ratio thresholds (Bruno's design: q* = 0.98, lower = 0.50). */
+  val Q_STAR_UPPER: Long = (BigInt(98) * GluonWBoxConstants.PRECISION / 100).toLong  // 0.98 * PRECISION
+  val Q_STAR_LOWER: Long = GluonWBoxConstants.PRECISION / 2                           // 0.50 * PRECISION
+
+  /**
+    * Compute the alpha-normalised oracle price.
+    * P' = rawPrice * alpha / PRECISION
+    */
+  private def normalizedPrice(rawPrice: Long, alpha: Long): Long =
+    (BigInt(rawPrice) * alpha / GluonWBoxConstants.PRECISION).toLong
+
+  /**
+    * Compute the current fusion ratio q using the normalised price from the box.
+    * Returns the raw BigInt value scaled by PRECISION.
+    */
+  private def computeQ(box: GluonWBox, rawOraclePrice: Long): BigInt = {
+    val pt = normalizedPrice(rawOraclePrice, box.alpha)
+    val debugAlpha = box.alpha
+    System.out.println(s"DEBUG: alpha = $debugAlpha, pricePerGram = $rawOraclePrice, normalizedPt = $pt, SNeutrons = ${box.neutronsCirculatingSupply}, RErg = ${box.ergFissioned}")
+    BigInt(box.neutronsCirculatingSupply) * pt / box.ergFissioned
+  }
+
+  /**
+    * Throw if the box is outside the healthy operating range [q_lower, q_upper].
+    * q is computed using the alpha-normalised oracle price.
+    */
+  def checkHealthyRange(box: GluonWBox, rawOraclePrice: Long): Unit = {
+    val q = computeQ(box, rawOraclePrice)
+    val qScaled = q.toLong
+    System.out.println(s"DEBUG: checkHealthyRange q = $qScaled, PRECISION = ${GluonWBoxConstants.PRECISION}")
+    if (qScaled < Q_STAR_LOWER || qScaled > Q_STAR_UPPER)
+      throw new Exception("GluonW Box is outside healthy operating range.")
+  }
+
+  /**
+    * adjustPeg
+    *
+    * Callable by anyone when the box is outside the healthy range.
+    * Modifies only R9._2 (alpha); preserves R9._1 (lastBucketBlockHeight) and
+    * all other state (tokens, ERG value, R4-R8) exactly.
+    *
+    * - If q > Q_STAR_UPPER (r < 102%): alpha := alpha * 0.99
+    * - If q < Q_STAR_LOWER (r > 200%): alpha := alpha * 1.01
+    */
+  def adjustPeg(
+    inputGluonWBox: GluonWBox
+  )(implicit oracleBox: OracleBox): GluonWBox = {
+    val rawPrice = oracleBox.getPricePerGram
+    val q = computeQ(inputGluonWBox, rawPrice)
+    val qScaled = q.toLong
+
+    if (qScaled >= Q_STAR_LOWER && qScaled <= Q_STAR_UPPER)
+      throw new Exception("adjustPeg called while box is within healthy operating range.")
+
+    val oldAlpha = inputGluonWBox.alpha
+    val newAlpha: Long = if (qScaled > Q_STAR_UPPER) {
+      // r < 102% → deflate peg
+      (BigInt(oldAlpha) * 99 / 100).toLong
+    } else {
+      // r > 200% → inflate peg
+      (BigInt(oldAlpha) * 101 / 100).toLong
+    }
+
+    // Preserve lastBucketBlockHeight (R9._1), update alpha (R9._2) only.
+    inputGluonWBox.copy(
+      lastDayBlockRegister = new LongPairRegister(
+        (inputGluonWBox.lastBucketBlock, newAlpha)
+      )
+    )
+  }
+
+  // ============================================================
+  // Core Operation Overrides
+  // ============================================================
+
   override def fission(
     inputGluonWBox: GluonWBox,
     ergAmount: Long
@@ -484,8 +567,13 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   )(implicit oracleBox: OracleBox, currentHeight: Long): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
-
     val rErg: Long = inputGluonWBox.ergFissioned
+
+    // Use alpha-normalised price for all calculations.
+    val adjustedPrice: Long = normalizedPrice(oracleBox.getPricePerGram, inputGluonWBox.alpha)
+
+    checkHealthyRange(inputGluonWBox, oracleBox.getPricePerGram)
+
     val (volumePlus, volumeMinus): (List[Long], List[Long]) = getVolumes(
       currentHeight = currentHeight,
       lastDayBlockHeight = inputGluonWBox.lastDayBlockRegister.value._1,
@@ -493,13 +581,14 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         neutronsInCirculation = sNeutrons,
         protonsInCirculation = sProtons,
         fissionedErg = rErg,
-        goldPriceNanoErgPerGram = oracleBox.getPricePerGram,
+        goldPriceNanoErgPerGram = adjustedPrice,
         protonsAmount = protonsToTransmute
       ),
       volumeListToAdd = inputGluonWBox.volumePlusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumeMinusRegister.value.toList
     )
 
+    // Pass adjustedPrice into the calculator so fusionRatio uses P'.
     val gluonWBoxOutputAssetAmount: GluonWBoxOutputAssetAmount =
       GluonWCalculator(
         sNeutrons = sNeutrons,
@@ -511,7 +600,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         rErg = rErg,
         volumePlus = volumePlus,
         volumeMinus = volumeMinus
-      )(oracleBox.getPricePerGram)
+      )(adjustedPrice)
 
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET
@@ -533,8 +622,12 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
   )(implicit oracleBox: OracleBox, currentHeight: Long): GluonWBox = {
     val sProtons: Long = inputGluonWBox.protonsCirculatingSupply
     val sNeutrons: Long = inputGluonWBox.neutronsCirculatingSupply
-
     val rErg: Long = inputGluonWBox.ergFissioned
+
+    // Use alpha-normalised price for all calculations.
+    val adjustedPrice: Long = normalizedPrice(oracleBox.getPricePerGram, inputGluonWBox.alpha)
+
+    checkHealthyRange(inputGluonWBox, oracleBox.getPricePerGram)
 
     val (volumeMinus, volumePlus): (List[Long], List[Long]) = getVolumes(
       currentHeight = currentHeight,
@@ -544,7 +637,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
           neutronsInCirculation = sNeutrons,
           neutronsAmount = neutronsToTransmute,
           fissionedErg = rErg,
-          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+          goldPriceNanoErgPerGram = adjustedPrice
         ),
       volumeListToAdd = inputGluonWBox.volumeMinusRegister.value.toList,
       volumeListToPreserved = inputGluonWBox.volumePlusRegister.value.toList
@@ -561,7 +654,7 @@ case class GluonWAlgorithm(gluonWConstants: TGluonWConstants)
         volumePlus = volumePlus,
         volumeMinus = volumeMinus,
         neutronsToDecay = neutronsToTransmute
-      )(oracleBox.getPricePerGram)
+      )(adjustedPrice)
 
     val dayBlockHeight: Long =
       (currentHeight / GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET) * GluonWBoxConstants.BLOCKS_PER_VOLUME_BUCKET

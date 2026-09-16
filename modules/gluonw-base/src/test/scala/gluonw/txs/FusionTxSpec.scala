@@ -41,7 +41,7 @@ class FusionTxSpec extends GluonWBase {
       gluonWConstants = gluonWConstants
     )
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
 
     "loop through multiple fusionTx correctly" in {
       client.getClient.execute { implicit ctx =>

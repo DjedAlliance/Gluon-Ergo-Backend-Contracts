@@ -424,3 +424,32 @@ case class BetaDecayMinusTx(
     Seq(outGluonWBoxWithLastBlockUpdated, outUserBox, oracleBuybackOutBox) ++ feeBoxesWithoutOracleBuyback
   }
 }
+
+/**
+  * AdjustPeg Tx
+  *
+  * Callable by anyone when the GluonW box is outside the healthy operating range.
+  * Mutates only R9._2 (alpha) by ±1%; preserves all other box state.
+  *
+  * Inputs:  GluonWBox, FeePayerBox
+  * DataInputs: GoldOracle
+  * Outputs: GluonWBox (with new alpha)
+  */
+case class AdjustPegTx(
+  inputBoxes: Seq[InputBox],
+  override val changeAddress: Address,
+  override val dataInputs: Seq[InputBox]
+)(
+  implicit val ctx: BlockchainContext,
+  implicit val algorithm: TGluonWAlgorithm
+) extends GluonWTx(algorithm) {
+
+  override def defineOutBoxWrappers: Seq[BoxWrapper] = {
+    val inGluonWBox: GluonWBox = GluonWBox.from(inputBoxes.head)
+    implicit val neutronOracleBox: OracleBox = OracleBox.from(dataInputs.head)
+
+    val outGluonWBox: GluonWBox = algorithm.adjustPeg(inGluonWBox)
+
+    Seq(outGluonWBox)
+  }
+}
