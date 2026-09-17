@@ -111,11 +111,25 @@
     // ===== Healthy Range Pre-computation ===== //
     // These must be declared at top-level scope so isFissionTx / isFusionTx /
     // isBetaDecayPlusTx / isBetaDecayMinusTx can reference isHealthyRange.
+
+    // ===== (START) Oracle Checks ===== //
+    // The two checks for the oracle is:
+    // 1. It has the right NFT on it
+    // 2. Its height is within 70 min, (35 blocks)
+    val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
+    val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
+
+    val __oracleCheck: Boolean = allOf(Coll(
+        oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
+        oracleBoxPoolNFT._1 == _OraclePoolNFT
+    ))
+    // ===== (END) Oracle Checks ===== //
+
     val __precision: BigInt        = (1000000000).toBigInt
     val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
     // Raw price from oracle: nanoErg/kg -> nanoErg/g
-    val __Pt: BigInt               = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000
+    val __Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
     // Alpha-normalised oracle price: P' = Pt * alpha / precision
     val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __precision
     // Current fusion ratio using normalized price
@@ -133,7 +147,8 @@
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
-        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
+        inAlpha == outAlpha
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
@@ -226,6 +241,7 @@
 
         allOf(Coll(
             _outsideRange,
+            __oracleCheck,
             _tokensSame,
             _valueSame,
             _r4Same,
@@ -294,19 +310,6 @@
         }
 
         // ===== (END) Variable Declarations ===== //
-
-        // ===== (START) Oracle Checks ===== //
-        // The two checks for the oracle is:
-        // 1. It has the right NFT on it
-        // 2. Its height is within 70 min, (35 blocks)
-        val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
-        val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
-
-        val __oracleCheck: Boolean = allOf(Coll(
-            oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
-            oracleBoxPoolNFT._1 == _OraclePoolNFT
-        ))
-        // ===== (END) Oracle Checks ===== //
 
         // ===== (START) Fee Declarations ===== //
         // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo

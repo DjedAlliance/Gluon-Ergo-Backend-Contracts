@@ -513,6 +513,31 @@ class FissionTxSpec extends GluonWBase {
           dummyProver.sign(unsignedTx)
         }
       }
+
+      // i. Trying to modify alpha (R9._2) during normal operation
+      "SECURITY: Reject transaction if alpha (R9._2) is tampered with" in {
+        val tamperedAlpha: Long = outGluonWBox.alpha + 1000L
+        val customRegisters = Seq(
+          outGluonWBox.totalSupplyRegister.toErgoValue.get,
+          outGluonWBox.treasuryMultisigRegister.toErgoValue.get,
+          outGluonWBox.feeRegister.toErgoValue.get,
+          outGluonWBox.volumePlusRegister.toErgoValue.get,
+          outGluonWBox.volumeMinusRegister.toErgoValue.get,
+          new edge.registers.LongPairRegister((outGluonWBox.lastBucketBlock, tamperedAlpha)).toErgoValue.get
+        )
+
+        val customBoxData: Seq[CustomBoxData] = Seq(
+          CustomBoxData(customRegs = Option(customRegisters)),
+          CustomBoxData() // for paymentBox
+        )
+
+        val unsignedTx: UnsignedTransaction =
+          fissionTx.buildCustomTx(customBoxData)
+
+        assertThrows[Throwable] {
+          dummyProver.sign(unsignedTx)
+        }
+      }
     }
   }
 }

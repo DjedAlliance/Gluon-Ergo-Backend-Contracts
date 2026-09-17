@@ -177,51 +177,63 @@ class AdjustPegTxSpec extends GluonWBase {
       assert(outBox.alpha == expectedAlpha,
         s"Expected alpha=$expectedAlpha but got ${outBox.alpha}")
     }
-    
+
     // ===========================================================================
     // On-Chain Enforcement Tests (Signing via ErgoScript Guard)
     // ===========================================================================
 
+    def cloneBoxForTest(box: GluonWBox): GluonWBox = {
+      box.copy(
+        totalSupplyRegister = new edge.registers.LongPairRegister(box.totalSupplyRegister.value),
+        treasuryMultisigRegister = new gluonw.boxes.SigmaPropRegister(box.treasuryMultisigRegister.value),
+        feeRegister = new edge.registers.LongPairRegister(box.feeRegister.value),
+        volumePlusRegister = new edge.registers.NumbersRegister(box.volumePlusRegister.value.clone()),
+        volumeMinusRegister = new edge.registers.NumbersRegister(box.volumeMinusRegister.value.clone()),
+        lastDayBlockRegister = new edge.registers.LongPairRegister(box.lastDayBlockRegister.value),
+        box = Option.empty
+      )
+    }
+
     "On-chain: accept valid downward adjustPeg (alpha * 0.99) when q > 0.98" in {
       client.getClient.execute { implicit ctx =>
-        val inBox = lowReserveBox()
+        val inBox = cloneBoxForTest(lowReserveBox())
         val oracleBox = healthyOracle
         val paymentBox = createPaymentBox(value = Parameters.MinFee)
 
-        val outBox = gluonWAlgorithm.adjustPeg(inBox)(oracleBox)
-        
+        val outBox = cloneBoxForTest(gluonWAlgorithm.adjustPeg(inBox)(oracleBox))
+
         val adjustTx: Tx = Tx(
           inputBoxes = Seq(inBox.getAsInputBox(), paymentBox),
           changeAddress = trueAddress,
           dataInputs = Seq(oracleBox.getAsInputBox()),
           outBoxes = Seq(outBox)
         )
-        // Should sign successfully
+
+        // Should not throw
         adjustTx.signTx
       }
     }
 
-    "On-chain: REJECT tampered downward adjustPeg (alpha * 0.98 instead of 0.99) when q > 0.98" in {
+    "SECURITY: Reject downward adjustPeg with tampered alpha when q > 0.98" in {
       client.getClient.execute { implicit ctx =>
-        val inBox = lowReserveBox()
+        val inBox = cloneBoxForTest(lowReserveBox())
         val oracleBox = healthyOracle
         val paymentBox = createPaymentBox(value = Parameters.MinFee)
 
         val validOutBox = gluonWAlgorithm.adjustPeg(inBox)(oracleBox)
         val tamperedAlpha = (BigInt(PRECISION) * 98 / 100).toLong
-        val tamperedOutBox = validOutBox.copy(
-          lastDayBlockRegister = new LongPairRegister(
+        val tamperedOutBox = cloneBoxForTest(validOutBox.copy(
+          lastDayBlockRegister = new edge.registers.LongPairRegister(
             (validOutBox.lastBucketBlock, tamperedAlpha)
           )
-        )
-        
+        ))
         val hackTx: Tx = Tx(
           inputBoxes = Seq(inBox.getAsInputBox(), paymentBox),
           changeAddress = trueAddress,
           dataInputs = Seq(oracleBox.getAsInputBox()),
           outBoxes = Seq(tamperedOutBox)
         )
-        // ErgoScript guard should reject the signature
+
         assertThrows[Throwable] {
           hackTx.signTx
         }
@@ -230,44 +242,75 @@ class AdjustPegTxSpec extends GluonWBase {
 
     "On-chain: accept valid upward adjustPeg (alpha * 1.01) when q < 0.50" in {
       client.getClient.execute { implicit ctx =>
-        val inBox = highReserveBox()
+        val inBox = cloneBoxForTest(highReserveBox())
         val oracleBox = healthyOracle
         val paymentBox = createPaymentBox(value = Parameters.MinFee)
 
-        val outBox = gluonWAlgorithm.adjustPeg(inBox)(oracleBox)
-        
+        val outBox = cloneBoxForTest(gluonWAlgorithm.adjustPeg(inBox)(oracleBox))
+
         val adjustTx: Tx = Tx(
           inputBoxes = Seq(inBox.getAsInputBox(), paymentBox),
           changeAddress = trueAddress,
           dataInputs = Seq(oracleBox.getAsInputBox()),
           outBoxes = Seq(outBox)
         )
-        // Should sign successfully
+
+        // Should not throw
         adjustTx.signTx
       }
     }
 
-    "On-chain: REJECT tampered upward adjustPeg (alpha * 1.02 instead of 1.01) when q < 0.50" in {
+    "SECURITY: Reject upward adjustPeg with tampered alpha when q < 0.50" in {
       client.getClient.execute { implicit ctx =>
-        val inBox = highReserveBox()
+        val inBox = cloneBoxForTest(highReserveBox())
         val oracleBox = healthyOracle
         val paymentBox = createPaymentBox(value = Parameters.MinFee)
 
         val validOutBox = gluonWAlgorithm.adjustPeg(inBox)(oracleBox)
         val tamperedAlpha = (BigInt(PRECISION) * 102 / 100).toLong
-        val tamperedOutBox = validOutBox.copy(
-          lastDayBlockRegister = new LongPairRegister(
+        val tamperedOutBox = cloneBoxForTest(validOutBox.copy(
+          lastDayBlockRegister = new edge.registers.LongPairRegister(
             (validOutBox.lastBucketBlock, tamperedAlpha)
           )
-        )
-        
+        ))
+
         val hackTx: Tx = Tx(
           inputBoxes = Seq(inBox.getAsInputBox(), paymentBox),
           changeAddress = trueAddress,
           dataInputs = Seq(oracleBox.getAsInputBox()),
           outBoxes = Seq(tamperedOutBox)
         )
-        // ErgoScript guard should reject the signature
+
+        assertThrows[Throwable] {
+          hackTx.signTx
+        }
+      }
+    }
+
+    "On-chain (SECURITY): REJECT adjustPeg when oracle box has a fake/missing pool NFT" in {
+      client.getClient.execute { implicit ctx =>
+val inBox = lowReserveBox() // q > 0.98 -> allows alpha reduction
+
+        // Create an oracle box that looks healthy in price but MISSES the OraclePoolNFT
+        val fakeOracleBox = gluonw.boxes.OracleBox(
+          value = 10000000L,
+          epochIdRegister = new edge.registers.IntRegister(1396),
+          priceRegister = new edge.registers.LongRegister(132000000L),
+          tokens = Seq(org.ergoplatform.sdk.ErgoToken(org.ergoplatform.sdk.ErgoId.create("0000000000000000000000000000000000000000000000000000000000000000"), 1L))
+        )
+        val paymentBox = createPaymentBox(value = Parameters.MinFee)
+
+        // Generate outBox using the fake oracle
+        val outBox = gluonWAlgorithm.adjustPeg(inBox)(fakeOracleBox)
+
+        val hackTx: Tx = Tx(
+          inputBoxes = Seq(inBox.getAsInputBox(), paymentBox),
+          changeAddress = trueAddress,
+          dataInputs = Seq(fakeOracleBox.getAsInputBox()),
+          outBoxes = Seq(outBox)
+        )
+
+        // ErgoScript guard MUST reject the signature because the Oracle NFT check should fail!
         assertThrows[Throwable] {
           hackTx.signTx
         }
