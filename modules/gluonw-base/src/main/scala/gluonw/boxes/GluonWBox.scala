@@ -95,9 +95,10 @@ case class GluonWBox(
   def getProtonsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
     val sProtons: BigInt = BigInt(protonsCirculatingSupply)
+    val normalizedPrice: Long = (BigInt(oracleBox.getPricePerGram) * alpha / GluonWBoxConstants.PRECISION).toLong
     val fusionRatio: BigInt = GluonWConstants().fusionRatio(
       neutronsCirculatingSupply,
-      oracleBox.getPricePerGram,
+      normalizedPrice,
       ergFissioned
     )
 
@@ -114,9 +115,10 @@ case class GluonWBox(
   def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
     val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
+    val normalizedPrice: Long = (BigInt(oracleBox.getPricePerGram) * alpha / GluonWBoxConstants.PRECISION).toLong
     val fusionRatio: BigInt = GluonWConstants().fusionRatio(
       neutronsCirculatingSupply,
-      oracleBox.getPricePerGram,
+      normalizedPrice,
       ergFissioned
     )
 
@@ -352,9 +354,15 @@ object GluonWBox extends BoxWrapperHelper {
       volumeMinusRegister = new NumbersRegister(
         inputBox.getRegisters.get(4).getValue.asInstanceOf[Coll[Long]].toArray
       ),
-      lastDayBlockRegister = new LongPairRegister(
-        inputBox.getRegisters.get(5).getValue.asInstanceOf[(Long, Long)]
-      )
+      lastDayBlockRegister = new LongPairRegister({
+        val r9Value = inputBox.getRegisters.get(5).getValue
+        r9Value match {
+          case tuple: (Long, Long)      => tuple
+          case longVal: java.lang.Long  => (longVal.toLong, GluonWBoxConstants.PRECISION)
+          case longVal: Long            => (longVal, GluonWBoxConstants.PRECISION)
+          case _ => throw new Exception("Unexpected type in R9 register during GluonWBox parsing")
+        }
+      })
     )
   }
 

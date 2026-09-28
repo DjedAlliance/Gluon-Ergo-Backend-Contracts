@@ -217,43 +217,8 @@
 
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
 
-    // isAdjustPegTx: callable by anyone when the box is outside the healthy range.
-    // Re-uses the top-level __q, __qStarUpper, __qStarLower computed above.
-    val isAdjustPegTx: Boolean = {
-        val _outsideRange: Boolean = !isHealthyRange
-
-        val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens
-        val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
-        val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
-        val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
-        val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
-        val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
-        val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
-        // R9._1 (lastBucketBlock) must be preserved; only R9._2 (alpha) may change.
-        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock
-
-        // Alpha update direction must match the range violation.
-        val _alphaDecreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 99 / 100
-        val _alphaIncreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 101 / 100
-        val _alphaCorrect: Boolean   =
-            if (__q > __qStarUpper) _alphaDecreased
-            else _alphaIncreased
-
-        allOf(Coll(
-            _outsideRange,
-            __oracleCheck,
-            _tokensSame,
-            _valueSame,
-            _r4Same,
-            _r5Same,
-            _r6Same,
-            _r7Same,
-            _r8Same,
-            _r9Block1Same,
-            _alphaCorrect,
-            IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
-        ))
-    }
+    // isAdjustPegTx: alpha is the only thing that changes (all other checks are in the sigmaProp block below).
+    val isAdjustPegTx: Boolean = (inAlpha != outAlpha)
 
     // ===== (END) Tx Definition ===== //
 
@@ -283,10 +248,10 @@
         // Reuse the top-level normalized price for the inner fusionRatio computation.
         val normalizedPt: BigInt = __normalizedPt
 
-        // q* = 0.66 (matches GluonWConstants.fusionRatio in Scala: fusionRatio = min(q, qStar))
-        val qStar: BigInt = (66 * precision / 100)
+        // q* = 0.99
+        val qStar: BigInt = (99 * precision / 100)
         val q: BigInt = SNeutrons * normalizedPt / RErg
-        val fusionRatio: BigInt = min(q, qStar)
+        val fusionRatio: BigInt = min(precision * q / (q + precision - qStar), q)
 
         // Calculate the value based on protons
         // Check Protons reduction in OutBox
@@ -687,9 +652,9 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.005, and Phi1 is 0.5
+            // Phi 0 is 0.005, and Phi1 is 1
             val Phi0 = precision / 200
-            val Phi1 = precision / 2
+            val Phi1 = precision
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -883,7 +848,40 @@
     } else if (isAdjustPegTx) {
         // Anyone can call adjustPeg when outside the healthy range.
         // All state is preserved except R9._2 (alpha). No sigma required.
-        sigmaProp(true)
+
+        // Alpha update direction must match the range violation.
+        val _alphaDecreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 99 / 100
+        val _alphaIncreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 101 / 100
+        val _alphaCorrect: Boolean   =
+            if (__q > __qStarUpper) _alphaDecreased
+            else if (__q < __qStarLower) _alphaIncreased
+            else false
+
+        val _outsideRange: Boolean = !isHealthyRange
+        val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens
+        val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
+        val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
+        val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
+        val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
+        val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
+        val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+        // R9._1 (lastBucketBlock) must be preserved; only R9._2 (alpha) may change.
+        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock
+
+        sigmaProp(allOf(Coll(
+            _outsideRange,
+            __oracleCheck,
+            _alphaCorrect,
+            _tokensSame,
+            _valueSame,
+            _r4Same,
+            _r5Same,
+            _r6Same,
+            _r7Same,
+            _r8Same,
+            _r9Block1Same,
+            IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+        )))
 
     } else if (isUpdateTreasury) {
 

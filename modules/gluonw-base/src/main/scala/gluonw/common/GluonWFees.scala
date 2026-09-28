@@ -2,7 +2,7 @@ package gluonw.common
 
 import commons.configs.{GetServiceConfig, MultiSig, OracleConfig}
 import edge.boxes.FundsToAddressBox
-import gluonw.boxes.{GluonWBox, OracleBox}
+import gluonw.boxes.{GluonWBox, GluonWBoxConstants, OracleBox}
 import org.ergoplatform.appkit.{Address, Parameters}
 
 case class GluonWFeesCalculator(
@@ -43,6 +43,8 @@ case class GluonWFeesCalculator(
     protonsAmount: Long,
     oracleBox: OracleBox
   ): GluonWFees = {
+    val normalizedPrice: Long =
+      (BigInt(oracleBox.getPricePerGram) * gluonWBox.alpha / GluonWBoxConstants.PRECISION).toLong
     val protonsNanoErgPrice: BigInt =
       BigInt(
         gluonWConstants.protonsToNanoErg(
@@ -50,7 +52,7 @@ case class GluonWFeesCalculator(
           protonsInCirculation = gluonWBox.protonsCirculatingSupply,
           protonsAmount = protonsAmount,
           fissionedErg = gluonWBox.ergFissioned,
-          goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+          goldPriceNanoErgPerGram = normalizedPrice
         )
       )
     val devFee: Long =
@@ -71,6 +73,8 @@ case class GluonWFeesCalculator(
     neutronsAmount: Long,
     oracleBox: OracleBox
   ): GluonWFees = {
+    val normalizedPrice: Long =
+      (BigInt(oracleBox.getPricePerGram) * gluonWBox.alpha / GluonWBoxConstants.PRECISION).toLong
     val neutronsNanoErgPrice: BigInt =
       BigInt(
         gluonWConstants
@@ -78,7 +82,7 @@ case class GluonWFeesCalculator(
             neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
             neutronsAmount = neutronsAmount,
             fissionedErg = gluonWBox.ergFissioned,
-            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+            goldPriceNanoErgPerGram = normalizedPrice
           )
       )
     val devFee: Long =

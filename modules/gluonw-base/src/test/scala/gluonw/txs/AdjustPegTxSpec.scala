@@ -295,7 +295,7 @@ val inBox = lowReserveBox() // q > 0.98 -> allows alpha reduction
         val fakeOracleBox = gluonw.boxes.OracleBox(
           value = 10000000L,
           epochIdRegister = new edge.registers.IntRegister(1396),
-          priceRegister = new edge.registers.LongRegister(132000000L),
+          priceRegister = new edge.registers.LongRegister(132000000000L),
           tokens = Seq(org.ergoplatform.sdk.ErgoToken(org.ergoplatform.sdk.ErgoId.create("0000000000000000000000000000000000000000000000000000000000000000"), 1L))
         )
         val paymentBox = createPaymentBox(value = Parameters.MinFee)

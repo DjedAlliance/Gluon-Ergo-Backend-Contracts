@@ -234,7 +234,7 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWFeesCalculator: GluonWFeesCalculator =
       GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
 
     client.getClient.execute { implicit ctx =>
       val maxErgs: Long = 10_000L

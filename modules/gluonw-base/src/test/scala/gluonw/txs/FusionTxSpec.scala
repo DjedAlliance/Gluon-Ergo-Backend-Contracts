@@ -228,7 +228,7 @@ class FusionTxSpec extends GluonWBase {
         gluonWConstants = gluonWConstants
       )
 
-      val oracleBox: OracleBox = createTestOracleBox
+      val oracleBox: OracleBox = createHealthyOracleBox
 
       // 1. Create a fission box
       // 2. Create a seq of erg to redeem
