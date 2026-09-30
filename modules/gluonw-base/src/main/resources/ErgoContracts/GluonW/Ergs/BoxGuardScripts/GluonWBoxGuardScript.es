@@ -31,7 +31,7 @@
     // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Long, Long)
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
-    // R9 - LastBucketBlock: Long
+    // R9 - (LastBucketBlock, Alpha): (Long, Long)
 
     // ===== Context Vars ===== //
     // val _optUIFeeAddress                    SigmaProp
@@ -98,11 +98,47 @@
     val outVolumePlus: Coll[Long] = OUT_GLUONW_BOX.R7[Coll[Long]].get
     val outVolumeMinus: Coll[Long] = OUT_GLUONW_BOX.R8[Coll[Long]].get
 
-    val inLastBucketBlock: Long = IN_GLUONW_BOX.R9[Long].get
-    val outLastBucketBlock: Long = OUT_GLUONW_BOX.R9[Long].get
+    val inR9: (Long, Long) = IN_GLUONW_BOX.R9[(Long, Long)].get
+    val outR9: (Long, Long) = OUT_GLUONW_BOX.R9[(Long, Long)].get
+    val inLastBucketBlock: Long = inR9._1
+    val outLastBucketBlock: Long = outR9._1
+    val inAlpha: Long = inR9._2
+    val outAlpha: Long = outR9._2
 
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
+
+    // ===== Healthy Range Pre-computation ===== //
+    // These must be declared at top-level scope so isFissionTx / isFusionTx /
+    // isBetaDecayPlusTx / isBetaDecayMinusTx can reference isHealthyRange.
+
+    // ===== (START) Oracle Checks ===== //
+    // The two checks for the oracle is:
+    // 1. It has the right NFT on it
+    // 2. Its height is within 70 min, (35 blocks)
+    val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
+    val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
+
+    val __oracleCheck: Boolean = allOf(Coll(
+        oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
+        oracleBoxPoolNFT._1 == _OraclePoolNFT
+    ))
+    // ===== (END) Oracle Checks ===== //
+
+    val __precision: BigInt        = (1000000000).toBigInt
+    val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
+    val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
+    // Raw price from oracle: nanoErg/kg -> nanoErg/g
+    val __Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
+    // Alpha-normalised oracle price: P' = Pt * alpha / precision
+    val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __precision
+    // Current fusion ratio using normalized price
+    val __q: BigInt                = __SNeutrons * __normalizedPt / __RErg
+    // Healthy range thresholds
+    val __qStarUpper: BigInt       = (98 * __precision / 100)  // 0.98 * precision
+    val __qStarLower: BigInt       = __precision / 2           // 0.50 * precision
+    // Normal operations are only permitted when 0.50 <= q <= 0.98
+    val isHealthyRange: Boolean    = (__q >= __qStarLower) && (__q <= __qStarUpper)
 
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
@@ -111,11 +147,13 @@
         IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
-        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
+        inAlpha == outAlpha
     ))
 
     val isFissionTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons reduction in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -128,6 +166,7 @@
 
     val isFusionTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons increment in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -146,6 +185,7 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons decrease in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -164,6 +204,7 @@
     // Therefore an increase in circulation means TokensAmountInBox is lesser
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         __gluonWBoxPersistedValueCheck,
+        isHealthyRange,
         // Check Neutrons increase in OutBox
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2,
 
@@ -175,6 +216,9 @@
     ))
 
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
+
+    // isAdjustPegTx: alpha is the only thing that changes (all other checks are in the sigmaProp block below).
+    val isAdjustPegTx: Boolean = (inAlpha != outAlpha)
 
     // ===== (END) Tx Definition ===== //
 
@@ -201,9 +245,12 @@
         // We're using 1,000,000,000 because the precision is based on nanoErgs
         val precision: BigInt = (1000000000).toBigInt
 
+        // Reuse the top-level normalized price for the inner fusionRatio computation.
+        val normalizedPt: BigInt = __normalizedPt
+
         // q* = 0.99
         val qStar: BigInt = (99 * precision / 100)
-        val q: BigInt = SNeutrons * Pt / RErg
+        val q: BigInt = SNeutrons * normalizedPt / RErg
         val fusionRatio: BigInt = min(precision * q / (q + precision - qStar), q)
 
         // Calculate the value based on protons
@@ -228,19 +275,6 @@
         }
 
         // ===== (END) Variable Declarations ===== //
-
-        // ===== (START) Oracle Checks ===== //
-        // The two checks for the oracle is:
-        // 1. It has the right NFT on it
-        // 2. Its height is within 70 min, (35 blocks)
-        val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
-        val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
-
-        val __oracleCheck: Boolean = allOf(Coll(
-            oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
-            oracleBoxPoolNFT._1 == _OraclePoolNFT
-        ))
-        // ===== (END) Oracle Checks ===== //
 
         // ===== (START) Fee Declarations ===== //
         // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
@@ -811,6 +845,44 @@
                 __oracleCheck
             )))
         } else sigmaProp(false)
+    } else if (isAdjustPegTx) {
+        // Anyone can call adjustPeg when outside the healthy range.
+        // All state is preserved except R9._2 (alpha). No sigma required.
+
+        // Alpha update direction must match the range violation.
+        val _alphaDecreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 99 / 100
+        val _alphaIncreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 101 / 100
+        val _alphaCorrect: Boolean   =
+            if (__q > __qStarUpper) _alphaDecreased
+            else if (__q < __qStarLower) _alphaIncreased
+            else false
+
+        val _outsideRange: Boolean = !isHealthyRange
+        val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens
+        val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
+        val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
+        val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
+        val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
+        val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
+        val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+        // R9._1 (lastBucketBlock) must be preserved; only R9._2 (alpha) may change.
+        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock
+
+        sigmaProp(allOf(Coll(
+            _outsideRange,
+            __oracleCheck,
+            _alphaCorrect,
+            _tokensSame,
+            _valueSame,
+            _r4Same,
+            _r5Same,
+            _r6Same,
+            _r7Same,
+            _r8Same,
+            _r9Block1Same,
+            IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+        )))
+
     } else if (isUpdateTreasury) {
 
         val validUpdateTreasuryMultisigTx: Boolean = {
@@ -826,7 +898,7 @@
                     (IN_GLUONW_BOX.R6[(Long, Long)].get == OUT_GLUONW_BOX.R6[(Long, Long)].get),
                     (IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get),
                     (IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get),
-                    (IN_GLUONW_BOX.R9[Long].get == OUT_GLUONW_BOX.R9[Long].get)
+                    (IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get)
                 ))
 
             }

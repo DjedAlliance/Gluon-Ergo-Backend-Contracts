@@ -33,7 +33,7 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
     val gluonWBox: GluonWBox = genesisGluonWBox()
     "loop through multiple fissionTx correctly" in {
       client.getClient.execute { implicit ctx =>
@@ -234,7 +234,7 @@ class FissionTxSpec extends GluonWBase {
     implicit val gluonWFeesCalculator: GluonWFeesCalculator =
       GluonWFeesCalculator()(gluonWBox, gluonWConstants)
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
 
     client.getClient.execute { implicit ctx =>
       val maxErgs: Long = 10_000L
@@ -504,6 +504,31 @@ class FissionTxSpec extends GluonWBase {
           CustomBoxData(customValue =
             Option(outPaymentBox.value - amountToChange)
           )
+        )
+
+        val unsignedTx: UnsignedTransaction =
+          fissionTx.buildCustomTx(customBoxData)
+
+        assertThrows[Throwable] {
+          dummyProver.sign(unsignedTx)
+        }
+      }
+
+      // i. Trying to modify alpha (R9._2) during normal operation
+      "SECURITY: Reject transaction if alpha (R9._2) is tampered with" in {
+        val tamperedAlpha: Long = outGluonWBox.alpha + 1000L
+        val customRegisters = Seq(
+          outGluonWBox.totalSupplyRegister.toErgoValue.get,
+          outGluonWBox.treasuryMultisigRegister.toErgoValue.get,
+          outGluonWBox.feeRegister.toErgoValue.get,
+          outGluonWBox.volumePlusRegister.toErgoValue.get,
+          outGluonWBox.volumeMinusRegister.toErgoValue.get,
+          new edge.registers.LongPairRegister((outGluonWBox.lastBucketBlock, tamperedAlpha)).toErgoValue.get
+        )
+
+        val customBoxData: Seq[CustomBoxData] = Seq(
+          CustomBoxData(customRegs = Option(customRegisters)),
+          CustomBoxData() // for paymentBox
         )
 
         val unsignedTx: UnsignedTransaction =

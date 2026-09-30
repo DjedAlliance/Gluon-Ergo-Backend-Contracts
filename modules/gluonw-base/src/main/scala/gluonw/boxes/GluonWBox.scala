@@ -71,7 +71,9 @@ case class GluonWBox(
   volumeMinusRegister: NumbersRegister = new NumbersRegister(
     new Array[Long](BUCKETS)
   ),
-  lastDayBlockRegister: LongRegister = new LongRegister(0L),
+  lastDayBlockRegister: LongPairRegister = new LongPairRegister(
+    (0L, GluonWBoxConstants.PRECISION)
+  ),
   override val tokens: Seq[ErgoToken],
   override val id: ErgoId = ErgoId.create(""),
   override val box: Option[Box] = Option(null)
@@ -93,9 +95,10 @@ case class GluonWBox(
   def getProtonsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
     val sProtons: BigInt = BigInt(protonsCirculatingSupply)
+    val normalizedPrice: Long = (BigInt(oracleBox.getPricePerGram) * alpha / GluonWBoxConstants.PRECISION).toLong
     val fusionRatio: BigInt = GluonWConstants().fusionRatio(
       neutronsCirculatingSupply,
-      oracleBox.getPricePerGram,
+      normalizedPrice,
       ergFissioned
     )
 
@@ -112,9 +115,10 @@ case class GluonWBox(
   def getNeutronsPrice(oracleBox: OracleBox): AssetPrice = {
     val rErg: BigInt = BigInt(ergFissioned)
     val sNeutrons: BigInt = BigInt(neutronsCirculatingSupply)
+    val normalizedPrice: Long = (BigInt(oracleBox.getPricePerGram) * alpha / GluonWBoxConstants.PRECISION).toLong
     val fusionRatio: BigInt = GluonWConstants().fusionRatio(
       neutronsCirculatingSupply,
-      oracleBox.getPricePerGram,
+      normalizedPrice,
       ergFissioned
     )
 
@@ -147,6 +151,12 @@ case class GluonWBox(
   override def R7: Option[Register[_]] = Option(volumePlusRegister)
   override def R8: Option[Register[_]] = Option(volumeMinusRegister)
   override def R9: Option[Register[_]] = Option(lastDayBlockRegister)
+
+  /** Convenience accessor for the last bucket block component of R9. */
+  def lastBucketBlock: Long = lastDayBlockRegister.value._1
+
+  /** Convenience accessor for the current alpha component of R9 (scaled by PRECISION). */
+  def alpha: Long = lastDayBlockRegister.value._2
 
   override def toJson(): Json =
     Json.fromFields(
@@ -344,9 +354,15 @@ object GluonWBox extends BoxWrapperHelper {
       volumeMinusRegister = new NumbersRegister(
         inputBox.getRegisters.get(4).getValue.asInstanceOf[Coll[Long]].toArray
       ),
-      lastDayBlockRegister = new LongRegister(
-        inputBox.getRegisters.get(5).getValue.asInstanceOf[Long]
-      )
+      lastDayBlockRegister = new LongPairRegister({
+        val r9Value = inputBox.getRegisters.get(5).getValue
+        r9Value match {
+          case tuple: (Long, Long)      => tuple
+          case longVal: java.lang.Long  => (longVal.toLong, GluonWBoxConstants.PRECISION)
+          case longVal: Long            => (longVal, GluonWBoxConstants.PRECISION)
+          case _ => throw new Exception("Unexpected type in R9 register during GluonWBox parsing")
+        }
+      })
     )
   }
 

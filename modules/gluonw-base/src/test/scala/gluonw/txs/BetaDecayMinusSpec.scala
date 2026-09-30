@@ -35,7 +35,7 @@ class BetaDecayMinusSpec extends GluonWBase {
     implicit val gluonWAlgorithm: GluonWAlgorithm =
       GluonWAlgorithm(gluonWConstants)
 
-    val gluonWBox: GluonWBox = genesisGluonWBox(20_000_000L, 100_000L, 100_000L)
+    val gluonWBox: GluonWBox = genesisGluonWBox()
     val gluonWCalculator: GluonWCalculator = GluonWCalculator(
       sProtons = gluonWBox.protonsCirculatingSupply,
       sNeutrons = gluonWBox.neutronsCirculatingSupply,
@@ -43,7 +43,19 @@ class BetaDecayMinusSpec extends GluonWBase {
       gluonWConstants = gluonWConstants
     )
 
-    val oracleBox: OracleBox = createTestOracleBox
+    val oracleBox: OracleBox = createHealthyOracleBox
+
+    def cloneBoxForTest(box: GluonWBox): GluonWBox = {
+      box.copy(
+        totalSupplyRegister = new edge.registers.LongPairRegister(box.totalSupplyRegister.value),
+        treasuryMultisigRegister = new gluonw.boxes.SigmaPropRegister(box.treasuryMultisigRegister.value),
+        feeRegister = new edge.registers.LongPairRegister(box.feeRegister.value),
+        volumePlusRegister = new edge.registers.NumbersRegister(box.volumePlusRegister.value.clone()),
+        volumeMinusRegister = new edge.registers.NumbersRegister(box.volumeMinusRegister.value.clone()),
+        lastDayBlockRegister = new edge.registers.LongPairRegister(box.lastDayBlockRegister.value),
+        box = Option.empty
+      )
+    }
 
     "loop through multiple betaDecayMinusTx correctly" in {
       client.getClient.execute { implicit ctx =>
@@ -82,9 +94,11 @@ class BetaDecayMinusSpec extends GluonWBase {
             .withContextVars(ContextVar.of(0.toByte, 0))
           val oracleBuybackBoxTopUpRoute: InputBox =
             OracleBuybackBox.setTopUp(oracleBuybackBox)
+
+          val freshGluonWBox = cloneBoxForTest(gluonWBox)
           val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
             inputBoxes = Seq(
-              gluonWBox.getAsInputBox(),
+              freshGluonWBox.getAsInputBox(),
               paymentBox,
               oracleBuybackBoxTopUpRoute
             ),
@@ -155,7 +169,7 @@ class BetaDecayMinusSpec extends GluonWBase {
 
     "chain through multiple betaDecayMinusTx" in {
       client.getClient.execute { implicit ctx =>
-        val maxNeutrons: Long = 10_000L
+        val maxNeutrons: Long = 1_000L
         val maxNeutronsInPrecision: Long =
           maxNeutrons * GluonWBoxConstants.PRECISION
         val changeAddress: Address = trueAddress
@@ -194,9 +208,10 @@ class BetaDecayMinusSpec extends GluonWBase {
             OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
           val oracleBuybackBoxTopUpRoute: InputBox =
             OracleBuybackBox.setTopUp(oracleBuybackBox)
+          val freshInGluonWBox = cloneBoxForTest(inGluonWBox)
           val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
             inputBoxes = Seq(
-              inGluonWBox.getAsInputBox(),
+              freshInGluonWBox.getAsInputBox(),
               paymentBox,
               oracleBuybackBoxTopUpRoute
             ),
@@ -276,63 +291,64 @@ class BetaDecayMinusSpec extends GluonWBase {
 
     val gluonWBox: GluonWBox = genesisGluonWBox()
 
-    val oracleBox: OracleBox = createTestOracleBox
-    client.getClient.execute { implicit ctx =>
-      val maxNeutrons: Long = 1_000L
-      val maxNeutronsInPrecision: Long =
-        maxNeutrons * GluonWBoxConstants.PRECISION
-      val changeAddress: Address = trueAddress
-      var inGluonWBox: GluonWBox = gluonWBox
-      implicit val gluonWFeesCalculator: GluonWFeesCalculator =
-        GluonWFeesCalculator()(gluonWBox, gluonWConstants)
-      val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
-      val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
-        sProtons = inGluonWBox.protonsCirculatingSupply,
-        sNeutrons = inGluonWBox.neutronsCirculatingSupply,
-        rErg = inGluonWBox.ergFissioned,
-        gluonWConstants = gluonWConstants
-      )
+    // Use the healthy oracle so betaDecayMinus succeeds and produces boxes to tamper.
+    // The ErgoScript then rejects the tampered tx.
+    val oracleBox: OracleBox = createHealthyOracleBox
 
-      val random: Double = new Random().nextDouble()
-      val neutronsToTransmute: Long = (maxNeutronsInPrecision * random).toLong
-
-      // Payment box to pay for the transaction
-      val paymentBox: InputBox =
-        createPaymentBox(
-          value = gluonWConstants.neutronsToNanoErg(
-            neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
-            neutronsAmount = neutronsToTransmute,
-            fissionedErg = gluonWBox.ergFissioned,
-            goldPriceNanoErgPerGram = oracleBox.getPricePerGram
-          ) / 10,
-          neutronsValue = neutronsToTransmute + 1000
+    // a. Get more protons for the neutrons given
+    "Get more Protons" in {
+      client.getClient.execute { implicit ctx =>
+        val maxNeutrons: Long = 1_000L
+        val maxNeutronsInPrecision: Long =
+          maxNeutrons * GluonWBoxConstants.PRECISION
+        val changeAddress: Address = trueAddress
+        val inGluonWBox: GluonWBox = gluonWBox
+        implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+          GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+        val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
+        val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
+          sProtons = inGluonWBox.protonsCirculatingSupply,
+          sNeutrons = inGluonWBox.neutronsCirculatingSupply,
+          rErg = inGluonWBox.ergFissioned,
+          gluonWConstants = gluonWConstants
         )
 
-      implicit val currentHeight: Long = ctx.getHeight
-      val oracleBuybackBox: InputBox =
-        OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
-      val oracleBuybackBoxTopUpRoute: InputBox =
-        OracleBuybackBox.setTopUp(oracleBuybackBox)
-      val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
-        inputBoxes = Seq(
-          inGluonWBox.getAsInputBox(),
-          paymentBox,
-          oracleBuybackBoxTopUpRoute
-        ),
-        neutronsToTransmute = neutronsToTransmute,
-        changeAddress = changeAddress,
-        dataInputs = Seq(oracleBoxInputBox)
-      )
+        val random: Double = new Random().nextDouble()
+        val neutronsToTransmute: Long = (maxNeutronsInPrecision * random).toLong
 
-      val outBoxes: Seq[InputBox] = betaDecayMinusTx.getOutBoxesAsInputBoxes()
-      val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
-      val outPaymentBox: FundsToAddressBox =
-        FundsToAddressBox.from(outBoxes.tail.head)
+        val paymentBox: InputBox =
+          createPaymentBox(
+            value = gluonWConstants.neutronsToNanoErg(
+              neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+              neutronsAmount = neutronsToTransmute,
+              fissionedErg = gluonWBox.ergFissioned,
+              goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+            ) / 10,
+            neutronsValue = neutronsToTransmute + 1000
+          )
 
-      // a. Get more protons for the neutrons given
-      "Get more Protons" in {
+        implicit val currentHeight: Long = ctx.getHeight
+        val oracleBuybackBox: InputBox =
+          OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+        val oracleBuybackBoxTopUpRoute: InputBox =
+          OracleBuybackBox.setTopUp(oracleBuybackBox)
+        val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+          inputBoxes = Seq(
+            inGluonWBox.getAsInputBox(),
+            paymentBox,
+            oracleBuybackBoxTopUpRoute
+          ),
+          neutronsToTransmute = neutronsToTransmute,
+          changeAddress = changeAddress,
+          dataInputs = Seq(oracleBoxInputBox)
+        )
+
+        val outBoxes: Seq[InputBox] = betaDecayMinusTx.getOutBoxesAsInputBoxes()
+        val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
+        val outPaymentBox: FundsToAddressBox =
+          FundsToAddressBox.from(outBoxes.tail.head)
+
         val protonsToChange: Long = 1000
-
         val customBoxData: Seq[CustomBoxData] = Seq(
           CustomBoxData(customTokens =
             Option(
@@ -361,11 +377,62 @@ class BetaDecayMinusSpec extends GluonWBase {
           dummyProver.sign(unsignedTx)
         }
       }
+    }
 
-      // b. Get less protons for the neutrons given
-      "Get less Protons" in {
+    // b. Get less protons for the neutrons given
+    "Get less Protons" in {
+      client.getClient.execute { implicit ctx =>
+        val maxNeutrons: Long = 1_000L
+        val maxNeutronsInPrecision: Long =
+          maxNeutrons * GluonWBoxConstants.PRECISION
+        val changeAddress: Address = trueAddress
+        val inGluonWBox: GluonWBox = gluonWBox
+        implicit val gluonWFeesCalculator: GluonWFeesCalculator =
+          GluonWFeesCalculator()(gluonWBox, gluonWConstants)
+        val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
+        val testGluonWCalculator: GluonWCalculator = GluonWCalculator(
+          sProtons = inGluonWBox.protonsCirculatingSupply,
+          sNeutrons = inGluonWBox.neutronsCirculatingSupply,
+          rErg = inGluonWBox.ergFissioned,
+          gluonWConstants = gluonWConstants
+        )
+
+        val random: Double = new Random().nextDouble()
+        val neutronsToTransmute: Long = (maxNeutronsInPrecision * random).toLong
+
+        val paymentBox: InputBox =
+          createPaymentBox(
+            value = gluonWConstants.neutronsToNanoErg(
+              neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+              neutronsAmount = neutronsToTransmute,
+              fissionedErg = gluonWBox.ergFissioned,
+              goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+            ) / 10,
+            neutronsValue = neutronsToTransmute + 1000
+          )
+
+        implicit val currentHeight: Long = ctx.getHeight
+        val oracleBuybackBox: InputBox =
+          OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+        val oracleBuybackBoxTopUpRoute: InputBox =
+          OracleBuybackBox.setTopUp(oracleBuybackBox)
+        val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+          inputBoxes = Seq(
+            inGluonWBox.getAsInputBox(),
+            paymentBox,
+            oracleBuybackBoxTopUpRoute
+          ),
+          neutronsToTransmute = neutronsToTransmute,
+          changeAddress = changeAddress,
+          dataInputs = Seq(oracleBoxInputBox)
+        )
+
+        val outBoxes: Seq[InputBox] = betaDecayMinusTx.getOutBoxesAsInputBoxes()
+        val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
+        val outPaymentBox: FundsToAddressBox =
+          FundsToAddressBox.from(outBoxes.tail.head)
+
         val protonsToChange: Long = 1000
-
         val customBoxData: Seq[CustomBoxData] = Seq(
           CustomBoxData(customTokens =
             Option(
@@ -385,6 +452,80 @@ class BetaDecayMinusSpec extends GluonWBase {
               )
             )
           )
+        )
+
+        val unsignedTx: UnsignedTransaction =
+          betaDecayMinusTx.buildCustomTx(customBoxData)
+
+        assertThrows[Throwable] {
+          dummyProver.sign(unsignedTx)
+        }
+      }
+    }
+
+    "SECURITY: Reject transaction if alpha (R9._2) is tampered with" in {
+      client.getClient.execute { implicit ctx =>
+        val maxNeutrons: Long = 1_000L
+        val maxNeutronsInPrecision: Long =
+          maxNeutrons * GluonWBoxConstants.PRECISION
+        val changeAddress: Address = trueAddress
+        val inGluonWBox: GluonWBox = gluonWBox
+        val oracleBoxInputBox: InputBox = oracleBox.getAsInputBox()
+        val gluonWCalculator: GluonWCalculator = GluonWCalculator(
+          sProtons = inGluonWBox.protonsCirculatingSupply,
+          sNeutrons = inGluonWBox.neutronsCirculatingSupply,
+          rErg = inGluonWBox.ergFissioned,
+          gluonWConstants = gluonWConstants
+        )
+
+        val random: Double = new Random().nextDouble()
+        val neutronsToTransmute: Long = (maxNeutronsInPrecision * random).toLong
+
+        val paymentBox: InputBox =
+          createPaymentBox(
+            value = gluonWConstants.neutronsToNanoErg(
+              neutronsInCirculation = gluonWBox.neutronsCirculatingSupply,
+              neutronsAmount = neutronsToTransmute,
+              fissionedErg = gluonWBox.ergFissioned,
+              goldPriceNanoErgPerGram = oracleBox.getPricePerGram
+            ) / 10,
+            neutronsValue = neutronsToTransmute + 1000
+          )
+
+        implicit val currentHeight: Long = ctx.getHeight
+        val oracleBuybackBox: InputBox =
+          OracleBuybackBox.testBox().getAsInputBox(ctx.newTxBuilder())
+        val oracleBuybackBoxTopUpRoute: InputBox =
+          OracleBuybackBox.setTopUp(oracleBuybackBox)
+        implicit val feesCalculator: gluonw.common.GluonWFeesCalculator = gluonw.common.GluonWFeesCalculator()(inGluonWBox, gluonWConstants)
+        val betaDecayMinusTx: BetaDecayMinusTx = BetaDecayMinusTx(
+          inputBoxes = Seq(
+            inGluonWBox.getAsInputBox(),
+            paymentBox,
+            oracleBuybackBoxTopUpRoute
+          ),
+          neutronsToTransmute = neutronsToTransmute,
+          changeAddress = changeAddress,
+          dataInputs = Seq(oracleBoxInputBox)
+        )
+
+        val outBoxes: Seq[InputBox] = betaDecayMinusTx.getOutBoxesAsInputBoxes()
+        val outGluonWBox: GluonWBox = GluonWBox.from(outBoxes.head)
+
+        val tamperedAlpha: Long = outGluonWBox.alpha + 1000L
+        val customRegisters = Seq(
+          outGluonWBox.totalSupplyRegister.toErgoValue.get,
+          outGluonWBox.treasuryMultisigRegister.toErgoValue.get,
+          outGluonWBox.feeRegister.toErgoValue.get,
+          outGluonWBox.volumePlusRegister.toErgoValue.get,
+          outGluonWBox.volumeMinusRegister.toErgoValue.get,
+          new edge.registers.LongPairRegister((outGluonWBox.lastBucketBlock, tamperedAlpha)).toErgoValue.get
+        )
+
+        val customBoxData: Seq[CustomBoxData] = Seq(
+          CustomBoxData(customRegs = Option(customRegisters)),
+          CustomBoxData(), // for paymentBox
+          CustomBoxData()  // for oracleBuybackBox
         )
 
         val unsignedTx: UnsignedTransaction =
