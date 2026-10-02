@@ -108,19 +108,19 @@
     ))
     // ===== (END) Oracle Checks ===== //
 
-    val __one: BigInt        = (1000000000).toBigInt
+    val one: BigInt                = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
     val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
     // Raw price from oracle: nanoErg/kg -> nanoErg/g
-    val __Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
+    val Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
     // PegFactor-normalised oracle price: P' = Pt * pegFactor / one
-    val __normalizedPt: BigInt     = __Pt * inPegFactor.toBigInt / __one
+    val normalizedPt: BigInt     = Pt * inPegFactor.toBigInt / one
     // Current fusion ratio using normalized price
-    val __q: BigInt                = __SNeutrons * __normalizedPt / __RErg
+    val __q: BigInt                = __SNeutrons * normalizedPt / __RErg
 
     // Healthy range thresholds
-    val __qStarUpper: BigInt       = (98 * __one / 100)  // 0.98 * one
-    val __qStarLower: BigInt       = __one / 2           // 0.50 * one
+    val __qStarUpper: BigInt       = (98 * one / 100)  // 0.98 * one
+    val __qStarLower: BigInt       = one / 2           // 0.50 * one
     val isHealthyRange: Boolean    = (__q >= __qStarLower) && (__q <= __qStarUpper) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
@@ -195,11 +195,6 @@
         val SProtons: BigInt = _protonsInCirculation.toBigInt
         val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee // As the box has a minimum fee, we must subtract the minimum fee
         val RErg: BigInt = _fissionedErg.toBigInt // Variable in Paper: R
-
-        // TODO: handle code duplication with __Pt and __normalizedPt and __one
-        val Pt: BigInt = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000 // Oracle Price
-        val normalizedPt: BigInt = __normalizedPt // Reuse the top-level normalized price for the inner fusionRatio computation.
-        val one: BigInt = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
 
         // q* = 0.99
         val qStar: BigInt = (99 * one / 100) // TODO: check whether this is still needed, check duplications
