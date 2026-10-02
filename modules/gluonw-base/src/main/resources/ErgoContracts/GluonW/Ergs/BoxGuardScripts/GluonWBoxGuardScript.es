@@ -111,12 +111,9 @@
     val one: BigInt                = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
     val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
-    // Raw price from oracle: nanoErg/kg -> nanoErg/g
-    val Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
-    // PegFactor-normalised oracle price: P' = Pt * pegFactor / one
-    val normalizedPt: BigInt     = Pt * inPegFactor.toBigInt / one
-    // Current fusion ratio using normalized price
-    val __q: BigInt                = __SNeutrons * normalizedPt / __RErg
+    val Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000 // Oracle price
+    val normalizedPt: BigInt     = Pt * inPegFactor.toBigInt / one // Adjusted oracle price: P_adjusted = Pt * pegFactor / one
+    val __q: BigInt                = __SNeutrons * normalizedPt / __RErg // Current fusion ratio
 
     // Healthy range thresholds
     val __qStarUpper: BigInt       = (98 * one / 100)  // 0.98 * one
