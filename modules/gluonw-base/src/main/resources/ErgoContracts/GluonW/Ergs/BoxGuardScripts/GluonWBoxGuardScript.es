@@ -252,7 +252,7 @@
                     neutronsInNanoergs
                 }
 
-            val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) { // TODO: consider eliminating this calculation and using only initialFee
+            val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
                 val initialFee: BigInt = (devFee * principal) / feeDenom
                 val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
                 decayedFee
