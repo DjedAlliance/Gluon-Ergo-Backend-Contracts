@@ -108,19 +108,19 @@
     ))
     // ===== (END) Oracle Checks ===== //
 
-    val __precision: BigInt        = (1000000000).toBigInt
+    val __one: BigInt        = (1000000000).toBigInt
     val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
     // Raw price from oracle: nanoErg/kg -> nanoErg/g
     val __Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
-    // Alpha-normalised oracle price: P' = Pt * alpha / precision
-    val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __precision
+    // Alpha-normalised oracle price: P' = Pt * alpha / one
+    val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __one
     // Current fusion ratio using normalized price
     val __q: BigInt                = __SNeutrons * __normalizedPt / __RErg
 
     // Healthy range thresholds
-    val __qStarUpper: BigInt       = (98 * __precision / 100)  // 0.98 * precision
-    val __qStarLower: BigInt       = __precision / 2           // 0.50 * precision
+    val __qStarUpper: BigInt       = (98 * __one / 100)  // 0.98 * one
+    val __qStarLower: BigInt       = __one / 2           // 0.50 * one
     val isHealthyRange: Boolean    = (__q >= __qStarLower) && (__q <= __qStarUpper) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
@@ -196,26 +196,25 @@
         val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee // As the box has a minimum fee, we must subtract the minimum fee
         val RErg: BigInt = _fissionedErg.toBigInt // Variable in Paper: R
 
-        // TODO: handle code duplication with __Pt and __normalizedPt and __precision
-        // TODO: rename "precision" to "one"
+        // TODO: handle code duplication with __Pt and __normalizedPt and __one
         val Pt: BigInt = CONTEXT.dataInputs(0).R4[Long].get.toBigInt / 1000 // Oracle Price
         val normalizedPt: BigInt = __normalizedPt // Reuse the top-level normalized price for the inner fusionRatio computation.
-        val precision: BigInt = (1000000000).toBigInt // We're using 1,000,000,000 because the precision is based on nanoErgs
+        val one: BigInt = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
 
         // q* = 0.99
-        val qStar: BigInt = (99 * precision / 100) // TODO: check whether this is still needed, check duplications
+        val qStar: BigInt = (99 * one / 100) // TODO: check whether this is still needed, check duplications
         val q: BigInt = SNeutrons * normalizedPt / RErg
-        val fusionRatio: BigInt = min(precision * q / (q + precision - qStar), q)
+        val fusionRatio: BigInt = min(one * q / (q + one - qStar), q)
 
         def getProtonVolume(protonsValue: Long): BigInt = { // TODO: consider renaming this function
-            val protonsPrice: BigInt = (precision - fusionRatio).toBigInt * RErg / SProtons
-            val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / precision
+            val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
+            val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / one
             protonsInNanoergs
         }
 
         def getNeutronVolume(neutronsValue: Long): BigInt = { // TODO: consider renaming this function
             val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
-            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * neutronPrice / precision
+            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * neutronPrice / one
             neutronsInNanoergs
         }
 
@@ -399,15 +398,15 @@
             // Equation: M [Ergs] ==> (M (1 - PhiT) (S Protons / R)) [Protons] + (M (1 - PhiT) (S Neutrons / R)) [Neutrons]
 
             val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt 
-            val PhiT: BigInt = (precision / 1000).toBigInt // fee added to the reserve
+            val PhiT: BigInt = (one / 1000).toBigInt // fee added to the reserve
 
             // The protons and neutrons are lesser in outbox than inputbox
             val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt // TODO: code duplication, see definition of M.
 
-            val NeutronsExpectedValue: BigInt = (M * SNeutrons * (precision - PhiT) / RErg) / precision
-            val ProtonsExpectedValue: BigInt = (M * SProtons * (precision - PhiT) / RErg) / precision
+            val NeutronsExpectedValue: BigInt = (M * SNeutrons * (one - PhiT) / RErg) / one
+            val ProtonsExpectedValue: BigInt = (M * SProtons * (one - PhiT) / RErg) / one
             val ErgsExpectedValue: BigInt = M
 
             // ### The 2 conditions to ensure that the values out are right ### //
@@ -424,7 +423,7 @@
         else if (isFusionTx) {
             // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - PhiT) [Ergs]
 
-            val PhiFusion: BigInt = (precision / 200).toBigInt // 0.5% fee that is added to the reserve
+            val PhiFusion: BigInt = (one / 200).toBigInt // 0.5% fee that is added to the reserve
 
             // The protons and neutrons are more in outbox than inputbox
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -434,9 +433,9 @@
             // M = Ergs
             val M: BigInt = ErgsActualValue
 
-            val inProtonsNumerator: BigInt = M * SProtons * precision
-            val inNeutronsNumerator: BigInt = M * SNeutrons * precision
-            val denominator: BigInt = RErg * (precision - PhiFusion)
+            val inProtonsNumerator: BigInt = M * SProtons * one
+            val inNeutronsNumerator: BigInt = M * SNeutrons * one
+            val denominator: BigInt = RErg * (one - PhiFusion)
 
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
@@ -577,8 +576,8 @@
             // This is the fee that gets collected to add into the pool during decay.
 
             // Phi 0 is 0.005, and Phi1 is 1
-            val Phi0 = precision / 200
-            val Phi1 = precision
+            val Phi0 = one / 200
+            val Phi1 = one
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -596,10 +595,10 @@
             // === Fusion Ratio === //
 
             // The steps of multiplication and division done below are to avoid overflow errors.
-            val oneMinusPhiBeta: BigInt = (precision - VarPhiBeta)
-            val oneMinusFusionRatio: BigInt = (precision - fusionRatio)
+            val oneMinusPhiBeta: BigInt = (one - VarPhiBeta)
+            val oneMinusFusionRatio: BigInt = (one - fusionRatio)
             val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / SProtons
-            val ratio2: BigInt = (oneMinusFusionRatio * SNeutrons) / precision
+            val ratio2: BigInt = (oneMinusFusionRatio * SNeutrons) / one
             val outNeutronsAmount: BigInt = (ratio1 * ratio2) / fusionRatio
 
             val NeutronsExpectedValue: BigInt = outNeutronsAmount
@@ -715,8 +714,8 @@
             // This is the fee that gets collected to add into the pool during decay.
 
             // Phi 0 is 0.005, and Phi1 is 1 // TODO: code duplication with the other beta decay.
-            val Phi0 = precision / 200
-            val Phi1 = precision
+            val Phi0 = one / 200
+            val Phi1 = one
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
@@ -739,10 +738,10 @@
             // === Fusion Ratio === //
 
             // The steps of multiplication and division done below are to avoid overflow errors.
-            val oneMinusPhiBeta: BigInt = precision - VarPhiBeta
-            val oneMinusFusionRatio: BigInt = precision - fusionRatio
+            val oneMinusPhiBeta: BigInt = one - VarPhiBeta
+            val oneMinusFusionRatio: BigInt = one - fusionRatio
             val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / SNeutrons
-            val ratio2: BigInt = (fusionRatio * SProtons) / precision
+            val ratio2: BigInt = (fusionRatio * SProtons) / one
             val outProtonsAmount: BigInt = (ratio1 * ratio2) / oneMinusFusionRatio
 
             val NeutronsExpectedValue: BigInt = M.toBigInt
