@@ -206,15 +206,15 @@
         val q: BigInt = SNeutrons * normalizedPt / RErg
         val fusionRatio: BigInt = min(one * q / (q + one - qStar), q)
 
-        def getProtonVolume(protonsValue: Long): BigInt = { // TODO: consider renaming this function
+        def valueOfProtons(protonsAmount: Long): BigInt = {
             val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
-            val protonsInNanoergs: BigInt = protonsValue.toBigInt * protonsPrice / one
+            val protonsInNanoergs: BigInt = protonsAmount.toBigInt * protonsPrice / one
             protonsInNanoergs
         }
 
-        def getNeutronVolume(neutronsValue: Long): BigInt = { // TODO: consider renaming this function
+        def valueOfNeutrons(neutronsAmount: Long): BigInt = {
             val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
-            val neutronsInNanoergs: BigInt = neutronsValue.toBigInt * neutronPrice / one
+            val neutronsInNanoergs: BigInt = neutronsAmount.toBigInt * neutronPrice / one
             neutronsInNanoergs
         }
 
@@ -242,13 +242,13 @@
                 } else if (isBetaDecayPlusTx) {
                     // Calculate the value based on protons
                     // Check Protons reduction in OutBox
-                    val protonsValue: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
-                    val protonsInNanoergs: BigInt = getProtonVolume(protonsValue)
+                    val protonsAmount: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
+                    val protonsInNanoergs: BigInt = valueOfProtons(protonsAmount)
                     protonsInNanoergs
                 } else {
                     // Calculate the value based on neutrons
-                    val neutronsValue: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
-                    val neutronsInNanoergs: BigInt = getNeutronVolume(neutronsValue)
+                    val neutronsAmount: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
+                    val neutronsInNanoergs: BigInt = valueOfNeutrons(neutronsAmount)
                     neutronsInNanoergs
                 }
 
@@ -473,7 +473,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Protons reduction in OutBox
-            val worthOfMInErgs: BigInt = getProtonVolume(M) // This actually represents the volume of protons in units of Erg, M being the amount of protons.
+            val worthOfMInErgs: BigInt = valueOfProtons(M) // This actually represents the volume of protons in units of Erg, M being the amount of protons.
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
@@ -633,7 +633,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Neutrons reduction in OutBox
-            val worthOfMInErgs: BigInt = getNeutronVolume(M) // This actually represents the volume of neutrons in units of Erg, M being the amount of neutrons.
+            val worthOfMInErgs: BigInt = valueOfNeutrons(M) // This actually represents the volume of neutrons in units of Erg, M being the amount of neutrons.
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
