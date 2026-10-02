@@ -30,7 +30,7 @@
     // R6 - (TotalDevFeesPaid, MaxAmountDevFeesPaid): (Long, Long)
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
-    // R9 - (LastBucketBlock, Alpha): (Long, Long)
+    // R9 - (LastBucketBlock, PegFactor): (Long, Long)
 
     // ===== Context Vars ===== //
     // val _optUIFeeAddress                    SigmaProp
@@ -40,7 +40,7 @@
     // 2. Fusion                    - The user sends Neutrons and Protons to the reactor and receives Ergs
     // 3. Beta Decay +              - The user sends Protons to the reactor and receives Neutrons
     // 4. Beta Decay -              - The user sends Neutrons to the reactor and receives Protons
-    // 5. Readjust Peg              - Any user readjusts the peg if the fusion ratio is outside the bounds of the healthy range.
+    // 5. Adjust Peg Factor         - Any user readjusts the peg if the fusion ratio is outside the bounds of the healthy range.
     // 6. Update Treasury Multisig  - The current treasury multisig is used to create a new box containing the updated treasury multisig address.
 
     // For all of the first five transactions:
@@ -85,8 +85,8 @@
     val outR9: (Long, Long) = OUT_GLUONW_BOX.R9[(Long, Long)].get
     val inLastBucketBlock: Long = inR9._1
     val outLastBucketBlock: Long = outR9._1
-    val inAlpha: Long = inR9._2 // TODO: consider renaming alpha
-    val outAlpha: Long = outR9._2
+    val inPegFactor: Long = inR9._2
+    val outPegFactor: Long = outR9._2
 
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
@@ -113,8 +113,8 @@
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
     // Raw price from oracle: nanoErg/kg -> nanoErg/g
     val __Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000
-    // Alpha-normalised oracle price: P' = Pt * alpha / one
-    val __normalizedPt: BigInt     = __Pt * inAlpha.toBigInt / __one
+    // PegFactor-normalised oracle price: P' = Pt * pegFactor / one
+    val __normalizedPt: BigInt     = __Pt * inPegFactor.toBigInt / __one
     // Current fusion ratio using normalized price
     val __q: BigInt                = __SNeutrons * __normalizedPt / __RErg
 
@@ -131,7 +131,7 @@
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
         IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
-        inAlpha == outAlpha
+        inPegFactor == outPegFactor
     ))
 
     // ====== Tx Definitions ===== //
@@ -177,8 +177,8 @@
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value                 // Check ERG value is preserved
     ))
 
-    // # AdjustPeg: Changes the alpha factors that determines the peg
-    val isAdjustPegTx: Boolean = (inAlpha != outAlpha)
+    // # AdjustPeg: Changes the peg factor that determines the peg
+    val isAdjustPegTx: Boolean = (inPegFactor != outPegFactor)
 
     // # UpdateTreasury: Changes the address that receives dev fees
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
@@ -764,14 +764,14 @@
         } else sigmaProp(false)
     } else if (isAdjustPegTx) {
         // Anyone can call adjustPeg when outside the healthy range.
-        // All state is preserved except R9._2 (alpha). No sigma required.
+        // All state is preserved except R9._2 (pegFactor). No sigma required.
 
-        // Alpha update direction must match the range violation.
-        val _alphaDecreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 99 / 100
-        val _alphaIncreased: Boolean = outAlpha.toBigInt == inAlpha.toBigInt * 101 / 100
-        val _alphaCorrect: Boolean   =
-            if (__q > __qStarUpper) _alphaDecreased
-            else if (__q < __qStarLower) _alphaIncreased
+        // PegFactor update direction must match the range violation.
+        val _pegFactorDecreased: Boolean = outPegFactor.toBigInt == inPegFactor.toBigInt * 99 / 100
+        val _pegFactorIncreased: Boolean = outPegFactor.toBigInt == inPegFactor.toBigInt * 101 / 100
+        val _pegFactorCorrect: Boolean   =
+            if (__q > __qStarUpper) _pegFactorDecreased
+            else if (__q < __qStarLower) _pegFactorIncreased
             else false
 
         val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens 
@@ -781,12 +781,12 @@
         val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
         val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
         val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
-        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (alpha) may change.
+        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
 
         sigmaProp(allOf(Coll(
             !isHealthyRange,
             __oracleCheck,
-            _alphaCorrect,
+            _pegFactorCorrect,
             _tokensSame, _valueSame,
             _r4Same, _r5Same, _r6Same, _r7Same, _r8Same, _r9Block1Same,
             IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
