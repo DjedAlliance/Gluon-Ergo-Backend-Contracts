@@ -235,44 +235,18 @@
             val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
             val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
 
-            val devFeeAddressAndPayout: (Coll[Byte], BigInt) =
-                (TREASURY_MULTISIG.propBytes, devFeePayout)
-            val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) =
-                (_OracleFeePk, oracleFeePayout)
+            val devFeeAddressAndPayout: (Coll[Byte], BigInt) = (TREASURY_MULTISIG.propBytes, devFeePayout)
+            val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) = (_OracleFeePk, oracleFeePayout)
 
-            // TODO: lots of refactoring possibilities here:
-            if (isBetaDecayMinusTx || isBetaDecayPlusTx) { // Fission and Fusion does not need Oracle
-                if (_optUIFeeAddress.isDefined) { // If Ui fee is defined, then we add an additional 0.4% fee
-                    Coll(
-                        devFeeAddressAndPayout,
-                        oracleFeeAddressAndPayout,
-                        (_optUIFeeAddress.get.propBytes, uiFeePayout),
-                    )
-                }
-                else {
-                    Coll(
-                        devFeeAddressAndPayout,
-                        oracleFeeAddressAndPayout,
-                        emptyFees,
-                    )
-                }
+            // Fission and Fusion do not need Oracle and do not pay oracle fees
+            // If Ui fee is defined, then we add an additional 0.4% fee
+            if (isBetaDecayMinusTx || isBetaDecayPlusTx) { 
+                if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout))
+                else Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, emptyFees)
             }
             else {
-                // If Ui fee is defined, then we add an additional 0.4% fee
-                if (_optUIFeeAddress.isDefined) {
-                    Coll(
-                        devFeeAddressAndPayout,
-                        (_optUIFeeAddress.get.propBytes, uiFeePayout),
-                        emptyFees,
-                    )
-                }
-                else {
-                    Coll(
-                        devFeeAddressAndPayout,
-                        emptyFees,
-                        emptyFees
-                    )
-                }
+                if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout), emptyFees)
+                else Coll(devFeeAddressAndPayout, emptyFees, emptyFees)  
             }
         }
 
@@ -286,63 +260,40 @@
              val oracleFeesPaid: Boolean = {
                 if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
                     if (oracleFeesToBePaid) { // Oracle fee is greater than 0
-                        // The oracle buy back input box is always the last input
-                        val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1)
-                        allOf(
-                            Coll(
+                        val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
+                        allOf(Coll(
                                 oracleOutput.propositionBytes       == fees(1)._1,
                                 oracleOutput.propositionBytes       == oracleBuybackInputBox.propositionBytes,
                                 oracleOutput.tokens(0)._1           == _OracleBuybackNFT,
                                 oracleOutput.value.toBigInt         == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
-                            )
-                        )
-                    } else {
-                        true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
-                    }
-                } else {
-                    true // if oracle fee is not defined, then default to true.
-                }
+                        ))
+                    } else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
+                } else true // if oracle fee is not defined, then default to true.
             }
 
             val devFeesPaid: Boolean = {
-                if (fees(0)._2 > 0)
-                {
-                    // Dev fee is greater than 0
+                if (fees(0)._2 > 0) { // Dev fee is greater than 0
                     // If there is a need to pay oracle fees, we check OUTPUTS(3)
                     val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) }
-                    allOf(
-                        Coll(
+                    allOf(Coll(
                             devOutput.propositionBytes      == fees(0)._1,
                             devOutput.value.toBigInt        == fees(0)._2 + _MinFee
-                        )
-                    )
+                    ))
                 }
-                else
-                {
-                    true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fees
-                }
+                else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fees
             }
 
             val uiFeesPaid: Boolean = {
-                if (_optUIFeeAddress.isDefined)
-                {
-                    if(fees(1)._2 > 0) {
-                        // UI fee is greater than 0
+                if (_optUIFeeAddress.isDefined) {
+                    if(fees(1)._2 > 0) { // UI fee is greater than 0
                         val uiOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(3) } else { OUTPUTS(4) }
-                        allOf(
-                            Coll(
+                        allOf(Coll(
                                 uiOutput.propositionBytes       == fees(1)._1,
                                 uiOutput.value.toBigInt         == fees(1)._2 + _MinFee
-                            )
-                        )
+                        ))
                     }
-                    else
-                    {
-                        true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value fee
-                    }
-                } else {
-                    true // if ui fee isn't defined, then default to true.
-                }
+                    else true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value fee
+                } else true // if ui fee isn't defined, then default to true.
             }
 
             devFeesPaid && uiFeesPaid && oracleFeesPaid
