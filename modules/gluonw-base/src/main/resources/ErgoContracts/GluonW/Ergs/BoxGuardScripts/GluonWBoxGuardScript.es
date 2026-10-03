@@ -309,20 +309,12 @@
         }
         else if (isBetaDecayPlusTx) {
             // Equation: M [Protons] ==> M * (1 - phiBeta(T)) * ((1 - q(R, S neutron)) / q(R, S neutron)) * (S neutrons / S protons) [Neutrons]
-
             val M: Long = (OUT_PROTONS_TOKEN._2 - PROTONS_TOKEN._2) // Number of protons being decayed.
-
-            // The protons increase in output, neutrons decrease in outputs
-            val NeutronsActualValue: BigInt = (NEUTRONS_TOKEN._2 - OUT_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (OUT_PROTONS_TOKEN._2 - PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
-
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
-
             val worthOfMInErgs: BigInt = valueOfProtons(M) // This is the volume of protons in units of ERG
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
+            val currentBlockNumber: Long = CONTEXT.HEIGHT
             val nDays: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
 
             // We don't need to shift it, we just need to check if OUT_VOLUME_PLUS is correct.
@@ -418,6 +410,11 @@
             val closestPreviousBlockValueViaBuckets: Int = (currentBlockNumber / blocksPerVolumeBucket) * blocksPerVolumeBucket
             val __lastBlockPreserved: Boolean = OUT_LAST_BUCKET_BLOCK == closestPreviousBlockValueViaBuckets
 
+            // The protons increase in output, neutrons decrease in outputs
+            val NeutronsActualValue: BigInt = (NEUTRONS_TOKEN._2 - OUT_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (OUT_PROTONS_TOKEN._2 - PROTONS_TOKEN._2).toBigInt
+            val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
+
             // The steps of multiplication and division done below are to avoid overflow errors.
             val ratio1: BigInt = (M.toBigInt * (one - VarPhiBeta)) / supplyProtons
             val ratio2: BigInt = ((one - qNorm) * supplyNeutrons) / one
@@ -444,15 +441,12 @@
             )))
         } else if (isBetaDecayMinusTx) {
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
-            
             val M: Long = (OUT_NEUTRONS_TOKEN._2 - NEUTRONS_TOKEN._2) // Number of neutron being decayed
-
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
-
             val worthOfMInErgs: BigInt = valueOfNeutrons(M)
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
+            val currentBlockNumber: Long = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 
