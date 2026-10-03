@@ -744,25 +744,17 @@
             )))
         } else sigmaProp(false)
     } else if (isAdjustPegTx) {
-        // Anyone can call adjustPeg when outside the healthy range.
-        // All state is preserved except R9._2 (pegFactor). No sigma required.
-
-        // PegFactor update direction must match the range violation.
-        val _pegFactorDecreased: Boolean = outPegFactor.toBigInt == inPegFactor.toBigInt * 99 / 100
-        val _pegFactorIncreased: Boolean = outPegFactor.toBigInt == inPegFactor.toBigInt * 101 / 100
-        val _pegFactorCorrect: Boolean   =
-            if (q > qUpperThreshold) _pegFactorDecreased
-            else if (q < qLowerThreshold) _pegFactorIncreased
+        val pegFactorCorrect: Boolean = // PegFactor update direction and magnitude must be correct
+            if (q > qUpperThreshold) outPegFactor.toBigInt == inPegFactor.toBigInt * 99 / 100       // Peg Factor must have decreased by 1%
+            else if (q < qLowerThreshold) outPegFactor.toBigInt == inPegFactor.toBigInt * 101 / 100 // Peg Factor must have increased by 1%
             else false
 
         sigmaProp(allOf(Coll(
-            !isHealthyRange,
+            !isHealthyRange, // Only when outside the healthy range.
             __oracleCheck,
-            _pegFactorCorrect,
-            cSameTokens, cSameValue,
-            cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
-            cSameContract
-        )))
+            cSameContract, cSameTokens, cSameValue, cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
+            pegFactorCorrect // Peg Factor is the only register variable that changes
+        ))) // Anyone may do this transaction when outside the healthy range
     } else if (isUpdateTreasury) {
         val newMultisig: SigmaProp = OUT_GLUONW_BOX.R5[SigmaProp].get
         sigmaProp(allOf(Coll(
@@ -770,7 +762,7 @@
             newMultisig != TREASURY_MULTISIG // R5 is the only register that changes and it must change
             cSameR6, cSameR7, cSameR8, cSameR9
         ))) && TREASURY_MULTISIG // The transaction must be signed by the current TREASURY_MULTISIG
-    } else {
+    } else { 
         sigmaProp(false)
     }
 }
