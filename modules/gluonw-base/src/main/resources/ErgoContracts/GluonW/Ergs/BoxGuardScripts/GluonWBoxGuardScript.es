@@ -765,11 +765,11 @@
         )))
     } else if (isUpdateTreasury) {
         val newMultisig: SigmaProp = OUT_GLUONW_BOX.R5[SigmaProp].get
-        val validUpdateTreasuryTx: Boolean = allOf(Coll(
+        sigmaProp(allOf(Coll(
             cSameContract, cSameValue, cSameTokens, cSameR4,
-            newMultisig != TREASURY_MULTISIG // R5 is the only register that changes
-            cSameR6, cSameR7, cSameR8, cSameR9))
-        sigmaProp(validUpdateTreasuryMultisigTx) && TREASURY_MULTISIG // The transaction must be signed by the current TREASURY_MULTISIG
+            newMultisig != TREASURY_MULTISIG // R5 is the only register that changes and it must change
+            cSameR6, cSameR7, cSameR8, cSameR9
+        ))) && TREASURY_MULTISIG // The transaction must be signed by the current TREASURY_MULTISIG
     } else {
         sigmaProp(false)
     }
