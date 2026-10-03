@@ -181,19 +181,14 @@
     ))
 
     // Auxiliary Functions 
-
-    def valueOfProtons(protonsAmount: Long): BigInt = {
+    def valueOfProtons(protonsAmount: Long): BigInt = { // value in nanoERG
         val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
-        val protonsInNanoergs: BigInt = protonsAmount.toBigInt * protonsPrice / one
-        protonsInNanoergs
+        protonsAmount.toBigInt * protonsPrice / one
     }
-
-    def valueOfNeutrons(neutronsAmount: Long): BigInt = {
+    def valueOfNeutrons(neutronsAmount: Long): BigInt = { // value in nanoERG
         val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
-        val neutronsInNanoergs: BigInt = neutronsAmount.toBigInt * neutronPrice / one
-        neutronsInNanoergs
+        neutronsAmount.toBigInt * neutronPrice / one
     }
-
 
     // Basic Math Functions
     def sum(collLong: Coll[Long]): BigInt = {
