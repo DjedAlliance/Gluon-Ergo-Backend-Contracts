@@ -53,6 +53,8 @@
     // DataInputs: None
     // Outputs: GluonBox
 
+    // TODO: check for dead code
+
     val TREASURY_MULTISIG: SigmaProp = SELF.R5[SigmaProp].get
     val IN_GLUON_BOX: Box = SELF
     val OUT_GLUON_BOX: Box = OUTPUTS(0)
@@ -237,6 +239,9 @@
             }
         }
 
+        // TODO: fees is constructing a collection, and then the "...FeesPaid" checks are 
+        // having the trouble of finding where the fees are in the collection. This is silly. Refactor
+
         val oracleFeesToBePaid: Boolean = fees(1)._2 > 0
 
         val oracleFeesPaid: Boolean = {
@@ -287,12 +292,6 @@
         ))
         // ===== (END) Fee Declarations ===== //
 
-        // In the case of fission and fusion transactions, the variables related to volume handling should remain unchanged
-        val volumePlusPreserved = inVolumePlus == outVolumePlus
-        val volumeMinusPreserved = inVolumeMinus == outVolumeMinus
-        val lastBucketBlockPreserved = inLastBucketBlock == outLastBucketBlock
-        val __validVolumeHandling = allOf(Coll(volumePlusPreserved, volumeMinusPreserved, lastBucketBlockPreserved))
-
         // NOTE:
         // In all of these transactions, the Input value varies, however, the output does not. The output is exactly how much
         // the user wants. Therefore we can use the outbox to calculate the value of M by using OutBox.value - InBox.value
@@ -314,9 +313,7 @@
                 isHealthyRange,
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
-                cSameR4, cSameR5, cSameR6, 
-                __validVolumeHandling, // TODO: Replace by cSameR7 and cSameR8?
-                cSameR9PegFactor,
+                cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
                 __feesCheck
             )))
         }
@@ -345,9 +342,7 @@
                 isHealthyRange,
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
-                cSameR4, cSameR5, cSameR6, 
-                 __validVolumeHandling, // TODO: Replace by cSameR7 and cSameR8?
-                cSameR9PegFactor,
+                cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
                 __feesCheck
             )))
         }
