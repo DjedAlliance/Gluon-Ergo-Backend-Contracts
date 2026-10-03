@@ -88,19 +88,6 @@
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
 
-    // ===== (START) Oracle Checks ===== //
-    // The two checks for the oracle is:
-    // 1. It has the right NFT on it
-    // 2. Its height is within 70 min, (35 blocks)
-    val oracleBoxCreationHeightDifferenceFromNow: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1
-    val oracleBoxPoolNFT: (Coll[Byte], Long) = ORACLE_BOX.tokens(0)
-
-    val __oracleCheck: Boolean = allOf(Coll(
-        oracleBoxCreationHeightDifferenceFromNow < 35 && oracleBoxCreationHeightDifferenceFromNow >= 0,
-        oracleBoxPoolNFT._1 == _OraclePoolNFT
-    ))
-    // ===== (END) Oracle Checks ===== //
-
     val one: BigInt                = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
 
     // # Parameters
@@ -186,6 +173,12 @@
     val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock // LastBucketBlock preserved
     val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor                   // PegFactor preserved
 
+    // Oracle Checks
+    val oracleDelay: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1 // Difference between now and the time when the oracle box was created, in blocks.
+    val cOracle: Boolean = allOf(Coll(
+        oracleDelay < 35 && oracleDelay >= 0, // Oracle delay is at most 35 blocks (~70 min) in the past
+        ORACLE_BOX.tokens(0)._1 == _OraclePoolNFT // The oracle NFT is the right NFT
+    ))
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
         def valueOfProtons(protonsAmount: Long): BigInt = {
@@ -593,7 +586,7 @@
                 __lastBlockPreserved,
                 cSameR9PegFactor,
                 __feesCheck,
-                __oracleCheck
+                cOracle
             )))
         } else if (isBetaDecayMinusTx) {
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
@@ -737,7 +730,7 @@
                 __lastBlockPreserved,
                 cSameR9PegFactor,
                 __feesCheck,
-                __oracleCheck
+                cOracle
             )))
         } else sigmaProp(false)
     } else if (isAdjustPegTx) {
@@ -748,7 +741,7 @@
 
         sigmaProp(allOf(Coll(
             !isHealthyRange, // Only when outside the healthy range.
-            __oracleCheck,
+            cOracle,
             cSameContract, cSameTokens, cSameValue, cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
             pegFactorCorrect // Peg Factor is the only register variable that changes
         ))) // Anyone may do this transaction when outside the healthy range
