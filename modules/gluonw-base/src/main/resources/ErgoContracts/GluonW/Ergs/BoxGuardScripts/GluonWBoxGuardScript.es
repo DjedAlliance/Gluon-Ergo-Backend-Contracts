@@ -180,25 +180,28 @@
         ORACLE_BOX.tokens(0)._1 == _OraclePoolNFT // The oracle NFT is the right NFT
     ))
 
+    // Auxiliary Functions 
+
+    def valueOfProtons(protonsAmount: Long): BigInt = {
+        val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
+        val protonsInNanoergs: BigInt = protonsAmount.toBigInt * protonsPrice / one
+        protonsInNanoergs
+    }
+
+    def valueOfNeutrons(neutronsAmount: Long): BigInt = {
+        val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
+        val neutronsInNanoergs: BigInt = neutronsAmount.toBigInt * neutronPrice / one
+        neutronsInNanoergs
+    }
+
+
+    // Basic Math Functions
+    def sum(collLong: Coll[Long]): BigInt = {
+        collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
+    }
+
+
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
-        def valueOfProtons(protonsAmount: Long): BigInt = {
-            val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
-            val protonsInNanoergs: BigInt = protonsAmount.toBigInt * protonsPrice / one
-            protonsInNanoergs
-        }
-
-        def valueOfNeutrons(neutronsAmount: Long): BigInt = {
-            val neutronPrice: BigInt = (fusionRatio * RErg) / SNeutrons
-            val neutronsInNanoergs: BigInt = neutronsAmount.toBigInt * neutronPrice / one
-            neutronsInNanoergs
-        }
-
-        def sum(collLong: Coll[Long]): BigInt = {
-            collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
-        }
-
-        
-
         // ===== (START) Fee Declarations ===== //
         // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
         val _optUIFeeAddress = getVar[SigmaProp](0)
