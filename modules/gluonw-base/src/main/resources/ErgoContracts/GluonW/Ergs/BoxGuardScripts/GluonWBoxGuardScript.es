@@ -114,6 +114,10 @@
     val qStar: BigInt           = (99 * one / 100) // q* = 99%
     val qUpperThreshold: BigInt = (98 * one / 100) // qUpper = 98%
     val qLowerThreshold: BigInt = one / 2          // qLower = 50%
+    val PhiFission: BigInt = (one / 1000).toBigInt // fission fee = 0.1%
+    val PhiFusion: BigInt  = (one / 200).toBigInt  // fusion fee  = 0.5%
+    val Phi0 = one / 200 // BetaDecay Fee y-intercept: Phi0 = 0.5%
+    val Phi1 = one       // BetaDecay Fee slope:       Phi1 = 1
 
     // # Internal State Variables
     val SNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
@@ -376,18 +380,16 @@
         // In all of these transactions, the Input value varies, however, the output does not. The output is exactly how much
         // the user wants. Therefore we can use the outbox to calculate the value of M by using OutBox.value - InBox.value
         if (isFissionTx) {
-            // Equation: M [Ergs] ==> (M (1 - PhiT) (S Protons / R)) [Protons] + (M (1 - PhiT) (S Neutrons / R)) [Neutrons]
-
+            // Equation: M [Ergs] ==> (M (1 - PhiFission) (S Protons / R)) [Protons] + (M (1 - PhiFission) (S Neutrons / R)) [Neutrons]
             val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt 
-            val PhiT: BigInt = (one / 1000).toBigInt // fee added to the reserve
 
             // The protons and neutrons are lesser in outbox than inputbox
             val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt // TODO: code duplication, see definition of M.
 
-            val NeutronsExpectedValue: BigInt = (M * SNeutrons * (one - PhiT) / RErg) / one
-            val ProtonsExpectedValue: BigInt = (M * SProtons * (one - PhiT) / RErg) / one
+            val NeutronsExpectedValue: BigInt = (M * SNeutrons * (one - PhiFission) / RErg) / one
+            val ProtonsExpectedValue: BigInt = (M * SProtons * (one - PhiFission) / RErg) / one
             val ErgsExpectedValue: BigInt = M
 
             // ### The 2 conditions to ensure that the values out are right ### //
@@ -404,9 +406,7 @@
             )))
         }
         else if (isFusionTx) {
-            // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - PhiT) [Ergs]
-
-            val PhiFusion: BigInt = (one / 200).toBigInt // 0.5% fee that is added to the reserve
+            // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - PhiFission) [Ergs]
 
             // The protons and neutrons are more in outbox than inputbox
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
@@ -560,10 +560,6 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.005, and Phi1 is 1
-            val Phi0 = one / 200
-            val Phi1 = one
-
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +/- 3 blocks.
@@ -700,9 +696,7 @@
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
 
-            // Phi 0 is 0.005, and Phi1 is 1 // TODO: code duplication with the other beta decay.
-            val Phi0 = one / 200
-            val Phi1 = one
+
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
