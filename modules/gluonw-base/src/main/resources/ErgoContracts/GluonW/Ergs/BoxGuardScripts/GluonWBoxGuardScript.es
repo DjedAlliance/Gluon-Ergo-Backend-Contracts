@@ -187,12 +187,6 @@
     val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor                   // PegFactor preserved
 
 
-    val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
-        cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
-    ))
-
-
-
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
         def valueOfProtons(protonsAmount: Long): BigInt = {
             val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
@@ -397,7 +391,7 @@
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __gluonWBoxPersistedValueCheck,
+                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor,
                 isHealthyRange,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 __feesCheck, __validVolumeHandling
@@ -425,7 +419,7 @@
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __gluonWBoxPersistedValueCheck,
+                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
                 __inNeutronsValueValid, __inProtonsValueValid,
                 __feesCheck, __validVolumeHandling
@@ -585,7 +579,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __gluonWBoxPersistedValueCheck,
+                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
@@ -727,7 +721,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                __gluonWBoxPersistedValueCheck,
+                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
