@@ -177,14 +177,15 @@
                                          IN_GLUON_BOX.tokens(1)._1 == OUT_GLUON_BOX.tokens(1)._1 && // token amounts may change,
                                          IN_GLUON_BOX.tokens(2)._1 == OUT_GLUON_BOX.tokens(2)._1    // but the token identifiers must be preserved
     val cSameValue: Boolean    = IN_GLUON_BOX.value  == OUT_GLUON_BOX.value
-    val cSameR4: Boolean       = IN_GLUON_BOX.R4[(Long,Long)].get == OUT_GLUON_BOX.R4[(Long,Long)].get
-    val cSameR5: Boolean       = IN_GLUON_BOX.R5[SigmaProp].get  == OUT_GLUON_BOX.R5[SigmaProp].get
-    val cSameR6: Boolean       = IN_GLUON_BOX.R6[(Long,Long)].get == OUT_GLUON_BOX.R6[(Long,Long)].get
-    val cSameR7: Boolean       = IN_GLUON_BOX.R7[Coll[Long]].get == OUT_GLUON_BOX.R7[Coll[Long]].get
-    val cSameR8: Boolean       = IN_GLUON_BOX.R8[Coll[Long]].get == OUT_GLUON_BOX.R8[Coll[Long]].get
-    val cSameR9: Boolean       = IN_GLUON_BOX.R9[(Long, Long)].get == OUT_GLUON_BOX.R9[(Long, Long)].get
-    val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock
-    val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor
+    val cSameR4: Boolean       = IN_GLUON_BOX.R4[(Long,Long)].get == OUT_GLUON_BOX.R4[(Long,Long)].get  // Total Neutron and Proton Suplies preserved
+    val cSameR5: Boolean       = IN_GLUON_BOX.R5[SigmaProp].get  == OUT_GLUON_BOX.R5[SigmaProp].get     // Treasury Multisig preserved    
+    val cSameR6: Boolean       = IN_GLUON_BOX.R6[(Long,Long)].get == OUT_GLUON_BOX.R6[(Long,Long)].get  // Dev fees accounting preserved
+    val cSameR7: Boolean       = IN_GLUON_BOX.R7[Coll[Long]].get == OUT_GLUON_BOX.R7[Coll[Long]].get    // BetaDecayPlus volume preserved
+    val cSameR8: Boolean       = IN_GLUON_BOX.R8[Coll[Long]].get == OUT_GLUON_BOX.R8[Coll[Long]].get    // BetaDecayMinus volume preserved
+    val cSameR9: Boolean       = IN_GLUON_BOX.R9[(Long, Long)].get == OUT_GLUON_BOX.R9[(Long, Long)].get // LastBucketBlock and PegFactor preserved
+    val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock // LastBucketBlock preserved
+    val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor                   // PegFactor preserved
+
 
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
         cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
