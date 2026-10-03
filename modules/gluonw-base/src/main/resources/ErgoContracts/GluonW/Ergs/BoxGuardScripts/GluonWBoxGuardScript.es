@@ -351,8 +351,8 @@
             // by OUT_VOLUME_MINUS(0) == if (nDays == 0) {VOLUME_MINUS(0)} else {0L}
 
             // #1
-            val OUT_VOLUME_PLUSExpectedValue = (if (nDays == 0) {VOLUME_PLUS(0)} else {0L}) + worthOfMInErgs
-            val _volumePlusAccounted = OUT_VOLUME_PLUS(0) == OUT_VOLUME_PLUSExpectedValue
+            val outVolumePlusExpectedValue = (if (nDays == 0) {VOLUME_PLUS(0)} else {0L}) + worthOfMInErgs
+            val _volumePlusAccounted = OUT_VOLUME_PLUS(0) == outVolumePlusExpectedValue
 
             // #2
             // We sliced n - 1 of the value in between, and we check if all of it are 0s.
@@ -376,7 +376,7 @@
                 OUT_VOLUME_PLUS.slice(1, buckets) == VOLUME_PLUS.slice(1, buckets)
             }
 
-            val __OUT_VOLUME_PLUSValidated: Boolean = allOf(Coll(
+            val __outVolumePlusValidated: Boolean = allOf(Coll(
                 OUT_VOLUME_PLUS.size == buckets,
                 _volumePlusAccounted,
                 _isSlicedValuedVolumePlusEqual,
@@ -384,8 +384,8 @@
             ))
 
             // #1
-            val OUT_VOLUME_MINUSExpectedValue = if (nDays == 0) {VOLUME_MINUS(0)} else {0L}
-            val _OUT_VOLUME_MINUSFirstIndexedPreserved = OUT_VOLUME_MINUSExpectedValue == OUT_VOLUME_MINUS(0)
+            val outVolumeMinusExpectedValue = if (nDays == 0) {VOLUME_MINUS(0)} else {0L}
+            val _outVolumeMinusFirstIndexedPreserved = outVolumeMinusExpectedValue == OUT_VOLUME_MINUS(0)
 
             // #2
             // We sliced n - 1 of the value in between, and we check if all of it are 0s.
@@ -409,7 +409,7 @@
 
             val __OUT_VOLUME_MINUSValidated: Boolean = allOf(Coll(
                 OUT_VOLUME_MINUS.size == buckets,
-                _OUT_VOLUME_MINUSFirstIndexedPreserved,
+                _outVolumeMinusFirstIndexedPreserved,
                 _isSlicedValuedVolumeMinusEqual,
                 _nVolumeMinusAllZeros
             ))
@@ -454,7 +454,7 @@
                 cSameContract, cSameTokenIdentifiers,  
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
-                __OUT_VOLUME_MINUSValidated, __OUT_VOLUME_PLUSValidated, 
+                __outVolumeMinusValidated, __outVolumePlusValidated, 
                 __lastBlockPreserved,
                 cSameR9PegFactor,
                 cFees,
@@ -477,8 +477,8 @@
 
             // SAME AS BetaDecayPlus, but reversed between plus and minus
             // #1
-            val OUT_VOLUME_MINUSExpectedValue = (if (nDays == 0) {VOLUME_MINUS(0)} else {0L}) + worthOfMInErgs
-            val _volumeMinusAccounted = OUT_VOLUME_MINUS(0) == OUT_VOLUME_MINUSExpectedValue
+            val outVolumeMinusExpectedValue = (if (nDays == 0) {VOLUME_MINUS(0)} else {0L}) + worthOfMInErgs
+            val _volumeMinusAccounted = OUT_VOLUME_MINUS(0) == outVolumeMinusExpectedValue
 
             // #2
             // We sliced n - 1 of the value in between, and we check if all of it are 0s.
@@ -502,7 +502,7 @@
                 OUT_VOLUME_MINUS.slice(1, buckets) == VOLUME_MINUS.slice(1, buckets)
             }
 
-            val __OUT_VOLUME_MINUSValidated: Boolean = allOf(Coll(
+            val __outVolumeMinusValidated: Boolean = allOf(Coll(
                 OUT_VOLUME_MINUS.size == buckets,
                 _volumeMinusAccounted,
                 _isSlicedValuedVolumeMinusEqual,
@@ -510,8 +510,8 @@
             ))
 
             // #1
-            val OUT_VOLUME_PLUSExpectedValue = if (nDays == 0) {VOLUME_PLUS(0)} else {0L}
-            val _OUT_VOLUME_PLUSFirstIndexedPreserved = OUT_VOLUME_PLUSExpectedValue == OUT_VOLUME_PLUS(0)
+            val outVolumePlusExpectedValue = if (nDays == 0) {VOLUME_PLUS(0)} else {0L}
+            val _outVolumePlusFirstIndexedPreserved = outVolumePlusExpectedValue == OUT_VOLUME_PLUS(0)
 
             // #2
             // We sliced n - 1 of the value in between, and we check if all of it are 0s.
@@ -533,9 +533,9 @@
                 OUT_VOLUME_PLUS.slice(1, buckets) == VOLUME_PLUS.slice(1, buckets)
             }
 
-            val __OUT_VOLUME_PLUSValidated: Boolean = allOf(Coll(
+            val __outVolumePlusValidated: Boolean = allOf(Coll(
                 OUT_VOLUME_PLUS.size == buckets,
-                _OUT_VOLUME_PLUSFirstIndexedPreserved,
+                _outVolumePlusFirstIndexedPreserved,
                 _isSlicedValuedVolumePlusEqual,
                 _nVolumePlusAllZeros
             ))
@@ -584,7 +584,7 @@
                 cSameContract, cSameTokenIdentifiers, 
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
-                __OUT_VOLUME_PLUSValidated, __OUT_VOLUME_MINUSValidated,
+                __outVolumePlusValidated, __outVolumeMinusValidated,
                 __lastBlockPreserved,
                 cSameR9PegFactor,
                 cFees,
