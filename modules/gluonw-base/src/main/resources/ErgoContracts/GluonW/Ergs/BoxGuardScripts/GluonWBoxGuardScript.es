@@ -188,6 +188,17 @@
 
     // ===== (END) Tx Definition ===== //
 
+    // Preservation Checks: When a transaction does not change a register, we must explicitly check that it remained unchanged
+    val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens 
+    val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
+    val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
+    val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
+    val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
+    val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
+    val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+    val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
+
+
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
         def valueOfProtons(protonsAmount: Long): BigInt = {
             val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
@@ -415,7 +426,6 @@
 
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
-            
 
             // ### The 2 conditions to ensure that the values out is right ### //
             val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -747,15 +757,6 @@
             if (q > qUpperThreshold) _pegFactorDecreased
             else if (q < qLowerThreshold) _pegFactorIncreased
             else false
-
-        val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens 
-        val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
-        val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
-        val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
-        val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
-        val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
-        val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
-        val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
 
         sigmaProp(allOf(Coll(
             !isHealthyRange,
