@@ -254,10 +254,6 @@
             } else true // if oracle fee is not defined, then default to true.
         }
 
-    
-        val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
-        
-
         val devFeesPaid: Boolean = {
             if (fees(0)._2 > 0) { // Dev fee is greater than 0
                 val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) } // If there is a need to pay oracle fees, we check OUTPUTS(3)
@@ -271,11 +267,12 @@
 
         val uiFeesPaid: Boolean = {
             if (_optUIFeeAddress.isDefined) {
-                if(fees(1)._2 > 0) { // UI fee is greater than 0
+                val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
+                if(uiFees._2 > 0) { // UI fee is greater than 0
                     val uiOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(3) } else { OUTPUTS(4) }
                     allOf(Coll(
-                            uiOutput.propositionBytes       == fees(1)._1,
-                            uiOutput.value.toBigInt         == fees(1)._2 + _MinFee
+                            uiOutput.propositionBytes       == uiFees._1,
+                            uiOutput.value.toBigInt         == uiFees._2 + _MinFee
                     ))
                 }
                 else true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value fee
