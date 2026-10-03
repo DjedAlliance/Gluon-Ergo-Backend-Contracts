@@ -110,21 +110,24 @@
 
     val one: BigInt                = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
 
+    // # Parameters
+    val qStar: BigInt           = (99 * one / 100) // q* = 99%
+    val qUpperThreshold: BigInt = (98 * one / 100) // qUpper = 98%
+    val qLowerThreshold: BigInt = one / 2          // qLower = 50%
 
-    // ===== Variable Declarations ===== //
-    val SNeutrons: BigInt          = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S neutrons
-    val SProtons: BigInt           = (PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2).toBigInt // Variable in Paper: S protons
-    val RErg: BigInt               = (IN_GLUONW_BOX.value - _MinFee).toBigInt // Variable in Paper: R
-    val Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000 // Oracle price
+    // # Internal State Variables
+    val SNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
+    val SProtons: BigInt  = (PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2).toBigInt   // Variable in Paper: S_protons
+    val RErg: BigInt      = (IN_GLUONW_BOX.value - _MinFee).toBigInt // Variable in Paper: R
+    
+    // # External State Variables
+    val Pt: BigInt        = ORACLE_BOX.R4[Long].get.toBigInt / 1000  // Oracle price
+
+    // # State Dependent Variables
     val normalizedPt: BigInt     = Pt * inPegFactor.toBigInt / one // Adjusted oracle price: P_adjusted = Pt * pegFactor / one
-    val qStar: BigInt = (99 * one / 100) // q* = 0.99
     val q: BigInt = SNeutrons * normalizedPt / RErg // Current fusion ratio
     val fusionRatio: BigInt = min(one * q / (q + one - qStar), q)
-    // ===== (END) Variable Declarations ===== //
 
-    // Healthy range thresholds
-    val qUpperThreshold: BigInt       = (98 * one / 100)  // 0.98 * one
-    val qLowerThreshold: BigInt       = one / 2           // 0.50 * one
     val isHealthyRange: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
     val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
