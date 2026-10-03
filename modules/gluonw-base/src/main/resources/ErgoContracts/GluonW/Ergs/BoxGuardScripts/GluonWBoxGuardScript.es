@@ -85,6 +85,7 @@
     val PEG_FACTOR: Long = REGISTER_9._2
     val OUT_PEG_FACTOR: Long = OUT_REGISTER_9._2
 
+    // # Constants
     val one: BigInt = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
 
     // # Parameters
@@ -97,6 +98,10 @@
     val phi1 = one       // BetaDecay Fee slope:       phi1 = 1
     val blocksPerVolumeBucket: Int = 720 // Approximately 1 day per volume bucket
     val buckets: Int = 14                // Tracking volume for approximately 14 days
+    val feeDenom: BigInt = 1000L.toBigInt
+    val initialDevFee: BigInt = 5L.toBigInt    // Initial dev fee: 0.5%
+    val oracleFee: BigInt = 1L.toBigInt // Oracle fee: 0.1%
+    val uiFee: BigInt = 4L.toBigInt.    // Optional UI fee: 0.4%
 
     // # Internal State Variables
     val supplyNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
@@ -110,53 +115,51 @@
     val priceAdjusted: BigInt     = price * PEG_FACTOR.toBigInt / one // Adjusted oracle price: P_adjusted = price * pegFactor / one
     val q: BigInt = supplyNeutrons * priceAdjusted / reserve  // fusion ratio
     val qNorm: BigInt = min(one * q / (q + one - qStar), q)   // normalized fusion ratio
-
     val isHealthy: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
-    // ====== Tx Definitions ===== //
+    // # Transaction Type Definitions //
 
-    // Note: AmountInCirculation = TotalSupply - AmountInReactorBox
-    // Therefore an increase/decrease in circulation means AmountInReactorBox decreases/increases
+    // Note: Circulating Supply = TotalSupply - AmountInBox
+    // Therefore an increase/decrease in circulating supply means AmountInBox decreases/increases
 
-    // # Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
+    // ## Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 > OUT_NEUTRONS_TOKEN._2, // Neutrons decrease
         PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons increase
-        GLUON_BOX.value < OUT_GLUON_BOX.value                  // ERG value increases
+        GLUON_BOX.value < OUT_GLUON_BOX.value      // ERG value increases
     ))
 
-    // # Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
+    // ## Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
     val isFusionTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 < OUT_NEUTRONS_TOKEN._2, // Neutrons increase
         PROTONS_TOKEN._2 < OUT_PROTONS_TOKEN._2,   // Protons increase
-        GLUON_BOX.value > OUT_GLUON_BOX.value                  // ERG value decreases
+        GLUON_BOX.value > OUT_GLUON_BOX.value      // ERG value decreases
     ))
 
-    // # BetaDecayPlus: Transmutes Protons to Neutrons
+    // ## BetaDecayPlus: Transmutes Protons to Neutrons
     // Decreases protons in circulation and increases neutrons in circulation
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 > OUT_NEUTRONS_TOKEN._2, // Neutrons decrease
         PROTONS_TOKEN._2 < OUT_PROTONS_TOKEN._2,   // Protons increase
-        GLUON_BOX.value == OUT_GLUON_BOX.value                 // ERG value is preserved
+        GLUON_BOX.value == OUT_GLUON_BOX.value     // ERG value is preserved
     ))
 
-    // # BetaDecayPlus: Transmutes Neutrons to Protons
+    // ## BetaDecayPlus: Transmutes Neutrons to Protons
     // Decreases neutrons in circulation and increases protons in circulation
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 < OUT_NEUTRONS_TOKEN._2, // Neutrons increase
         PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons decrease
-        GLUON_BOX.value == OUT_GLUON_BOX.value                 // ERG value is preserved
+        GLUON_BOX.value == OUT_GLUON_BOX.value     // ERG value is preserved
     ))
 
-    // # AdjustPeg: Changes the peg factor that determines the peg
+    // ## AdjustPeg: Changes the peg factor that determines the peg
     val isAdjustPegTx: Boolean = (PEG_FACTOR != OUT_PEG_FACTOR)
 
-    // # UpdateTreasury: Changes the address that receives dev fees
+    // ## UpdateTreasury: Changes the address that receives dev fees
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
 
-    // ===== (END) Tx Definition ===== //
 
-    // Preservation Checks: When a transaction does not change something, we must explicitly check that it remained unchanged
+    // # Preservation Checks: When a transaction does not change something, we must explicitly check that it remained unchanged
     val cSameContract: Boolean = GLUON_BOX.propositionBytes == OUT_GLUON_BOX.propositionBytes
     val cSameTokens: Boolean   = GLUON_BOX.tokens == OUT_GLUON_BOX.tokens
     val cSameTokenIdentifiers: Boolean = GLUON_BOX.tokens(0)._1 == OUT_GLUON_BOX.tokens(0)._1 && // For fission, fusion and beta decays,
@@ -170,16 +173,16 @@
     val cSameR8: Boolean       = GLUON_BOX.R8[Coll[Long]].get == OUT_GLUON_BOX.R8[Coll[Long]].get    // BetaDecayMinus volume preserved
     val cSameR9: Boolean       = GLUON_BOX.R9[(Long, Long)].get == OUT_GLUON_BOX.R9[(Long, Long)].get // LastBucketBlock and PegFactor preserved
     val cSameR9LastBucketBlock: Boolean = LAST_BUCKET_BLOCK == OUT_LAST_BUCKET_BLOCK // LastBucketBlock preserved
-    val cSameR9PegFactor: Boolean = PEG_FACTOR == OUT_PEG_FACTOR                   // PegFactor preserved
+    val cSameR9PegFactor: Boolean = PEG_FACTOR == OUT_PEG_FACTOR   // PegFactor preserved
 
-    // Oracle Checks
+    // # Oracle Checks
     val oracleDelay: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1 // Difference between now and the time when the oracle box was created, in blocks.
     val cOracle: Boolean = allOf(Coll(
         oracleDelay < 35 && oracleDelay >= 0, // Oracle delay is at most 35 blocks (~70 min) in the past
         ORACLE_BOX.tokens(0)._1 == _OraclePoolNFT // The oracle NFT is the right NFT
     ))
 
-    // Auxiliary Functions 
+    // # Auxiliary Functions 
     def valueOfProtons(protonsAmount: Long): BigInt = { // value in nanoERG
         val protonsPrice: BigInt = (one - qNorm).toBigInt * reserve / supplyProtons
         protonsAmount.toBigInt * protonsPrice / one
@@ -189,32 +192,20 @@
         neutronsAmount.toBigInt * neutronPrice / one
     }
 
-    // Basic Math Functions
-    def sum(collLong: Coll[Long]): BigInt = {
-        collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
-    }
+    // # Basic Math Functions
+    def sum(collLong: Coll[Long]): BigInt = collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
 
-
+    // # Transaction Validity Conditions
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
-        // ===== (START) Fee Declarations ===== //
-
-        // principal is the amount that is requested, always in nanoERG
-        val principal: BigInt = 
-            if (isFissionTx) (OUT_GLUON_BOX.value - GLUON_BOX.value).toBigInt
+        // ## General Fee Checks
+        val principal: BigInt = // the value of the amount transacted, measured in nanoERG
+            if (isFissionTx) (OUT_GLUON_BOX.value - GLUON_BOX.value).toBigInt 
             else if (isFusionTx) (GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
             else if (isBetaDecayPlusTx) valueOfProtons(OUT_PROTONS_TOKEN._2 - PROTONS_TOKEN._2)
             else valueOfNeutrons(OUT_NEUTRONS_TOKEN._2 - NEUTRONS_TOKEN._2)
 
-        val feeDenom: BigInt = 1000L.toBigInt // TODO: move to parameter section?
-        val devFee: BigInt = 5L.toBigInt    // Initial dev fee: 0.5%
-        val oracleFee: BigInt = 1L.toBigInt // Oracle fee: 0.1%
-        val uiFee: BigInt = 4L.toBigInt.    // Optional UI fee: 0.4%
-
         val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
-        val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) = (_OracleFeePk, oracleFeePayout)
-
         val oracleFeesToBePaid: Boolean = (isBetaDecayPlusTx || isBetaDecayMinusTx) && oracleFeePayout > 0
-
         val oracleFeesPaid: Boolean = {
             val oracleOutput: Box = OUTPUTS(2)
             if (oracleFeesToBePaid) {
@@ -228,12 +219,9 @@
             } else true // if oracle fee does not need to be paid, then default to true.
         }
 
-        val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
-            val initialFee: BigInt = (devFee * principal) / feeDenom
-            val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
-            decayedFee
-        } else 0L.toBigInt
-        
+        val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) { // Decreases linearly from initialDevFee to zero
+            ((initialDevFee * principal) / feeDenom) * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
+        } else 0L.toBigInt    
         val devFeesToBePaid: Boolean = devFeePayout > 0
         val devFeesPaid: Boolean = {
             if (devFeesToBePaid) {
@@ -244,10 +232,11 @@
                 ))
             } else true // if dev fee does not need to be paid, then default to true.
         }
+        val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == devFeePayout
+        val maxDevFeeThresholdSame: Boolean = OUT_MAX_DEV_FEE_THRESHOLD == MAX_DEV_FEE_THRESHOLD
 
         val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
         val _optUIFeeAddress = getVar[SigmaProp](0)
-
         val uiFeesPaid: Boolean = {
             if (_optUIFeeAddress.isDefined && uiFeesPayout > 0) {
                 val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
@@ -261,19 +250,14 @@
             } else true // if ui fee does not need to be paid, then default to true.
         }
 
-        val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == devFeePayout
-        val maxDevFeeThresholdSame: Boolean = OUT_MAX_DEV_FEE_THRESHOLD == MAX_DEV_FEE_THRESHOLD
-
-        val __feesCheck: Boolean = allOf(Coll(
+        val cFees: Boolean = allOf(Coll(
             oracleFeesPaid, devFeesPaid, uiFeesPaid,
             devFeeRepaidValueAdded,
             maxDevFeeThresholdSame
         ))
-        // ===== (END) Fee Declarations ===== //
+        
 
-        // NOTE:
-        // In all of these transactions, the Input value varies, however, the output does not. The output is exactly how much
-        // the user wants. Therefore we can use the outbox to calculate the value of M by using OutBox.value - InBox.value
+        // ## Transaction-Specific Checks
         if (isFissionTx) {
             // Equation: M [Ergs] ==> (M (1 - phiFission) (S Protons / R)) [Protons] + (M (1 - phiFission) (S Neutrons / R)) [Neutrons]
             val M: BigInt = (OUT_GLUON_BOX.value - GLUON_BOX.value).toBigInt 
@@ -284,7 +268,6 @@
             val NeutronsExpectedValue: BigInt = (M * supplyNeutrons * (one - phiFission) / reserve) / one
             val ProtonsExpectedValue: BigInt = (M * supplyProtons * (one - phiFission) / reserve) / one
 
-            // ### The 2 conditions to ensure that the values out are right ### //
             val __outNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
@@ -293,7 +276,7 @@
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
-                __feesCheck
+                cFees
             )))
         }
         else if (isFusionTx) {
@@ -313,7 +296,6 @@
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
 
-            // ### The 2 conditions to ensure that the values out is right ### //
             val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
@@ -322,7 +304,7 @@
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
                 cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
-                __feesCheck
+                cFees
             )))
         }
         else if (isBetaDecayPlusTx) {
@@ -335,7 +317,6 @@
             val ProtonsActualValue: BigInt = (OUT_PROTONS_TOKEN._2 - PROTONS_TOKEN._2).toBigInt
             val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
 
-            // === VarPhiBeta Calculation === //
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Protons reduction in OutBox
@@ -438,10 +419,7 @@
 
             val volume: BigInt = if (volumeMinus > volumePlus) {0L.toBigInt} else {volumePlus - volumeMinus} // integer subtraction
 
-            // === Tx FEE for pool === //
-            // This is the fee that gets collected to add into the pool during decay.
-
-            val VarPhiBeta: BigInt = phi0 + ((phi1 * volume) / reserve)
+            val VarPhiBeta: BigInt = phi0 + ((phi1 * volume) / reserve) // This fee remains in the reserve
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +/- 3 blocks.
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
@@ -452,7 +430,6 @@
             val closestPreviousBlockValueViaBuckets: Int = (currentBlockNumber / blocksPerVolumeBucket) * blocksPerVolumeBucket
             val __lastBlockPreserved: Boolean = OUT_LAST_BUCKET_BLOCK == closestPreviousBlockValueViaBuckets
 
-            // === VarPhiBeta Calculation End === //
 
             // === Fusion Ratio === //
 
@@ -480,7 +457,7 @@
                 __OUT_VOLUME_MINUSValidated, __OUT_VOLUME_PLUSValidated, 
                 __lastBlockPreserved,
                 cSameR9PegFactor,
-                __feesCheck,
+                cFees,
                 cOracle
             )))
         } else if (isBetaDecayMinusTx) {
@@ -488,7 +465,6 @@
             
             val M: Long = (OUT_NEUTRONS_TOKEN._2 - NEUTRONS_TOKEN._2) // Number of neutron being decayed
 
-            // === VarPhiBeta Calculation === //
             val currentBlockNumber: Long = CONTEXT.HEIGHT
 
             // Check Neutrons reduction in OutBox
@@ -569,10 +545,7 @@
 
             val volume: BigInt = if (volumePlus > volumeMinus) {0L.toBigInt} else {volumeMinus - volumePlus} // integer subtraction
 
-            // === Tx FEE for pool === //
-            // This is the fee that gets collected to add into the pool during decay.
-
-            val VarPhiBeta: BigInt = phi0 + ((phi1 * volume) / reserve)
+            val VarPhiBeta: BigInt = phi0 + ((phi1 * volume) / reserve) // This fee remains in the reserve
 
             // Due to some issues with moving towards the next block. We should give it a margin of error of +/- 3 blocks.
             // There is a tricky situation where if the lastblock is within a day, and if it is always updated,
@@ -614,7 +587,7 @@
                 __OUT_VOLUME_PLUSValidated, __OUT_VOLUME_MINUSValidated,
                 __lastBlockPreserved,
                 cSameR9PegFactor,
-                __feesCheck,
+                cFees,
                 cOracle
             )))
         } else sigmaProp(false)
@@ -629,7 +602,7 @@
             cOracle,
             cSameContract, cSameTokens, cSameValue, cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
             pegFactorCorrect // Peg Factor is the only register variable that changes
-        ))) // Anyone may do this transaction when outside the healthy range
+        ))) // Anyone may do this transaction when the fusion ratio is outside the healthy range
     } else if (isUpdateTreasury) {
         val newMultisig: SigmaProp = OUT_GLUON_BOX.R5[SigmaProp].get
         sigmaProp(allOf(Coll(
