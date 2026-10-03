@@ -199,91 +199,69 @@
             else if (isBetaDecayPlusTx) valueOfProtons(OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
             else valueOfNeutrons(OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
 
+        val feeDenom: BigInt = 1000L.toBigInt // TODO: move to parameter section?
+        val devFee: BigInt = 5L.toBigInt    // Initial dev fee: 0.5%
+        val oracleFee: BigInt = 1L.toBigInt // Oracle fee: 0.1%
+        val uiFee: BigInt = 4L.toBigInt.    // Optional UI fee: 0.4%
+
         val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
         val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) = (_OracleFeePk, oracleFeePayout)
 
-        val _optUIFeeAddress = getVar[SigmaProp](0)
-        val fees: Coll[(Coll[Byte], BigInt)] = {
-            val feeDenom: BigInt = 1000L.toBigInt
-            val devFee: BigInt = 5L.toBigInt
-            val oracleFee: BigInt = 1L.toBigInt
-            val uiFee: BigInt = 4L.toBigInt
-            val emptyFees: (Coll[Byte], Long) = (Coll(1.toByte), 0L.toBigInt)
-
-            val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
-            val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get    
-            val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1 
-            val MAX_DEV_FEE_THRESHOLD: Long = ASSET_MAX_DEV_FEE_THRESHOLD._2
-            val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
-            val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
-
-            val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
-                val initialFee: BigInt = (devFee * principal) / feeDenom
-                val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
-                decayedFee
-            } else 0L.toBigInt
-            val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
-            
-
-            val devFeeAddressAndPayout: (Coll[Byte], BigInt) = (TREASURY_MULTISIG.propBytes, devFeePayout)
-            
-
-            // Fission and Fusion do not need Oracle and do not pay oracle fees
-            // If Ui fee is defined, then we add an additional 0.4% fee
-            if (isBetaDecayMinusTx || isBetaDecayPlusTx) { 
-                if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout))
-                else Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, emptyFees)
-            }
-            else { // fission or fusion
-                if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout), emptyFees)
-                else Coll(devFeeAddressAndPayout, emptyFees, emptyFees)  
-            }
-        }
-
-        // TODO: fees is constructing a collection, and then the "...FeesPaid" checks are 
-        // having the trouble of finding where the fees are in the collection. This is silly. Refactor
-
-        val oracleFeesToBePaid: Boolean = oracleFeePayout > 0
+        val oracleFeesToBePaid: Boolean = (isBetaDecayPlusTx || isBetaDecayMinusTx) && oracleFeePayout > 0
 
         val oracleFeesPaid: Boolean = {
             val oracleOutput: Box = OUTPUTS(2)
-            if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
-                if (oracleFeesToBePaid) { // Oracle fee is greater than 0
-                    val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
-                    allOf(Coll(
-                        oracleOutput.propositionBytes == _OracleFeePk,
-                        oracleOutput.propositionBytes == oracleBuybackInputBox.propositionBytes,
-                        oracleOutput.tokens(0)._1     == _OracleBuybackNFT,
-                        oracleOutput.value.toBigInt   == oracleBuybackInputBox.value.toBigInt + oracleFeePayout + _MinFee
-                    ))
-                } else true // do nothing if fee doesn't add up greater than 0, prevents errors on low value fee
-            } else true // if oracle fee is not defined, then default to true.
+            if (oracleFeesToBePaid) {
+                val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
+                allOf(Coll(
+                    oracleOutput.propositionBytes == _OracleFeePk,
+                    oracleOutput.propositionBytes == oracleBuybackInputBox.propositionBytes,
+                    oracleOutput.tokens(0)._1     == _OracleBuybackNFT,
+                    oracleOutput.value.toBigInt   == oracleBuybackInputBox.value.toBigInt + oracleFeePayout + _MinFee
+                ))
+            } else true // if oracle fee does not need to be paid, then default to true.
         }
 
+        val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
+        val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get    
+        val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1 
+        val MAX_DEV_FEE_THRESHOLD: Long = ASSET_MAX_DEV_FEE_THRESHOLD._2
+        val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
+        val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
+        val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
+            val initialFee: BigInt = (devFee * principal) / feeDenom
+            val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
+            decayedFee
+        } else 0L.toBigInt
+        
+        val devFeesToBePaid: Boolean = devFeePayout > 0
         val devFeesPaid: Boolean = {
-            if (fees(0)._2 > 0) { // Dev fee is greater than 0
+            if (devFeesToBePaid) {
                 val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) } // If there is a need to pay oracle fees, we check OUTPUTS(3)
                 allOf(Coll(
-                    devOutput.propositionBytes == fees(0)._1,
-                    devOutput.value.toBigInt   == fees(0)._2 + _MinFee
+                    devOutput.propositionBytes == TREASURY_MULTISIG.propBytes,
+                    devOutput.value.toBigInt   == devFeePayout + _MinFee
                 ))
-            } else true // do nothing if fee doesn't add up greater than 0, prevents errors on low value fee
+            } else true // if dev fee does not need to be paid, then default to true.
         }
+
+        val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
+        val _optUIFeeAddress = getVar[SigmaProp](0)
 
         val uiFeesPaid: Boolean = {
-            if (_optUIFeeAddress.isDefined) {
+            if (_optUIFeeAddress.isDefined && uiFeesPayout > 0) {
                 val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
-                if(uiFees._2 > 0) { // UI fee is greater than 0
-                    val uiOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(3) } else { OUTPUTS(4) }
-                    allOf(Coll(
-                        uiOutput.propositionBytes == uiFees._1,
-                        uiOutput.value.toBigInt   == uiFees._2 + _MinFee
-                    ))
-                } else true // do nothing if fee doesn't end up greater than 0, prevents errors on low value fee
-            } else true // if ui fee isn't defined, then default to true.
+                val uiOutput: Box = if (oracleFeesToBePaid && devFeesToBePaid) OUTPUTS(4) 
+                                    else if (oracleFeesToBePaid || devFeesToBePaid) OUTPUTS(3)
+                                    else OUTPUTS(2)
+                allOf(Coll(
+                    uiOutput.propositionBytes == _optUIFeeAddress.get.propBytes,
+                    uiOutput.value.toBigInt   == uiFeePayout + _MinFee
+                ))
+            } else true // if ui fee does not need to be paid, then default to true.
         }
 
-        val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == fees(0)._2
+        val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == devFeePayout
         val maxDevFeeThresholdSame: Boolean = OUT_MAX_DEV_FEE_THRESHOLD == MAX_DEV_FEE_THRESHOLD
 
         val __feesCheck: Boolean = allOf(Coll(
