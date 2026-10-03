@@ -186,6 +186,7 @@
     val cSameR6: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
     val cSameR7: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
     val cSameR8: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+    val cSameR9: Boolean       = IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get
     val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock
     val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor
 
@@ -770,8 +771,7 @@
                     cSameValue,
                     cSameTokens,
                     cSameR4,
-                    cSameR6, cSameR7, cSameR8,
-                    (IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get),
+                    cSameR6, cSameR7, cSameR8, cSameR9,
                     cSameContract
                 ))
             }
