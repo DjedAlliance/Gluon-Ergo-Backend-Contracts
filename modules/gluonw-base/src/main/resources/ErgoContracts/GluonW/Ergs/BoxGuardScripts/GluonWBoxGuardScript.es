@@ -207,31 +207,18 @@
             val uiFee: BigInt = 4L.toBigInt
             val emptyFees: (Coll[Byte], Long) = (Coll(1.toByte), 0L.toBigInt)
 
-            // principal is the amount that is requested
-            val principal: BigInt = if (isFissionTx) {
-                    (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt
-                } else if (isFusionTx) {
-                    (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
-                } else if (isBetaDecayPlusTx) {
-                    // Calculate the value based on protons
-                    // Check Protons reduction in OutBox
-                    val protonsAmount: Long = OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2
-                    val protonsInNanoergs: BigInt = valueOfProtons(protonsAmount)
-                    protonsInNanoergs
-                } else {
-                    // Calculate the value based on neutrons
-                    val neutronsAmount: Long = OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2
-                    val neutronsInNanoergs: BigInt = valueOfNeutrons(neutronsAmount)
-                    neutronsInNanoergs
-                }
+            // principal is the amount that is requested, always in nanoERG
+            val principal: BigInt = 
+                if (isFissionTx) (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt
+                else if (isFusionTx) (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
+                else if (isBetaDecayPlusTx) valueOfProtons(OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
+                else valueOfNeutrons(OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
 
             val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
                 val initialFee: BigInt = (devFee * principal) / feeDenom
                 val decayedFee: BigInt = initialFee * (MAX_DEV_FEE_THRESHOLD - DEV_FEE_REPAID) / MAX_DEV_FEE_THRESHOLD
                 decayedFee
-            } else {
-                0L.toBigInt
-            }
+            } else 0L.toBigInt
             val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
             val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
 
@@ -631,8 +618,6 @@
 
             // === Tx FEE for pool === //
             // This is the fee that gets collected to add into the pool during decay.
-
-
 
             val VarPhiBeta: BigInt = Phi0 + ((Phi1 * volume) / RErg)
 
