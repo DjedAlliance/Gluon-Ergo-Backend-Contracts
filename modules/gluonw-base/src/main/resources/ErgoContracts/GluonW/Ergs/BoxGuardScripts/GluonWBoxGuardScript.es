@@ -53,21 +53,15 @@
     // DataInputs: None
     // Outputs: GluonBox
 
-    // TODO: check for dead code
-
     val TREASURY_MULTISIG: SigmaProp = SELF.R5[SigmaProp].get
     val IN_GLUON_BOX: Box = SELF
     val OUT_GLUON_BOX: Box = OUTPUTS(0)
     val ORACLE_BOX: Box = CONTEXT.dataInputs(0)
-    val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUON_BOX.R4[(Long, Long)].get
-    val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
-    val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get
-    val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1
-    val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2
-    val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1
-    val MAX_DEV_FEE_THRESHOLD: Long = ASSET_MAX_DEV_FEE_THRESHOLD._2
-    val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
-    val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
+
+    val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUON_BOX.R4[(Long, Long)].get // Only used in the two lines below
+    val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1 // Used only once
+    val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2 // Used only once
+
 
     val IN_GLUON_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUON_BOX.tokens(1)
     val IN_GLUON_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUON_BOX.tokens(2)
@@ -215,6 +209,13 @@
                 else if (isFusionTx) (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
                 else if (isBetaDecayPlusTx) valueOfProtons(OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
                 else valueOfNeutrons(OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
+
+            val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
+            val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get    
+            val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1 
+            val MAX_DEV_FEE_THRESHOLD: Long = ASSET_MAX_DEV_FEE_THRESHOLD._2
+            val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
+            val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
 
             val devFeePayout: BigInt = if (DEV_FEE_REPAID < MAX_DEV_FEE_THRESHOLD) {
                 val initialFee: BigInt = (devFee * principal) / feeDenom
