@@ -193,7 +193,7 @@
         cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
     ))
 
-    
+
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
         def valueOfProtons(protonsAmount: Long): BigInt = {
@@ -767,12 +767,10 @@
             val newMultisig: SigmaProp = OUT_GLUONW_BOX.R5[SigmaProp].get
             val validSelfRecreation: Boolean = {
                 allOf(Coll(
-                    (IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value),
-                    (IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens),
-                    (IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get), // TODO: handle code duplications with AdjustPeg?
-                    (IN_GLUONW_BOX.R6[(Long, Long)].get == OUT_GLUONW_BOX.R6[(Long, Long)].get),
-                    (IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get),
-                    (IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get),
+                    cSameValue,
+                    cSameTokens,
+                    cSameR4,
+                    cSameR6, cSameR7, cSameR8,
                     (IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get),
                     cSameContract
                 ))
