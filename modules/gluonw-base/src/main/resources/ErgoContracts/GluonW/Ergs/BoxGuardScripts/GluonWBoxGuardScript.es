@@ -590,7 +590,7 @@
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
                 __outVolumeMinusValidated, __outVolumePlusValidated, 
-                __lastBlockPreserved, // TODO: Replace this and the next line by cSameR9?
+                __lastBlockPreserved,
                 cSameR9PegFactor,
                 __feesCheck,
                 __oracleCheck
@@ -734,7 +734,7 @@
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
                 __outVolumePlusValidated, __outVolumeMinusValidated,
-                __lastBlockPreserved, // TODO: Replace this and the next line by cSameR9?
+                __lastBlockPreserved,
                 cSameR9PegFactor,
                 __feesCheck,
                 __oracleCheck
