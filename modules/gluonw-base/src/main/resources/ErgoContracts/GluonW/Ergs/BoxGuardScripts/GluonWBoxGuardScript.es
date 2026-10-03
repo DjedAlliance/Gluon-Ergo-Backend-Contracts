@@ -109,11 +109,24 @@
     // ===== (END) Oracle Checks ===== //
 
     val one: BigInt                = (1000000000).toBigInt // one is 1,000,000,000 because we are using 9 decimal digits.
+
+
+    // ===== Variable Declarations ===== //
+    val _neutronsInCirculation: Long = NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2 // Variable in Paper: S neutrons
+    val _protonsInCirculation: Long = PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2.   // Variable in Paper: S protons
+    val SNeutrons: BigInt = _neutronsInCirculation.toBigInt
+    val SProtons: BigInt = _protonsInCirculation.toBigInt
     val __SNeutrons: BigInt        = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
     val __RErg: BigInt             = (IN_GLUONW_BOX.value - _MinFee).toBigInt
+    val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee // As the box has a minimum fee, we must subtract the minimum fee
+    val RErg: BigInt = _fissionedErg.toBigInt // Variable in Paper: R
     val Pt: BigInt               = ORACLE_BOX.R4[Long].get.toBigInt / 1000 // Oracle price
     val normalizedPt: BigInt     = Pt * inPegFactor.toBigInt / one // Adjusted oracle price: P_adjusted = Pt * pegFactor / one
     val __q: BigInt                = __SNeutrons * normalizedPt / __RErg // Current fusion ratio
+    val qStar: BigInt = (99 * one / 100) // q* = 0.99
+    val q: BigInt = SNeutrons * normalizedPt / RErg
+    val fusionRatio: BigInt = min(one * q / (q + one - qStar), q)
+    // ===== (END) Variable Declarations ===== //
 
     // Healthy range thresholds
     val __qStarUpper: BigInt       = (98 * one / 100)  // 0.98 * one
@@ -185,19 +198,6 @@
     // ===== (END) Tx Definition ===== //
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
-        // ===== Variable Declarations ===== //
-        val _neutronsInCirculation: Long = NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2 // Variable in Paper: S neutrons
-        val _protonsInCirculation: Long = PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2.   // Variable in Paper: S protons
-        val SNeutrons: BigInt = _neutronsInCirculation.toBigInt
-        val SProtons: BigInt = _protonsInCirculation.toBigInt
-        val _fissionedErg: Long = IN_GLUONW_BOX.value - _MinFee // As the box has a minimum fee, we must subtract the minimum fee
-        val RErg: BigInt = _fissionedErg.toBigInt // Variable in Paper: R
-
-        // q* = 0.99
-        val qStar: BigInt = (99 * one / 100) // TODO: check whether this is still needed, check duplications
-        val q: BigInt = SNeutrons * normalizedPt / RErg
-        val fusionRatio: BigInt = min(one * q / (q + one - qStar), q)
-
         def valueOfProtons(protonsAmount: Long): BigInt = {
             val protonsPrice: BigInt = (one - fusionRatio).toBigInt * RErg / SProtons
             val protonsInNanoergs: BigInt = protonsAmount.toBigInt * protonsPrice / one
@@ -214,7 +214,7 @@
             collLong.fold(0L, {(acc: Long, indexedValue: Long) => acc + indexedValue}).toBigInt
         }
 
-        // ===== (END) Variable Declarations ===== //
+        
 
         // ===== (START) Fee Declarations ===== //
         // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
