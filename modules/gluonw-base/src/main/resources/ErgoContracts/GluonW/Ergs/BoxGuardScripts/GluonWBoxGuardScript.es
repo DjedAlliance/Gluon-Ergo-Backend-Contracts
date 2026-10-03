@@ -237,31 +237,31 @@
             }
         }
 
+        val oracleFeesPaid: Boolean = {
+            val oracleOutput: Box = OUTPUTS(2)
+            if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
+                if (oracleFeesToBePaid) { // Oracle fee is greater than 0
+                    val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
+                    allOf(Coll(
+                            oracleOutput.propositionBytes       == fees(1)._1,
+                            oracleOutput.propositionBytes       == oracleBuybackInputBox.propositionBytes,
+                            oracleOutput.tokens(0)._1           == _OracleBuybackNFT,
+                            oracleOutput.value.toBigInt         == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
+                    ))
+                } else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
+            } else true // if oracle fee is not defined, then default to true.
+        }
+
         val feesPaid: Boolean = {
             val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
             val uiFeesToBePaid: Boolean = uiFees._2 > 0
+            
             val oracleFeesToBePaid: Boolean = fees(1)._2 > 0
 
-            val oracleOutput: Box = OUTPUTS(2)
-
-             val oracleFeesPaid: Boolean = {
-                if (isBetaDecayPlusTx || isBetaDecayMinusTx) {
-                    if (oracleFeesToBePaid) { // Oracle fee is greater than 0
-                        val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
-                        allOf(Coll(
-                                oracleOutput.propositionBytes       == fees(1)._1,
-                                oracleOutput.propositionBytes       == oracleBuybackInputBox.propositionBytes,
-                                oracleOutput.tokens(0)._1           == _OracleBuybackNFT,
-                                oracleOutput.value.toBigInt         == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
-                        ))
-                    } else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
-                } else true // if oracle fee is not defined, then default to true.
-            }
 
             val devFeesPaid: Boolean = {
                 if (fees(0)._2 > 0) { // Dev fee is greater than 0
-                    // If there is a need to pay oracle fees, we check OUTPUTS(3)
-                    val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) }
+                    val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) } // If there is a need to pay oracle fees, we check OUTPUTS(3)
                     allOf(Coll(
                             devOutput.propositionBytes      == fees(0)._1,
                             devOutput.value.toBigInt        == fees(0)._2 + _MinFee
@@ -283,14 +283,14 @@
                 } else true // if ui fee isn't defined, then default to true.
             }
 
-            devFeesPaid && uiFeesPaid && oracleFeesPaid
+            devFeesPaid && uiFeesPaid
         }
 
         val devFeeRepaidValueAdded: Boolean = (OUT_DEV_FEE_REPAID - DEV_FEE_REPAID) == fees(0)._2
         val maxDevFeeThresholdSame: Boolean = OUT_MAX_DEV_FEE_THRESHOLD == MAX_DEV_FEE_THRESHOLD
 
         val __feesCheck: Boolean = allOf(Coll(
-            feesPaid,
+            oracleFeesPaid, feesPaid,
             devFeeRepaidValueAdded,
             maxDevFeeThresholdSame
         ))
