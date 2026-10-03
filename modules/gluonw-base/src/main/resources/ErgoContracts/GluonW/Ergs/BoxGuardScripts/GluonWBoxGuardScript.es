@@ -419,10 +419,8 @@
             val __lastBlockPreserved: Boolean = OUT_LAST_BUCKET_BLOCK == closestPreviousBlockValueViaBuckets
 
             // The steps of multiplication and division done below are to avoid overflow errors.
-            val oneMinusPhiBeta: BigInt = (one - VarPhiBeta)
-            val oneMinusFusionRatio: BigInt = (one - qNorm)
-            val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / supplyProtons
-            val ratio2: BigInt = (oneMinusFusionRatio * supplyNeutrons) / one
+            val ratio1: BigInt = (M.toBigInt * (one - VarPhiBeta)) / supplyProtons
+            val ratio2: BigInt = ((one - qNorm) * supplyNeutrons) / one
             val outNeutronsAmount: BigInt = (ratio1 * ratio2) / qNorm
 
             val NeutronsExpectedValue: BigInt = outNeutronsAmount
@@ -535,11 +533,9 @@
             val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
 
             // The steps of multiplication and division done below are to avoid overflow errors.
-            val oneMinusPhiBeta: BigInt = one - VarPhiBeta
-            val oneMinusFusionRatio: BigInt = one - qNorm
-            val ratio1: BigInt = (M.toBigInt * oneMinusPhiBeta) / supplyNeutrons
+            val ratio1: BigInt = (M.toBigInt * (one - VarPhiBeta)) / supplyNeutrons
             val ratio2: BigInt = (qNorm * supplyProtons) / one
-            val outProtonsAmount: BigInt = (ratio1 * ratio2) / oneMinusFusionRatio
+            val outProtonsAmount: BigInt = (ratio1 * ratio2) / (one - qNorm)
 
             val NeutronsExpectedValue: BigInt = M.toBigInt
             val ProtonsExpectedValue: BigInt = outProtonsAmount
