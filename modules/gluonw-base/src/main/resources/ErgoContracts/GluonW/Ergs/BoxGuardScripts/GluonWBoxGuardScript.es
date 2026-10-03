@@ -191,7 +191,17 @@
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
         // ===== (START) Fee Declarations ===== //
-        // Reference from https://github.com/K-Singh/Sigma-Finance/blob/master/contracts/ex/ExOrderERG.ergo
+
+        // principal is the amount that is requested, always in nanoERG
+        val principal: BigInt = 
+            if (isFissionTx) (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt
+            else if (isFusionTx) (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
+            else if (isBetaDecayPlusTx) valueOfProtons(OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
+            else valueOfNeutrons(OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
+
+        val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
+        val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) = (_OracleFeePk, oracleFeePayout)
+
         val _optUIFeeAddress = getVar[SigmaProp](0)
         val fees: Coll[(Coll[Byte], BigInt)] = {
             val feeDenom: BigInt = 1000L.toBigInt
@@ -199,13 +209,6 @@
             val oracleFee: BigInt = 1L.toBigInt
             val uiFee: BigInt = 4L.toBigInt
             val emptyFees: (Coll[Byte], Long) = (Coll(1.toByte), 0L.toBigInt)
-
-            // principal is the amount that is requested, always in nanoERG
-            val principal: BigInt = 
-                if (isFissionTx) (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt
-                else if (isFusionTx) (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
-                else if (isBetaDecayPlusTx) valueOfProtons(OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
-                else valueOfNeutrons(OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
 
             val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
             val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get    
@@ -220,10 +223,10 @@
                 decayedFee
             } else 0L.toBigInt
             val uiFeePayout: BigInt = (uiFee * principal) / feeDenom
-            val oracleFeePayout: BigInt = (oracleFee * principal) / feeDenom
+            
 
             val devFeeAddressAndPayout: (Coll[Byte], BigInt) = (TREASURY_MULTISIG.propBytes, devFeePayout)
-            val oracleFeeAddressAndPayout: (Coll[Byte], BigInt) = (_OracleFeePk, oracleFeePayout)
+            
 
             // Fission and Fusion do not need Oracle and do not pay oracle fees
             // If Ui fee is defined, then we add an additional 0.4% fee
@@ -240,7 +243,7 @@
         // TODO: fees is constructing a collection, and then the "...FeesPaid" checks are 
         // having the trouble of finding where the fees are in the collection. This is silly. Refactor
 
-        val oracleFeesToBePaid: Boolean = fees(1)._2 > 0
+        val oracleFeesToBePaid: Boolean = oracleFeePayout > 0
 
         val oracleFeesPaid: Boolean = {
             val oracleOutput: Box = OUTPUTS(2)
@@ -248,10 +251,10 @@
                 if (oracleFeesToBePaid) { // Oracle fee is greater than 0
                     val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
                     allOf(Coll(
-                        oracleOutput.propositionBytes == fees(1)._1,
+                        oracleOutput.propositionBytes == _OracleFeePk,
                         oracleOutput.propositionBytes == oracleBuybackInputBox.propositionBytes,
                         oracleOutput.tokens(0)._1     == _OracleBuybackNFT,
-                        oracleOutput.value.toBigInt   == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
+                        oracleOutput.value.toBigInt   == oracleBuybackInputBox.value.toBigInt + oracleFeePayout + _MinFee
                     ))
                 } else true // do nothing if fee doesn't add up greater than 0, prevents errors on low value fee
             } else true // if oracle fee is not defined, then default to true.
