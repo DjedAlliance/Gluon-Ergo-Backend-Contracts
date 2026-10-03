@@ -399,7 +399,6 @@
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
-                __gluonWBoxPersistedValueCheck,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 __feesCheck, __validVolumeHandling
             )))
@@ -428,7 +427,6 @@
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
-                __gluonWBoxPersistedValueCheck,
                 __inNeutronsValueValid, __inProtonsValueValid,
                 __feesCheck, __validVolumeHandling
             )))
@@ -589,7 +587,6 @@
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
-                __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
                 __outVolumeMinusValidated, __outVolumePlusValidated,
@@ -732,7 +729,6 @@
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
-                __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
                 __outVolumePlusValidated, __outVolumeMinusValidated,
