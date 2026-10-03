@@ -44,22 +44,22 @@
     // 6. Update Treasury Multisig  - The current treasury multisig is used to create a new box containing the updated treasury multisig address.
 
     // For all of the first five transactions:
-    // Inputs: GluonWBox, UserPk
+    // Inputs: GluonBox, UserPk
     // DataInputs: GoldOracle
-    // Outputs: GluonWBox, UserPk
+    // Outputs: GluonBox, UserPk
 
     // For the sixth transaction:
-    // Inputs: GluonWBox, MultisigUtxo
+    // Inputs: GluonBox, MultisigUtxo
     // DataInputs: None
-    // Outputs: GluonWBox
+    // Outputs: GluonBox
 
     val TREASURY_MULTISIG: SigmaProp = SELF.R5[SigmaProp].get
-    val IN_GLUONW_BOX: Box = SELF
-    val OUT_GLUONW_BOX: Box = OUTPUTS(0)
+    val IN_GLUON_BOX: Box = SELF
+    val OUT_GLUON_BOX: Box = OUTPUTS(0)
     val ORACLE_BOX: Box = CONTEXT.dataInputs(0)
-    val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUONW_BOX.R4[(Long, Long)].get
-    val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUONW_BOX.R6[(Long, Long)].get
-    val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUONW_BOX.R6[(Long, Long)].get
+    val ASSET_TOTAL_SUPPLY_REGISTER: (Long, Long) = IN_GLUON_BOX.R4[(Long, Long)].get
+    val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = IN_GLUON_BOX.R6[(Long, Long)].get
+    val OUT_ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = OUT_GLUON_BOX.R6[(Long, Long)].get
     val NEUTRONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._1
     val PROTONS_TOTAL_SUPPLY: Long = ASSET_TOTAL_SUPPLY_REGISTER._2
     val DEV_FEE_REPAID: Long = ASSET_MAX_DEV_FEE_THRESHOLD._1
@@ -67,19 +67,19 @@
     val OUT_DEV_FEE_REPAID: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._1
     val OUT_MAX_DEV_FEE_THRESHOLD: Long = OUT_ASSET_MAX_DEV_FEE_THRESHOLD._2
 
-    val IN_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(1)
-    val IN_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUONW_BOX.tokens(2)
+    val IN_GLUON_NEUTRONS_TOKEN: (Coll[Byte], Long) = IN_GLUON_BOX.tokens(1)
+    val IN_GLUON_PROTONS_TOKEN: (Coll[Byte], Long) = IN_GLUON_BOX.tokens(2)
 
-    val OUT_GLUONW_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(1)
-    val OUT_GLUONW_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUONW_BOX.tokens(2)
+    val OUT_GLUON_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUON_BOX.tokens(1)
+    val OUT_GLUON_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUON_BOX.tokens(2)
 
-    val inVolumePlus: Coll[Long] = IN_GLUONW_BOX.R7[Coll[Long]].get
-    val inVolumeMinus: Coll[Long] = IN_GLUONW_BOX.R8[Coll[Long]].get
-    val outVolumePlus: Coll[Long] = OUT_GLUONW_BOX.R7[Coll[Long]].get
-    val outVolumeMinus: Coll[Long] = OUT_GLUONW_BOX.R8[Coll[Long]].get
+    val inVolumePlus: Coll[Long] = IN_GLUON_BOX.R7[Coll[Long]].get
+    val inVolumeMinus: Coll[Long] = IN_GLUON_BOX.R8[Coll[Long]].get
+    val outVolumePlus: Coll[Long] = OUT_GLUON_BOX.R7[Coll[Long]].get
+    val outVolumeMinus: Coll[Long] = OUT_GLUON_BOX.R8[Coll[Long]].get
 
-    val inR9: (Long, Long) = IN_GLUONW_BOX.R9[(Long, Long)].get
-    val outR9: (Long, Long) = OUT_GLUONW_BOX.R9[(Long, Long)].get
+    val inR9: (Long, Long) = IN_GLUON_BOX.R9[(Long, Long)].get
+    val outR9: (Long, Long) = OUT_GLUON_BOX.R9[(Long, Long)].get
     val inLastBucketBlock: Long = inR9._1
     val outLastBucketBlock: Long = outR9._1
     val inPegFactor: Long = inR9._2
@@ -87,10 +87,6 @@
 
     val BLOCKS_PER_VOLUME_BUCKET: Int = 720 // Approximately 1 day per volume bucket
     val BUCKETS: Int = 14 // Tracking volume of approximately 14 days
-
-    // ===== Healthy Range Pre-computation ===== //
-    // These must be declared at top-level scope so isFissionTx / isFusionTx /
-    // isBetaDecayPlusTx / isBetaDecayMinusTx can reference isHealthyRange.
 
     // ===== (START) Oracle Checks ===== //
     // The two checks for the oracle is:
@@ -117,9 +113,9 @@
     val Phi1 = one       // BetaDecay Fee slope:       Phi1 = 1
 
     // # Internal State Variables
-    val SNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
-    val SProtons: BigInt  = (PROTONS_TOTAL_SUPPLY - IN_GLUONW_PROTONS_TOKEN._2).toBigInt   // Variable in Paper: S_protons
-    val RErg: BigInt      = (IN_GLUONW_BOX.value - _MinFee).toBigInt // Variable in Paper: R
+    val SNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - IN_GLUON_NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
+    val SProtons: BigInt  = (PROTONS_TOTAL_SUPPLY - IN_GLUON_PROTONS_TOKEN._2).toBigInt   // Variable in Paper: S_protons
+    val RErg: BigInt      = (IN_GLUON_BOX.value - _MinFee).toBigInt // Variable in Paper: R
     
     // # External State Variables
     val Pt: BigInt        = ORACLE_BOX.R4[Long].get.toBigInt / 1000  // Oracle price
@@ -138,32 +134,32 @@
 
     // # Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
-        IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons decrease
-        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value                  // Check ERG value increases
+        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons decrease
+        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
+        IN_GLUON_BOX.value < OUT_GLUON_BOX.value                  // Check ERG value increases
     ))
 
     // # Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
     val isFusionTx: Boolean = allOf(Coll(
-        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons increase
-        IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUONW_BOX.value > OUT_GLUONW_BOX.value                  // Check ERG value decreases
+        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons increase
+        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
+        IN_GLUON_BOX.value > OUT_GLUON_BOX.value                  // Check ERG value decreases
     ))
 
     // # BetaDecayPlus: Transmutes Protons to Neutrons
     // Decreases protons in circulation and increases neutrons in circulation
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
-        IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons decrease
-        IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value // Check ERG value is preserved
+        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons decrease
+        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
+        IN_GLUON_BOX.value == OUT_GLUON_BOX.value // Check ERG value is preserved
     ))
 
     // # BetaDecayPlus: Transmutes Neutrons to Protons
     // Decreases neutrons in circulation and increases protons in circulation
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
-        IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons increase
-        IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons decrease
-        IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value                 // Check ERG value is preserved
+        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons increase
+        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons decrease
+        IN_GLUON_BOX.value == OUT_GLUON_BOX.value                 // Check ERG value is preserved
     ))
 
     // # AdjustPeg: Changes the peg factor that determines the peg
@@ -175,18 +171,18 @@
     // ===== (END) Tx Definition ===== //
 
     // Preservation Checks: When a transaction does not change something, we must explicitly check that it remained unchanged
-    val cSameContract: Boolean = IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
-    val cSameTokens: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens
-    val cSameTokenIdentifiers: Boolean = IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1 && // For fission, fusion and beta decays,
-                                         IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1 && // token amounts may change,
-                                         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1    // but the token identifiers must be preserved
-    val cSameValue: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
-    val cSameR4: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
-    val cSameR5: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
-    val cSameR6: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
-    val cSameR7: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
-    val cSameR8: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
-    val cSameR9: Boolean       = IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get
+    val cSameContract: Boolean = IN_GLUON_BOX.propositionBytes == OUT_GLUON_BOX.propositionBytes
+    val cSameTokens: Boolean   = IN_GLUON_BOX.tokens == OUT_GLUON_BOX.tokens
+    val cSameTokenIdentifiers: Boolean = IN_GLUON_BOX.tokens(0)._1 == OUT_GLUON_BOX.tokens(0)._1 && // For fission, fusion and beta decays,
+                                         IN_GLUON_BOX.tokens(1)._1 == OUT_GLUON_BOX.tokens(1)._1 && // token amounts may change,
+                                         IN_GLUON_BOX.tokens(2)._1 == OUT_GLUON_BOX.tokens(2)._1    // but the token identifiers must be preserved
+    val cSameValue: Boolean    = IN_GLUON_BOX.value  == OUT_GLUON_BOX.value
+    val cSameR4: Boolean       = IN_GLUON_BOX.R4[(Long,Long)].get == OUT_GLUON_BOX.R4[(Long,Long)].get
+    val cSameR5: Boolean       = IN_GLUON_BOX.R5[SigmaProp].get  == OUT_GLUON_BOX.R5[SigmaProp].get
+    val cSameR6: Boolean       = IN_GLUON_BOX.R6[(Long,Long)].get == OUT_GLUON_BOX.R6[(Long,Long)].get
+    val cSameR7: Boolean       = IN_GLUON_BOX.R7[Coll[Long]].get == OUT_GLUON_BOX.R7[Coll[Long]].get
+    val cSameR8: Boolean       = IN_GLUON_BOX.R8[Coll[Long]].get == OUT_GLUON_BOX.R8[Coll[Long]].get
+    val cSameR9: Boolean       = IN_GLUON_BOX.R9[(Long, Long)].get == OUT_GLUON_BOX.R9[(Long, Long)].get
     val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock
     val cSameR9PegFactor: Boolean = inPegFactor == outPegFactor
 
@@ -227,18 +223,18 @@
 
             // principal is the amount that is requested
             val principal: BigInt = if (isFissionTx) {
-                    (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt
+                    (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt
                 } else if (isFusionTx) {
-                    (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
+                    (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
                 } else if (isBetaDecayPlusTx) {
                     // Calculate the value based on protons
                     // Check Protons reduction in OutBox
-                    val protonsAmount: Long = OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2
+                    val protonsAmount: Long = OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2
                     val protonsInNanoergs: BigInt = valueOfProtons(protonsAmount)
                     protonsInNanoergs
                 } else {
                     // Calculate the value based on neutrons
-                    val neutronsAmount: Long = OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2
+                    val neutronsAmount: Long = OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2
                     val neutronsInNanoergs: BigInt = valueOfNeutrons(neutronsAmount)
                     neutronsInNanoergs
                 }
@@ -387,10 +383,10 @@
         // the user wants. Therefore we can use the outbox to calculate the value of M by using OutBox.value - InBox.value
         if (isFissionTx) {
             // Equation: M [Ergs] ==> (M (1 - PhiFission) (S Protons / R)) [Protons] + (M (1 - PhiFission) (S Neutrons / R)) [Neutrons]
-            val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt 
+            val M: BigInt = (OUT_GLUON_BOX.value - IN_GLUON_BOX.value).toBigInt 
 
-            val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
+            val NeutronsActualValue: BigInt = (IN_GLUON_NEUTRONS_TOKEN._2 - OUT_GLUON_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (IN_GLUON_PROTONS_TOKEN._2 - OUT_GLUON_PROTONS_TOKEN._2).toBigInt
 
             val NeutronsExpectedValue: BigInt = (M * SNeutrons * (one - PhiFission) / RErg) / one
             val ProtonsExpectedValue: BigInt = (M * SProtons * (one - PhiFission) / RErg) / one
@@ -411,11 +407,11 @@
             // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - PhiFission) [Ergs]
 
             // The protons and neutrons are more in outbox than inputbox
-            val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
+            val NeutronsActualValue: BigInt = (OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2).toBigInt
 
             // M = Ergs
-            val M: BigInt = (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
+            val M: BigInt = (IN_GLUON_BOX.value - OUT_GLUON_BOX.value).toBigInt
 
             val inProtonsNumerator: BigInt = M * SProtons * one
             val inNeutronsNumerator: BigInt = M * SNeutrons * one
@@ -445,12 +441,12 @@
             // Vp = N*Pp
 
             // Proton value
-            val M: Long = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2)
+            val M: Long = (OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2)
 
             // The protons increase in output, neutrons decrease in outputs
-            val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
+            val NeutronsActualValue: BigInt = (IN_GLUON_NEUTRONS_TOKEN._2 - OUT_GLUON_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (OUT_GLUON_PROTONS_TOKEN._2 - IN_GLUON_PROTONS_TOKEN._2).toBigInt
+            val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
 
             // === VarPhiBeta Calculation === //
             val currentBlockNumber: Long = CONTEXT.HEIGHT
@@ -582,7 +578,7 @@
 
             val NeutronsExpectedValue: BigInt = outNeutronsAmount
             val ProtonsExpectedValue: BigInt = M.toBigInt
-            val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
+            val ErgsExpectedValue: BigInt = (IN_GLUON_BOX.value).toBigInt
 
             // ### The 2 conditions to ensure that the values out is right ### //
             val __neutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -602,7 +598,7 @@
         } else if (isBetaDecayMinusTx) {
             //Equation: M [Neutrons] = M * (1 - PhiBeta(T)) * ((q(R, S neutron)) / 1 - q(R, S neutron)) * (S protons / S neutrons) [Protons]
             
-            val M: Long = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2)
+            val M: Long = (OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2)
 
             // Equations for determining the neutron price, Pn, and neutron volume, Vn, given N neutrons.
             // Note that the target price, Pt, i.e. oracle price, is not the same as the neutron price.
@@ -710,9 +706,9 @@
             // === VarPhiBeta Calculation End === //
 
             // Neutrons increase in output, protons decrease in output.
-            val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
-            val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value).toBigInt
+            val NeutronsActualValue: BigInt = (OUT_GLUON_NEUTRONS_TOKEN._2 - IN_GLUON_NEUTRONS_TOKEN._2).toBigInt
+            val ProtonsActualValue: BigInt = (IN_GLUON_PROTONS_TOKEN._2 - OUT_GLUON_PROTONS_TOKEN._2).toBigInt
+            val ErgsActualValue: BigInt = (OUT_GLUON_BOX.value).toBigInt
 
             // === Fusion Ratio === //
 
@@ -725,7 +721,7 @@
 
             val NeutronsExpectedValue: BigInt = M.toBigInt
             val ProtonsExpectedValue: BigInt = outProtonsAmount
-            val ErgsExpectedValue: BigInt = (IN_GLUONW_BOX.value).toBigInt
+            val ErgsExpectedValue: BigInt = (IN_GLUON_BOX.value).toBigInt
 
             // ### The 2 conditions to ensure that the values out are right ### //
             val __neutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
@@ -756,7 +752,7 @@
             pegFactorCorrect // Peg Factor is the only register variable that changes
         ))) // Anyone may do this transaction when outside the healthy range
     } else if (isUpdateTreasury) {
-        val newMultisig: SigmaProp = OUT_GLUONW_BOX.R5[SigmaProp].get
+        val newMultisig: SigmaProp = OUT_GLUON_BOX.R5[SigmaProp].get
         sigmaProp(allOf(Coll(
             cSameContract, cSameValue, cSameTokens, cSameR4,
             newMultisig != TREASURY_MULTISIG // R5 is the only register that changes and it must change
