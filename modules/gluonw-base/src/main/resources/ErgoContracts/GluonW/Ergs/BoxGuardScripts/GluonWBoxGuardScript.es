@@ -256,7 +256,6 @@
 
     
         val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
-        val uiFeesToBePaid: Boolean = uiFees._2 > 0
         
 
         val devFeesPaid: Boolean = {
