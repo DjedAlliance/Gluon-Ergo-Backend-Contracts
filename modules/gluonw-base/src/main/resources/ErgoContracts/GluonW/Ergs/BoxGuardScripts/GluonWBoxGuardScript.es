@@ -148,8 +148,6 @@
 
     // # Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
-        __gluonWBoxPersistedValueCheck, // TODO: move these checks to the appropriate place
-        isHealthyRange, // TODO: move these checks to the appropriate place
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons decrease
         IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
         IN_GLUONW_BOX.value < OUT_GLUONW_BOX.value                  // Check ERG value increases
@@ -157,8 +155,6 @@
 
     // # Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
     val isFusionTx: Boolean = allOf(Coll(
-        __gluonWBoxPersistedValueCheck,
-        isHealthyRange,
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons increase
         IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
         IN_GLUONW_BOX.value > OUT_GLUONW_BOX.value                  // Check ERG value decreases
@@ -167,8 +163,6 @@
     // # BetaDecayPlus: Transmutes Protons to Neutrons
     // Decreases protons in circulation and increases neutrons in circulation
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
-        __gluonWBoxPersistedValueCheck,
-        isHealthyRange,
         IN_GLUONW_NEUTRONS_TOKEN._2 > OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons decrease
         IN_GLUONW_PROTONS_TOKEN._2 < OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons increase
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value // Check ERG value is preserved
@@ -177,8 +171,6 @@
     // # BetaDecayPlus: Transmutes Neutrons to Protons
     // Decreases neutrons in circulation and increases protons in circulation
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
-        __gluonWBoxPersistedValueCheck,
-        isHealthyRange,
         IN_GLUONW_NEUTRONS_TOKEN._2 < OUT_GLUONW_NEUTRONS_TOKEN._2, // Check Neutrons increase
         IN_GLUONW_PROTONS_TOKEN._2 > OUT_GLUONW_PROTONS_TOKEN._2,   // Check Protons decrease
         IN_GLUONW_BOX.value == OUT_GLUONW_BOX.value                 // Check ERG value is preserved
@@ -405,6 +397,8 @@
 
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
+                isHealthyRange,
+                __gluonWBoxPersistedValueCheck,
                 __outNeutronsValueValid, __outProtonsValueValid, __inErgsValueValid,
                 __feesCheck, __validVolumeHandling
             )))
@@ -437,6 +431,8 @@
             val __outErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue // TODO: this is trivially always true.
 
             sigmaProp(allOf(Coll(
+                __gluonWBoxPersistedValueCheck,
+                isHealthyRange,
                 __gluonWBoxPersistedValueCheck,
                 __inNeutronsValueValid, __inProtonsValueValid, __outErgsValueValid,
                 __feesCheck, __validVolumeHandling
@@ -601,6 +597,8 @@
 
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
+                isHealthyRange,
+                __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
                 __outVolumeMinusValidated, __outVolumePlusValidated,
@@ -743,6 +741,8 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
+                __gluonWBoxPersistedValueCheck,
+                isHealthyRange,
                 __gluonWBoxPersistedValueCheck,
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 __feesCheck,
