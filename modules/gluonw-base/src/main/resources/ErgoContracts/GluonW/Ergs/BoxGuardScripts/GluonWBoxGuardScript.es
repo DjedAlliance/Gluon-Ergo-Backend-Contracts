@@ -121,32 +121,32 @@
 
     // # Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
-        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons decrease
-        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUON_BOX.value < OUT_GLUON_BOX.value                  // Check ERG value increases
+        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Neutrons decrease
+        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Protons increase
+        IN_GLUON_BOX.value < OUT_GLUON_BOX.value                  // ERG value increases
     ))
 
     // # Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
     val isFusionTx: Boolean = allOf(Coll(
-        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons increase
-        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUON_BOX.value > OUT_GLUON_BOX.value                  // Check ERG value decreases
+        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Neutrons increase
+        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Protons increase
+        IN_GLUON_BOX.value > OUT_GLUON_BOX.value                  // ERG value decreases
     ))
 
     // # BetaDecayPlus: Transmutes Protons to Neutrons
     // Decreases protons in circulation and increases neutrons in circulation
     val isBetaDecayPlusTx: Boolean = allOf(Coll(
-        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons decrease
-        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons increase
-        IN_GLUON_BOX.value == OUT_GLUON_BOX.value // Check ERG value is preserved
+        IN_GLUON_NEUTRONS_TOKEN._2 > OUT_GLUON_NEUTRONS_TOKEN._2, // Neutrons decrease
+        IN_GLUON_PROTONS_TOKEN._2 < OUT_GLUON_PROTONS_TOKEN._2,   // Protons increase
+        IN_GLUON_BOX.value == OUT_GLUON_BOX.value                 // ERG value is preserved
     ))
 
     // # BetaDecayPlus: Transmutes Neutrons to Protons
     // Decreases neutrons in circulation and increases protons in circulation
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
-        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Check Neutrons increase
-        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Check Protons decrease
-        IN_GLUON_BOX.value == OUT_GLUON_BOX.value                 // Check ERG value is preserved
+        IN_GLUON_NEUTRONS_TOKEN._2 < OUT_GLUON_NEUTRONS_TOKEN._2, // Neutrons increase
+        IN_GLUON_PROTONS_TOKEN._2 > OUT_GLUON_PROTONS_TOKEN._2,   // Protons decrease
+        IN_GLUON_BOX.value == OUT_GLUON_BOX.value                 // ERG value is preserved
     ))
 
     // # AdjustPeg: Changes the peg factor that determines the peg
