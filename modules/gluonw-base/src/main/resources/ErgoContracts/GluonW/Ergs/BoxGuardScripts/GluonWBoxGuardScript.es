@@ -138,7 +138,7 @@
         IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
         IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
         IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
-        IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes,
+        cSameContract,
         IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
         IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
         IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
@@ -188,15 +188,16 @@
 
     // ===== (END) Tx Definition ===== //
 
-    // Preservation Checks: When a transaction does not change a register, we must explicitly check that it remained unchanged
-    val _tokensSame: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens 
-    val _valueSame: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
-    val _r4Same: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
-    val _r5Same: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
-    val _r6Same: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
-    val _r7Same: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
-    val _r8Same: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
-    val _r9Block1Same: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
+    // Preservation Checks: When a transaction does not change something, we must explicitly check that it remained unchanged
+    val cSameContract: Boolean = IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+    val cSameTokens: Boolean   = IN_GLUONW_BOX.tokens == OUT_GLUONW_BOX.tokens 
+    val cSameValue: Boolean    = IN_GLUONW_BOX.value  == OUT_GLUONW_BOX.value
+    val cSameR4: Boolean       = IN_GLUONW_BOX.R4[(Long,Long)].get == OUT_GLUONW_BOX.R4[(Long,Long)].get
+    val cSameR5: Boolean       = IN_GLUONW_BOX.R5[SigmaProp].get  == OUT_GLUONW_BOX.R5[SigmaProp].get
+    val cSameR6: Boolean       = IN_GLUONW_BOX.R6[(Long,Long)].get == OUT_GLUONW_BOX.R6[(Long,Long)].get
+    val cSameR7: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
+    val cSameR8: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
+    val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
 
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
@@ -762,9 +763,9 @@
             !isHealthyRange,
             __oracleCheck,
             _pegFactorCorrect,
-            _tokensSame, _valueSame,
-            _r4Same, _r5Same, _r6Same, _r7Same, _r8Same, _r9Block1Same,
-            IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+            cSameTokens, cSameValue,
+            cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
+            cSameContract
         )))
     } else if (isUpdateTreasury) {
         val validUpdateTreasuryMultisigTx: Boolean = {
@@ -778,7 +779,7 @@
                     (IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get),
                     (IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get),
                     (IN_GLUONW_BOX.R9[(Long, Long)].get == OUT_GLUONW_BOX.R9[(Long, Long)].get),
-                    IN_GLUONW_BOX.propositionBytes == OUT_GLUONW_BOX.propositionBytes
+                    cSameContract
                 ))
             }
 
