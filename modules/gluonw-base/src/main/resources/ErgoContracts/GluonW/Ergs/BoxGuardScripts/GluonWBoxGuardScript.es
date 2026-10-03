@@ -186,8 +186,6 @@
     // # UpdateTreasury: Changes the address that receives dev fees
     val isUpdateTreasury: Boolean = (INPUTS(1).propositionBytes == TREASURY_MULTISIG.propBytes)
 
-    
-
     // ===== (END) Tx Definition ===== //
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
@@ -383,25 +381,21 @@
             // Equation: M [Ergs] ==> (M (1 - PhiFission) (S Protons / R)) [Protons] + (M (1 - PhiFission) (S Neutrons / R)) [Neutrons]
             val M: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt 
 
-            // The protons and neutrons are lesser in outbox than inputbox
             val NeutronsActualValue: BigInt = (IN_GLUONW_NEUTRONS_TOKEN._2 - OUT_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (IN_GLUONW_PROTONS_TOKEN._2 - OUT_GLUONW_PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (OUT_GLUONW_BOX.value - IN_GLUONW_BOX.value).toBigInt // TODO: code duplication, see definition of M.
 
             val NeutronsExpectedValue: BigInt = (M * SNeutrons * (one - PhiFission) / RErg) / one
             val ProtonsExpectedValue: BigInt = (M * SProtons * (one - PhiFission) / RErg) / one
-            val ErgsExpectedValue: BigInt = M
 
             // ### The 2 conditions to ensure that the values out are right ### //
             val __outNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
-            val __inErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue // TODO: this seems to be trivially always true
 
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
                 __gluonWBoxPersistedValueCheck,
-                __outNeutronsValueValid, __outProtonsValueValid, __inErgsValueValid,
+                __outNeutronsValueValid, __outProtonsValueValid,
                 __feesCheck, __validVolumeHandling
             )))
         }
@@ -411,10 +405,9 @@
             // The protons and neutrons are more in outbox than inputbox
             val NeutronsActualValue: BigInt = (OUT_GLUONW_NEUTRONS_TOKEN._2 - IN_GLUONW_NEUTRONS_TOKEN._2).toBigInt
             val ProtonsActualValue: BigInt = (OUT_GLUONW_PROTONS_TOKEN._2 - IN_GLUONW_PROTONS_TOKEN._2).toBigInt
-            val ErgsActualValue: BigInt = (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
 
             // M = Ergs
-            val M: BigInt = ErgsActualValue
+            val M: BigInt = (IN_GLUONW_BOX.value - OUT_GLUONW_BOX.value).toBigInt
 
             val inProtonsNumerator: BigInt = M * SProtons * one
             val inNeutronsNumerator: BigInt = M * SNeutrons * one
@@ -422,19 +415,17 @@
 
             val NeutronsExpectedValue: BigInt = inNeutronsNumerator / denominator
             val ProtonsExpectedValue: BigInt =  inProtonsNumerator / denominator
-            // This will make the outErgsValueValid condition tautological. We could take this and the condition off, but we will keep it for the sake of completeness.
-            val ErgsExpectedValue: BigInt = M
+            
 
             // ### The 2 conditions to ensure that the values out is right ### //
             val __inNeutronsValueValid: Boolean = NeutronsActualValue == NeutronsExpectedValue
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
-            val __outErgsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue // TODO: this is trivially always true.
 
             sigmaProp(allOf(Coll(
                 __gluonWBoxPersistedValueCheck,
                 isHealthyRange,
                 __gluonWBoxPersistedValueCheck,
-                __inNeutronsValueValid, __inProtonsValueValid, __outErgsValueValid,
+                __inNeutronsValueValid, __inProtonsValueValid,
                 __feesCheck, __validVolumeHandling
             )))
         }
