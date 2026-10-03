@@ -391,10 +391,13 @@
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor,
                 isHealthyRange,
+                cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
-                __feesCheck, __validVolumeHandling
+                cSameR4, cSameR5, cSameR6, 
+                __validVolumeHandling, // TODO: Replace by cSameR7 and cSameR8?
+                cSameR9PegFactor,
+                __feesCheck
             )))
         }
         else if (isFusionTx) {
@@ -419,10 +422,13 @@
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
+                cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
-                __feesCheck, __validVolumeHandling
+                cSameR4, cSameR5, cSameR6, 
+                 __validVolumeHandling, // TODO: Replace by cSameR7 and cSameR8?
+                cSameR9PegFactor,
+                __feesCheck
             )))
         }
         else if (isBetaDecayPlusTx) {
@@ -579,12 +585,14 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
+                cSameContract, cSameTokenIdentifiers,  
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
+                cSameR4, cSameR5, cSameR6,
+                __outVolumeMinusValidated, __outVolumePlusValidated, 
+                __lastBlockPreserved, // TODO: Replace this and the next line by cSameR9?
+                cSameR9PegFactor,
                 __feesCheck,
-                __outVolumeMinusValidated, __outVolumePlusValidated,
-                __lastBlockPreserved,
                 __oracleCheck
             )))
         } else if (isBetaDecayMinusTx) {
@@ -721,12 +729,14 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                cSameTokenIdentifiers, cSameContract, cSameR4, cSameR5, cSameR6, cSameR9PegFactor
                 isHealthyRange,
+                cSameContract, cSameTokenIdentifiers, 
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
-                __feesCheck,
+                cSameR4, cSameR5, cSameR6,
                 __outVolumePlusValidated, __outVolumeMinusValidated,
-                __lastBlockPreserved,
+                __lastBlockPreserved, // TODO: Replace this and the next line by cSameR9?
+                cSameR9PegFactor,
+                __feesCheck,
                 __oracleCheck
             )))
         } else sigmaProp(false)
