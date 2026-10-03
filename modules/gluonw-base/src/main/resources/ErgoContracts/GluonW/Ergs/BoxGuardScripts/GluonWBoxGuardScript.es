@@ -449,6 +449,7 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
+            // TODO: Possible Bug: Compare the line above with the analogous line in the BetaDecayPlus transaction. They are different. Shouldn't they be similar?
 
             // SAME AS BetaDecayPlus, but reversed between plus and minus
             // #1
