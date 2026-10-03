@@ -134,17 +134,6 @@
 
     val isHealthyRange: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
-    val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
-        IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
-        IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
-        IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
-        cSameContract,
-        IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
-        IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
-        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
-        inPegFactor == outPegFactor
-    ))
-
     // ====== Tx Definitions ===== //
 
     // Note: AmountInCirculation = TotalSupply - AmountInReactorBox
@@ -198,6 +187,18 @@
     val cSameR7: Boolean       = IN_GLUONW_BOX.R7[Coll[Long]].get == OUT_GLUONW_BOX.R7[Coll[Long]].get
     val cSameR8: Boolean       = IN_GLUONW_BOX.R8[Coll[Long]].get == OUT_GLUONW_BOX.R8[Coll[Long]].get
     val cSameR9LastBucketBlock: Boolean = inLastBucketBlock == outLastBucketBlock // R9._1 (lastBucketBlock) must be preserved; only R9._2 (pegFactor) may change.
+    
+    val __gluonWBoxPersistedValueCheck: Boolean = allOf(Coll(
+        IN_GLUONW_BOX.tokens(0)._1 == OUT_GLUONW_BOX.tokens(0)._1,
+        IN_GLUONW_BOX.tokens(1)._1 == OUT_GLUONW_BOX.tokens(1)._1,
+        IN_GLUONW_BOX.tokens(2)._1 == OUT_GLUONW_BOX.tokens(2)._1,
+        cSameContract,
+        IN_GLUONW_BOX.R4[(Long, Long)].get == OUT_GLUONW_BOX.R4[(Long, Long)].get,
+        IN_GLUONW_BOX.R5[SigmaProp].get == OUT_GLUONW_BOX.R5[SigmaProp].get,
+        IN_GLUONW_BOX.R6[(Long, Long)].get._2 == OUT_GLUONW_BOX.R6[(Long, Long)].get._2,
+        inPegFactor == outPegFactor
+    ))
+
 
 
     if (anyOf(Coll(isFissionTx, isFusionTx, isBetaDecayPlusTx, isBetaDecayMinusTx))) {
