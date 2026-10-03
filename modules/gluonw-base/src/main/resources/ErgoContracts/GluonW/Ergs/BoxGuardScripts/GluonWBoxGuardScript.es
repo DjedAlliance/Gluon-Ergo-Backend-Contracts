@@ -231,7 +231,7 @@
                 if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout))
                 else Coll(devFeeAddressAndPayout, oracleFeeAddressAndPayout, emptyFees)
             }
-            else {
+            else { // fission or fusion
                 if (_optUIFeeAddress.isDefined) Coll(devFeeAddressAndPayout, (_optUIFeeAddress.get.propBytes, uiFeePayout), emptyFees)
                 else Coll(devFeeAddressAndPayout, emptyFees, emptyFees)  
             }
@@ -245,12 +245,12 @@
                 if (oracleFeesToBePaid) { // Oracle fee is greater than 0
                     val oracleBuybackInputBox: Box = INPUTS(INPUTS.size - 1) // The oracle buy back input box is always the last input
                     allOf(Coll(
-                            oracleOutput.propositionBytes       == fees(1)._1,
-                            oracleOutput.propositionBytes       == oracleBuybackInputBox.propositionBytes,
-                            oracleOutput.tokens(0)._1           == _OracleBuybackNFT,
-                            oracleOutput.value.toBigInt         == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
+                        oracleOutput.propositionBytes == fees(1)._1,
+                        oracleOutput.propositionBytes == oracleBuybackInputBox.propositionBytes,
+                        oracleOutput.tokens(0)._1     == _OracleBuybackNFT,
+                        oracleOutput.value.toBigInt   == oracleBuybackInputBox.value.toBigInt + fees(1)._2 + _MinFee
                     ))
-                } else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fee
+                } else true // do nothing if fee doesn't add up greater than 0, prevents errors on low value fee
             } else true // if oracle fee is not defined, then default to true.
         }
 
@@ -258,11 +258,10 @@
             if (fees(0)._2 > 0) { // Dev fee is greater than 0
                 val devOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(2) } else { OUTPUTS(3) } // If there is a need to pay oracle fees, we check OUTPUTS(3)
                 allOf(Coll(
-                        devOutput.propositionBytes      == fees(0)._1,
-                        devOutput.value.toBigInt        == fees(0)._2 + _MinFee
+                    devOutput.propositionBytes == fees(0)._1,
+                    devOutput.value.toBigInt   == fees(0)._2 + _MinFee
                 ))
-            }
-            else true // do nothing if dev fee doesn't add up greater than 0, prevents errors on low value fees
+            } else true // do nothing if fee doesn't add up greater than 0, prevents errors on low value fee
         }
 
         val uiFeesPaid: Boolean = {
@@ -271,11 +270,10 @@
                 if(uiFees._2 > 0) { // UI fee is greater than 0
                     val uiOutput: Box = if (!oracleFeesToBePaid) { OUTPUTS(3) } else { OUTPUTS(4) }
                     allOf(Coll(
-                            uiOutput.propositionBytes       == uiFees._1,
-                            uiOutput.value.toBigInt         == uiFees._2 + _MinFee
+                        uiOutput.propositionBytes == uiFees._1,
+                        uiOutput.value.toBigInt   == uiFees._2 + _MinFee
                     ))
-                }
-                else true // do nothing if ui fee doesn't end up greater than 0, prevents errors on low value fee
+                } else true // do nothing if fee doesn't end up greater than 0, prevents errors on low value fee
             } else true // if ui fee isn't defined, then default to true.
         }
 
