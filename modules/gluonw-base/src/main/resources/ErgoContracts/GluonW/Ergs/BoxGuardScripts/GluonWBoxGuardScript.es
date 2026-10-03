@@ -105,7 +105,7 @@
     val q: BigInt = supplyNeutrons * priceAdjusted / reserve  // fusion ratio
     val qNorm: BigInt = min(one * q / (q + one - qStar), q)   // normalized fusion ratio
 
-    val isHealthyRange: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
+    val isHealthy: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
     // ====== Tx Definitions ===== //
 
@@ -308,7 +308,7 @@
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthyRange,
+                isHealthy,
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
@@ -337,7 +337,7 @@
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthyRange,
+                isHealthy,
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
                 cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9,
@@ -492,7 +492,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthyRange,
+                isHealthy,
                 cSameContract, cSameTokenIdentifiers,  
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
@@ -628,7 +628,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthyRange,
+                isHealthy,
                 cSameContract, cSameTokenIdentifiers, 
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5, cSameR6,
@@ -646,7 +646,7 @@
             else false
 
         sigmaProp(allOf(Coll(
-            !isHealthyRange, // Only when outside the healthy range.
+            !isHealthy, // Only when outside the healthy range.
             cOracle,
             cSameContract, cSameTokens, cSameValue, cSameR4, cSameR5, cSameR6, cSameR7, cSameR8, cSameR9LastBucketBlock,
             pegFactorCorrect // Peg Factor is the only register variable that changes
