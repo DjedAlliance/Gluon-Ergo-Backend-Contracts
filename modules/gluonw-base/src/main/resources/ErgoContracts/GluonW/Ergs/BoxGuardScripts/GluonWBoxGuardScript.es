@@ -124,15 +124,15 @@
 
     // ## Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
-        NEUTRONS_TOKEN._2 > OUT_NEUTRONS_TOKEN._2, // Neutrons decrease
-        PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons increase
+        NEUTRONS_TOKEN._2 > OUT_NEUTRONS_TOKEN._2, // Neutrons decrease (circulating supply increases)
+        PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons decrease  (circuluting supply increases)
         GLUON_BOX.value < OUT_GLUON_BOX.value      // ERG value increases
     ))
 
-    // ## Fission: Merges protons and neutrons into ERG (redeems protons and neutrons)
+    // ## Fusion: Merges protons and neutrons into ERG (redeems protons and neutrons)
     val isFusionTx: Boolean = allOf(Coll(
-        NEUTRONS_TOKEN._2 < OUT_NEUTRONS_TOKEN._2, // Neutrons increase
-        PROTONS_TOKEN._2 < OUT_PROTONS_TOKEN._2,   // Protons increase
+        NEUTRONS_TOKEN._2 < OUT_NEUTRONS_TOKEN._2, // Neutrons increase (circulating supply decreases)
+        PROTONS_TOKEN._2 < OUT_PROTONS_TOKEN._2,   // Protons increase  (circulating supply decreases)
         GLUON_BOX.value > OUT_GLUON_BOX.value      // ERG value decreases
     ))
 
@@ -184,7 +184,7 @@
 
     // # Auxiliary Functions 
     def valueOfProtons(protonsAmount: Long): BigInt = { // value in nanoERG
-        val protonsPrice: BigInt = (one - qNorm).toBigInt * reserve / supplyProtons
+        val protonsPrice: BigInt = (one - qNorm) * reserve / supplyProtons
         protonsAmount.toBigInt * protonsPrice / one
     }
     def valueOfNeutrons(neutronsAmount: Long): BigInt = { // value in nanoERG
@@ -568,7 +568,7 @@
         val newMultisig: SigmaProp = OUT_GLUON_BOX.R5[SigmaProp].get
         sigmaProp(allOf(Coll(
             cSameContract, cSameValue, cSameTokens, cSameR4,
-            newMultisig != TREASURY_MULTISIG // R5 is the only register that changes and it must change
+            newMultisig != TREASURY_MULTISIG, // R5 is the only register that changes and it must change
             cSameR6, cSameR7, cSameR8, cSameR9
         ))) && TREASURY_MULTISIG // The transaction must be signed by the current TREASURY_MULTISIG
     } else { 
