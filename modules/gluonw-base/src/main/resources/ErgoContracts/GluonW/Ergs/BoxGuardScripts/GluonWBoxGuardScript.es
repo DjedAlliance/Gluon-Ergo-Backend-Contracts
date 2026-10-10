@@ -315,7 +315,8 @@
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
             val currentBlockNumber: Long = CONTEXT.HEIGHT
-            val nDays: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
+            val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
+            val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 
             // We don't need to shift it, we just need to check if OUT_VOLUME_PLUS is correct.
             // Therefore, if there is a requirement to shift, we just need to check if the value after n is the same for the next 14.
@@ -449,7 +450,6 @@
             val currentBlockNumber: Long = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
-            // TODO: Possible Bug: Compare the line above with the analogous line in the BetaDecayPlus transaction. They are different. Shouldn't they be similar?
 
             // SAME AS BetaDecayPlus, but reversed between plus and minus
             // #1
