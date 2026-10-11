@@ -7,7 +7,8 @@
   },
   "scripts": {
     "test": "vitest run --testTimeout=30000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify.ts"
   },
   "dependencies": {
     "@fleet-sdk/common": "0.10.0",
