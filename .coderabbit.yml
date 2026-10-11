@@ -1,0 +1,186 @@
+# Enables IDE autocompletion for this config file
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# Language for CodeRabbit's review comments
+language: en
+
+# Enable experimental features (currently not using any specific early_access features)
+early_access: true
+
+chat:
+  # CodeRabbit will automatically respond to @coderabbitai mentions in PR comments
+  auto_reply: true
+
+reviews:
+  profile: assertive # Options: chill (focuses on significant issues, less nitpicky about style), assertive (more thorough, flags style issues and minor improvements too)
+
+  auto_review:
+    # Automatically trigger reviews when PRs are opened or updated
+    enabled: true
+    # Skip auto-review if PR title contains these keywords
+    ignore_title_keywords:
+      - "WIP"
+    # Don't auto-review draft PRs
+    drafts: false
+    # Only auto-review PRs targeting these branches
+    base_branches:
+      - main
+      - develop
+
+  # Include a high-level summary at the start of each review
+  high_level_summary: true
+
+  # Generate sequence diagrams for complex code flows
+  sequence_diagrams: true
+
+  # Include poems in reviews
+  poem: true
+
+  # Show review completion status
+  review_status: true
+
+  # Keep the walkthrough section expanded by default
+  collapse_walkthrough: false
+
+  # Include summary of all changed files
+  changed_files_summary: true
+
+  # Automatically request changes on the PR (just leave comments)
+  request_changes_workflow: true
+
+  # Pre-merge checks to enforce before merging PRs
+  pre_merge_checks:
+    description:
+      # Validate that PR has a proper description
+      mode: warning # Options: off, warning, error
+    docstrings:
+      # Disable docstring coverage checks (let's assume we don't need them)
+      mode: off
+
+  # Exclude these paths from reviews (build artifacts and dependencies)
+  path_filters:
+    - "!**/node_modules/**" # npm dependencies
+    - "!**/dist/**" # Build output
+
+  # Use the following tools when reviewing
+  tools:
+    shellcheck:
+      enabled: true
+    ruff:
+      enabled: true
+    markdownlint:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
+    languagetool:
+      enabled: true
+      enabled_only: false
+      level: default
+    biome:
+      enabled: true
+    hadolint:
+      enabled: true
+    swiftlint:
+      enabled: true
+    phpstan:
+      enabled: true
+      level: default
+    golangci-lint:
+      enabled: true
+    yamllint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    checkov:
+      enabled: true
+    detekt:
+      enabled: true
+    eslint:
+      enabled: true
+
+  # Apply the following labels to PRs
+  labeling_instructions:
+    - label: Python Lang
+      instructions: Apply when the PR/MR contains changes to python source-code
+    - label: Solidity Lang
+      instructions: Apply when the PR/MR contains changes to solidity source-code
+    - label: Typescript Lang
+      instructions: Apply when the PR/MR contains changes to javascript or typescript source-code
+    - label: Ergoscript Lang
+      instructions: Apply when the PR/MR contains changes to ergoscript source-code
+    - label: Bash Lang
+      instructions: >-
+        Apply when the PR/MR contains changes to shell-scripts or BASH code
+        snippets
+    - label: Make Lang
+      instructions: >-
+        Apply when the PR/MR contains changes to the file `Makefile` or makefile
+        code snippets
+    - label: Documentation
+      instructions: >-
+        Apply whenever project documentation (namely markdown source-code) is
+        updated by the PR/MR
+    - label: Linter
+      instructions: >-
+        Apply when the purpose of the PR/MR is related to fixing the feedback
+        from a linter
+
+  # Review instructions that apply to all files
+  instructions: >-
+    - Verify that documentation and comments are free of spelling mistakes
+    - Ensure that test code is automated, comprehensive, and follows testing best practices
+    - Verify that all critical functionality is covered by tests
+    - Confirm that the code meets the project's requirements and objectives
+    - Confirm that copyright years are up-to date whenever a file is changed
+    - Point out redundant obvious comments that do not add clarity to the code
+    - Look for code duplication
+    - Suggest code completions when:
+        - seeing a TODO comment
+        - seeing a FIXME comment
+
+  # Custom review instructions for specific file patterns
+  path_instructions:
+    # ErgoScript contract
+    - path: "contracts/**/*.es"
+      instructions: |
+        ErgoScript:
+        - Review the contract for security vulnerabilities and best practices
+        - Every spending path must constrain everything it relies on in the outputs it creates: scripts, values, tokens and registers. No path may let anyone take the reserve or replace the reactor box outside the contract's rules
+        - Check the integer arithmetic for overflow, and for rounding that favors the caller over the reserve
+        - Flag any change to the transaction layout (positions of inputs, data inputs and outputs, context variables): off-chain code such as the Gluon Ergo SDK depends on it, and the README documents it
+        - Deployed reactors are immutable: a change to the contract only takes effect through a new deployment, with a new address
+        - Every changed condition needs a test with an accepted transaction and a rejected one
+
+    # TypeScript files
+    - path: "**/*.ts"
+      instructions: |
+        TypeScript:
+        - Avoid 'any', use explicit types
+        - Prefer 'import type' for type imports
+        - Review for significant deviations from Google JavaScript style guide. Minor style issues are not a priority
+        - The code adheres to best practices associated with Node.js
+        - Amounts are bigint; flag conversions through JavaScript numbers that can lose precision
+
+        Security:
+        - No exposed mnemonics, private keys or other secrets: .env holds only the mnemonic, and public parameters belong in config/
+        - Scripts must only sign and broadcast transactions when explicitly asked to (--submit)
+        - Check for common security vulnerabilities such as:
+          - Insecure dependencies
+          - Sensitive data exposure
+
+    # Test files
+    - path: "test/**/*.test.ts"
+      instructions: |
+        Review test files for:
+        - Comprehensive coverage of contract behavior: an accepted transaction for every spending path, and rejected transactions that each break exactly one condition
+        - Rejections caused by the contract, not by unrelated errors in the test transaction
+        - Test descriptions are sufficiently detailed to clarify the purpose of each test
+        - The tests are not tautological
+
+    # Deployment records
+    - path: "deployments/*.json"
+      instructions: |
+        Review deployment records for:
+        - Records are facts about the chain: flag edits to existing records
+        - Deployments.md must be regenerated with `node scripts/render-deployments.ts` (CI runs `npm run verify`)
