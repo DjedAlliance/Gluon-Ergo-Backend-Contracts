@@ -322,7 +322,7 @@
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
+            val currentBlockNumber: Int = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 
@@ -455,7 +455,7 @@
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
+            val currentBlockNumber: Int = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 
