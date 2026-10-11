@@ -172,7 +172,6 @@
     val cSameR4: Boolean       = GLUON_BOX.R4[(Long,Long)].get == OUT_GLUON_BOX.R4[(Long,Long)].get  // Total Neutron and Proton Suplies preserved
     val cSameR5: Boolean       = GLUON_BOX.R5[SigmaProp].get  == OUT_GLUON_BOX.R5[SigmaProp].get     // Treasury Multisig preserved    
     val cSameR6: Boolean       = GLUON_BOX.R6[(Long,Long)].get == OUT_GLUON_BOX.R6[(Long,Long)].get  // Dev fees accounting preserved
-    val cSameR6MaxDevFeeThreshold: Boolean = MAX_DEV_FEE_THRESHOLD == OUT_MAX_DEV_FEE_THRESHOLD      // Max dev fee threshold preserved
     val cSameR7: Boolean       = GLUON_BOX.R7[Coll[Long]].get == OUT_GLUON_BOX.R7[Coll[Long]].get    // BetaDecayPlus volume preserved
     val cSameR8: Boolean       = GLUON_BOX.R8[Coll[Long]].get == OUT_GLUON_BOX.R8[Coll[Long]].get    // BetaDecayMinus volume preserved
     val cSameR9: Boolean       = GLUON_BOX.R9[(Long, Long)].get == OUT_GLUON_BOX.R9[(Long, Long)].get // LastBucketBlock and PegFactor preserved
@@ -278,8 +277,8 @@
                 isHealthy,
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
-                cSameR4, cSameR5, cSameR6MaxDevFeeThreshold, cSameR7, cSameR8, cSameR9,
-                cFees
+                cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
+                cFees // cFees also checks that R6._2 remains the same
             )))
         }
         else if (isFusionTx) {
@@ -306,8 +305,8 @@
                 isHealthy,
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
-                cSameR4, cSameR5, c6SameR6MaxDevFeeThreshold, cSameR7, cSameR8, cSameR9,
-                cFees
+                cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
+                cFees // cFees also checks that R6._2 remains the same
             )))
         }
         else if (isBetaDecayPlusTx) {
@@ -436,11 +435,11 @@
                 isHealthy,
                 cSameContract, cSameTokenIdentifiers,  
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
-                cSameR4, cSameR5, cSameR6MaxDevFeeThreshold,
+                cSameR4, cSameR5,
                 __outVolumeMinusValidated, __outVolumePlusValidated, 
                 __lastBlockPreserved,
                 cSameR9PegFactor,
-                cFees,
+                cFees, // cFees also checks that R6._2 remains the same
                 cOracle
             )))
         } else if (isBetaDecayMinusTx) {
@@ -547,11 +546,11 @@
                 isHealthy,
                 cSameContract, cSameTokenIdentifiers, 
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
-                cSameR4, cSameR5, cSameR6MaxDevFeeThreshold,
+                cSameR4, cSameR5,
                 __outVolumePlusValidated, __outVolumeMinusValidated,
                 __lastBlockPreserved,
                 cSameR9PegFactor,
-                cFees,
+                cFees, // cFees also checks that R6._2 remains the same
                 cOracle
             )))
         } else sigmaProp(false)
