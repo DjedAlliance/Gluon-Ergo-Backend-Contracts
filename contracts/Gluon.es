@@ -45,12 +45,13 @@
 
     // For all of the first five transaction types:
     // Inputs: GluonBox, UserPk
-    // DataInputs: GoldOracle
+    // DataInputs: Oracle
     // Outputs: GluonBox, UserPk
 
     // For the sixth transaction type:
     // Inputs: GluonBox, MultisigUtxo
-    // DataInputs: None
+    // DataInputs: Oracle (unused by this transaction type, but required because the script reads
+    //             CONTEXT.dataInputs(0), its R4 and its first token for every transaction type)
     // Outputs: GluonBox
 
     // # Box Definitions
