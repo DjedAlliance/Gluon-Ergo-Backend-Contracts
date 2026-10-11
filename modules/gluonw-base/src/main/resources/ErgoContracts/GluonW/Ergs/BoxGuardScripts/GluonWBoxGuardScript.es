@@ -64,6 +64,9 @@
     val OUT_NEUTRONS_TOKEN: (Coll[Byte], Long) = OUT_GLUON_BOX.tokens(1)
     val OUT_PROTONS_TOKEN: (Coll[Byte], Long) = OUT_GLUON_BOX.tokens(2)
     
+    val NEUTRONS_TOTAL_SUPPLY: Long = GLUON_BOX.R4[(Long, Long)].get._1
+    val PROTONS_TOTAL_SUPPLY: Long = GLUON_BOX.R4[(Long, Long)].get._2
+
     val TREASURY_MULTISIG: SigmaProp = SELF.R5[SigmaProp].get
 
     val ASSET_MAX_DEV_FEE_THRESHOLD: (Long, Long) = GLUON_BOX.R6[(Long, Long)].get
