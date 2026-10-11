@@ -3,7 +3,7 @@
     // Name             : Gluon Reactor
     // Type             : Guard Script
     // Author           : Kii, LGD, Sanjam, Zahnentferner
-    // Last Modified    : 2026-10-02
+    // Last Modified    : 2026-10-11
     // Version          : v 3.0
 
     // ===== Version Logs ===== //
@@ -31,6 +31,10 @@
     // R7 - BetaPlusVolume: Coll[Long]
     // R8 - BetaMinusVolume: Coll[Long]
     // R9 - (LastBucketBlock, PegFactor): (Long, Long)
+    //      PegFactor (scaled by one = 1e9) converts the oracle price into the target price of one neutron.
+    //      Its initial value also fixes the unit: e.g. 0.001 (1000000) for an oracle quoting nanoERG per kg
+    //      of gold pegs one neutron to one gram of gold; 1 (1000000000) for an oracle quoting nanoERG per USD
+    //      pegs one neutron to one USD.
 
     // ===== Context Vars ===== //
     // val _optUIFeeAddress                    SigmaProp
@@ -45,12 +49,13 @@
 
     // For all of the first five transaction types:
     // Inputs: GluonBox, UserPk
-    // DataInputs: GoldOracle
+    // DataInputs: Oracle
     // Outputs: GluonBox, UserPk
 
     // For the sixth transaction type:
     // Inputs: GluonBox, MultisigUtxo
-    // DataInputs: None
+    // DataInputs: Oracle (unused by this transaction type, but required because the script reads
+    //             CONTEXT.dataInputs(0), its R4 and its first token for every transaction type)
     // Outputs: GluonBox
 
     // # Box Definitions
@@ -114,10 +119,10 @@
     val outReserve: BigInt        = (OUT_GLUON_BOX.value - _MinFee).toBigInt
 
     // # External State Variables
-    val price: BigInt = ORACLE_BOX.R4[Long].get.toBigInt / 1000  // Oracle price
+    val price: BigInt = ORACLE_BOX.R4[Long].get.toBigInt  // Oracle price, in nanoERG per unit of the oracle's asset
 
     // # State Dependent Variables
-    val priceAdjusted: BigInt     = price * PEG_FACTOR.toBigInt / one // Adjusted oracle price: P_adjusted = price * pegFactor / one
+    val priceAdjusted: BigInt     = price * PEG_FACTOR.toBigInt / one // Target price of one neutron: P_adjusted = price * pegFactor / one
     val q: BigInt = supplyNeutrons * priceAdjusted / reserve  // fusion ratio
     val qOut: BigInt = outSupplyNeutrons * priceAdjusted / outReserve 
     val qNorm: BigInt = min(one * q / (q + one - qStar), q)   // normalized fusion ratio
@@ -322,7 +327,7 @@
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
+            val currentBlockNumber: Int = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 
@@ -455,7 +460,7 @@
 
             // Calculate the amount of days that has been since the last betaDecayTx
             // 1000 - 200 = 800 | 800 / 720 = 1
-            val currentBlockNumber: Long = CONTEXT.HEIGHT
+            val currentBlockNumber: Int = CONTEXT.HEIGHT
             val getNDaysPreFilteredValue: Int = ((currentBlockNumber - LAST_BUCKET_BLOCK) / blocksPerVolumeBucket).toInt
             val nDays: Int = if (getNDaysPreFilteredValue >= buckets) {buckets} else getNDaysPreFilteredValue
 

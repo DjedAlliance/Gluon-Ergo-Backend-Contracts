@@ -1,0 +1,25 @@
+{
+  "name": "gluon-ergo-contracts",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fleet-sdk/common": "0.10.0",
+    "@fleet-sdk/compiler": "0.12.0",
+    "@fleet-sdk/core": "0.12.0",
+    "@fleet-sdk/serializer": "0.11.0"
+  },
+  "devDependencies": {
+    "@fleet-sdk/mock-chain": "0.12.0",
+    "@types/node": "24.19.0",
+    "sigmastate-js-next": "npm:sigmastate-js@0.6.3",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}
