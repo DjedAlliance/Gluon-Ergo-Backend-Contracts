@@ -101,7 +101,7 @@
     val feeDenom: BigInt = 1000L.toBigInt
     val initialDevFee: BigInt = 5L.toBigInt    // Initial dev fee: 0.5%
     val oracleFee: BigInt = 1L.toBigInt // Oracle fee: 0.1%
-    val uiFee: BigInt = 4L.toBigInt.    // Optional UI fee: 0.4%
+    val uiFee: BigInt = 4L.toBigInt     // Optional UI fee: 0.4%
 
     // # Internal State Variables
     val supplyNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
