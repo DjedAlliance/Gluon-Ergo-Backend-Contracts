@@ -1,37 +1,25 @@
-logs
-ergo_config.json
-ergo_config_testnet.json
-/.bsp
-/.idea
-/.idea_modules
-/.classpath
-/.project
-/.settings
-/RUNNING_PID
-logfile
-*.log
-.DS_Store
+# dependencies
+node_modules/
 
-# targets
-**/target
-
-# env
+# secrets: only .env.example is committed
 .env
+.env.*
+!.env.example
+
+# legacy Scala deployment configs, which held mnemonics
+ergo_config*.json
 config.env
 
-# DB Stuff
-data
+# test coverage
+coverage/
 
-# metals
-project/.bloop
-project/project
-project/target
-project/metals.sbt
-.metals
-.bloop
+# logs
+*.log
 
-# vs code
-.vscode
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
 
 # security reviews with unremediated findings (never commit)
 unremediated-security-reviews/
