@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ONE, isHealthy, snapshot } from "../lib/math.ts";
+import { ONE, isHealthy, pegAdjustments, snapshot } from "../lib/math.ts";
 import { readReactor } from "../lib/reactor.ts";
 import { adjustPegTx, reactorTx } from "../lib/transactions.ts";
 import {
@@ -56,16 +56,20 @@ describe.each(PROFILES)("Adjust Peg ($name)", (profile) => {
     expectAccepted(w, adjustPegTx(w.ctx()));
   });
 
-  it("chains adjustments until the reactor is healthy again", () => {
+  it("chains adjustments until the reactor is healthy again, as pegAdjustments predicts", () => {
     const w = setup(profile, { q: (103n * ONE) / 100n });
+    const state = () => readReactor(w.ctx().reactor).state;
+    const predicted = pegAdjustments(state(), MIN_FEE, profile.oraclePrice);
     let steps = 0;
-    const q = () => snapshot(readReactor(w.ctx().reactor).state, MIN_FEE, profile.oraclePrice).q;
-    while (!isHealthy(q())) {
+    while (!isHealthy(snapshot(state(), MIN_FEE, profile.oraclePrice).q)) {
       expectAccepted(w, adjustPegTx(w.ctx()));
       steps++;
       expect(steps).toBeLessThan(10);
     }
     expect(steps).toBe(5);
+    expect(predicted).toHaveLength(5);
+    expect(predicted.at(-1)).toEqual(state());
+    expect(pegAdjustments(state(), MIN_FEE, profile.oraclePrice)).toEqual([]);
   });
 
   describe("rejects an adjustment when", () => {

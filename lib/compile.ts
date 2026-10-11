@@ -32,6 +32,17 @@ export function namedConstants(c: GluonConstants) {
   };
 }
 
-export function compileGluon(constants: GluonConstants, network: "mainnet" | "testnet" = "mainnet"): ErgoTree {
-  return compile(CONTRACT_SOURCE, { ...COMPILER_OPTIONS, network, map: namedConstants(constants) });
+export function compileGluon(
+  constants: GluonConstants,
+  network: "mainnet" | "testnet" = "mainnet",
+  source = CONTRACT_SOURCE,
+): ErgoTree {
+  return compile(source, { ...COMPILER_OPTIONS, network, map: namedConstants(constants) });
+}
+
+/** The ErgoScript compiler in use, for deployment records: Fleet's compiler wraps sigmastate-js. */
+export function compilerVersion(): string {
+  const version = (name: string) =>
+    (JSON.parse(readFileSync(new URL(`../node_modules/${name}/package.json`, import.meta.url), "utf8")) as { version: string }).version;
+  return `sigmastate-js ${version("sigmastate-js")} via @fleet-sdk/compiler ${version("@fleet-sdk/compiler")}`;
 }

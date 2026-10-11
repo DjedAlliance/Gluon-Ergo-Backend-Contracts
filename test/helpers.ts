@@ -1,12 +1,13 @@
 import type { BoxCandidate, EIP12UnsignedTransaction } from "@fleet-sdk/common";
 import { compile } from "@fleet-sdk/compiler";
-import { type Amount, type Box, type ErgoTree, FEE_CONTRACT } from "@fleet-sdk/core";
+import type { Amount, Box, ErgoTree } from "@fleet-sdk/core";
 import { type KeyedMockChainParty, MockChain, type MockChainParty } from "@fleet-sdk/mock-chain";
-import { SLong, estimateBoxSize } from "@fleet-sdk/serializer";
+import { SLong } from "@fleet-sdk/serializer";
 import { expect } from "vitest";
 import { type GluonConstants, compileGluon } from "../lib/compile.ts";
 import { BUCKETS, ONE, type ReactorState, adjustedPrice, bucketStart, genesisSupplies } from "../lib/math.ts";
 import { type ReactorTokens, reactorAssets, reactorRegisters, readReactor } from "../lib/reactor.ts";
+import { consensusIssues } from "../lib/simulate.ts";
 import type { TxContext } from "../lib/transactions.ts";
 
 /** Chain height when a test starts. Scripts see the height of the next block, HEIGHT + 1. */
@@ -105,6 +106,8 @@ export interface SetupOptions {
   buybackNft?: string;
   /** A real buyback box (e.g. a mainnet fixture) to use instead of the stand-in. The reactor is compiled for it. */
   buybackBox?: Box<Amount>;
+  /** Start without a reactor box, e.g. to bootstrap one. The reactor party still receives boxes of its tree. */
+  withoutReactor?: boolean;
 }
 
 export interface World {
@@ -149,13 +152,15 @@ export function setup(profile: Profile, options: SetupOptions = {}): World {
   const tree = reactorTree(constants).toHex();
   const reactor = chain.addParty(tree, "reactor");
 
-  reactor.addUTxOs({
-    value: initial.value,
-    ergoTree: tree,
-    creationHeight: HEIGHT - 10,
-    assets: reactorAssets(initial, TOKENS),
-    additionalRegisters: reactorRegisters(initial),
-  });
+  if (!options.withoutReactor) {
+    reactor.addUTxOs({
+      value: initial.value,
+      ergoTree: tree,
+      creationHeight: HEIGHT - 10,
+      assets: reactorAssets(initial, TOKENS),
+      additionalRegisters: reactorRegisters(initial),
+    });
+  }
   oracle.addUTxOs({
     value: ONE,
     ergoTree: oracle.ergoTree,
@@ -199,21 +204,6 @@ export function setup(profile: Profile, options: SetupOptions = {}): World {
 }
 
 export type Tx = EIP12UnsignedTransaction;
-
-/** Problems a node would reject but MockChain does not check. */
-export function consensusIssues(tx: Tx, height: number): string[] {
-  const issues: string[] = [];
-  const total = (boxes: { value: Amount }[]) => boxes.reduce((sum, b) => sum + BigInt(b.value), 0n);
-  if (total(tx.inputs) !== total(tx.outputs)) issues.push("ERG is not preserved");
-  if (!tx.outputs.some((o) => o.ergoTree === FEE_CONTRACT)) issues.push("no miner-fee output");
-  const newestInput = Math.max(...tx.inputs.map((i) => i.creationHeight));
-  for (const o of tx.outputs) {
-    if (BigInt(o.value) < BigInt(estimateBoxSize(o)) * 360n) issues.push(`output below the minimum value: ${o.value}`);
-    if (o.creationHeight > height + 1) issues.push("output created in the future");
-    if (o.creationHeight < newestInput) issues.push("output created before one of the inputs");
-  }
-  return issues;
-}
 
 function execute(w: World, tx: Tx, signers: KeyedMockChainParty[]): string | undefined {
   try {
