@@ -243,6 +243,19 @@ export function adjustPeg(s: ReactorState, minFee: bigint, oraclePrice: bigint):
 }
 
 /**
+ * The states a reactor goes through while Adjust Peg is repeated until the reactor is healthy again: one
+ * state per transaction, none if the reactor is already healthy.
+ */
+export function pegAdjustments(s: ReactorState, minFee: bigint, oraclePrice: bigint, limit = 10_000): ReactorState[] {
+  const states: ReactorState[] = [];
+  for (let next = adjustPeg(s, minFee, oraclePrice); next; next = adjustPeg(next, minFee, oraclePrice)) {
+    if (states.length === limit) throw new Error(`Adjust Peg does not make the reactor healthy within ${limit} steps`);
+    states.push(next);
+  }
+  return states;
+}
+
+/**
  * Circulating supplies for a new reactor with reserve `reserve` and neutron target price `price` (nanoERG),
  * such that it starts at fusion ratio `q0` (scaled by ONE) with one proton worth `protonPrice` (nanoERG).
  */

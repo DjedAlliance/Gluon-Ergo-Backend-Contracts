@@ -1,0 +1,42 @@
+{
+  "deployment": "gluon-gold-v3",
+  "network": "mainnet",
+  "peg": "1 gram of gold",
+  "contract": {
+    "source": "contracts/Gluon.es",
+    "ergoTreeVersion": 0
+  },
+  "minFee": "1000000",
+  "oracle": {
+    "description": "GoldPool: R4 = nanoERG per kg of gold. The initial peg factor of 0.001 converts it to a price per gram, so one neutron is pegged to one gram of gold.",
+    "poolNft": "3c45f29a5165b030fdb5eaf5d81f8108f9d8f507b31487dd51f4ae08fe07cf4a",
+    "buybackNft": "TODO: the GoldPool's buyback NFT 119a068a0119670de8a5d2467da33df572903c64aaa7b6ea4c9668ef0cfe0325 was burned on 2026-06-30; set the NFT of a new buyback box here",
+    "buybackContractAddress": "TODO: set the address of the contract that guards the new buyback box here"
+  },
+  "treasuryAddress": "TODO: single-signature address, to be provided",
+  "bootstrap": {
+    "seedErg": "TODO: at most 10; the genesis tokens are burned, so the seed stays in the reserve for good",
+    "initialFusionRatio": "0.6",
+    "initialProtonPriceErg": "1",
+    "initialPegFactor": "0.001",
+    "maxDevFeeErg": "10000000",
+    "tokenEmission": "100000000"
+  },
+  "tokens": {
+    "nft": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    },
+    "neutron": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    },
+    "proton": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    }
+  }
+}
