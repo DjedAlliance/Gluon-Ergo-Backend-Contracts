@@ -32,3 +32,6 @@ project/metals.sbt
 
 # vs code
 .vscode
+
+# security reviews with unremediated findings (never commit)
+unremediated-security-reviews/
