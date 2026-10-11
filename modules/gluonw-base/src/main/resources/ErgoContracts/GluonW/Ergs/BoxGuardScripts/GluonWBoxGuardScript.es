@@ -128,7 +128,7 @@
     // ## Fission: Splits ERG into protons and neutrons (mints protons and neutrons)
     val isFissionTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 > OUT_NEUTRONS_TOKEN._2, // Neutrons decrease (circulating supply increases)
-        PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons decrease  (circuluting supply increases)
+        PROTONS_TOKEN._2 > OUT_PROTONS_TOKEN._2,   // Protons decrease  (circulating supply increases)
         GLUON_BOX.value < OUT_GLUON_BOX.value      // ERG value increases
     ))
 
@@ -147,7 +147,7 @@
         GLUON_BOX.value == OUT_GLUON_BOX.value     // ERG value is preserved
     ))
 
-    // ## BetaDecayPlus: Transmutes Neutrons to Protons
+    // ## BetaDecayMinus: Transmutes Neutrons to Protons
     // Decreases neutrons in circulation and increases protons in circulation
     val isBetaDecayMinusTx: Boolean = allOf(Coll(
         NEUTRONS_TOKEN._2 < OUT_NEUTRONS_TOKEN._2, // Neutrons increase
@@ -182,7 +182,7 @@
     // # Oracle Checks
     val oracleDelay: Int = CONTEXT.HEIGHT - ORACLE_BOX.creationInfo._1 // Difference between now and the time when the oracle box was created, in blocks.
     val cOracle: Boolean = allOf(Coll(
-        oracleDelay < 35 && oracleDelay >= 0, // Oracle delay is at most 35 blocks (~70 min) in the past
+        oracleDelay < 35 && oracleDelay >= 0,     // Oracle delay is at most 34 blocks (~70 min) in the past
         ORACLE_BOX.tokens(0)._1 == _OraclePoolNFT // The oracle NFT is the right NFT
     ))
 
@@ -283,7 +283,7 @@
             )))
         }
         else if (isFusionTx) {
-            // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - phiFission) [Ergs]
+            // Equation: (M (S neutrons / R)) [Protons] + (M (S protons / R)) [Neutrons] ==> M (1 - phiFusion) [Ergs]
 
             // The protons and neutrons are more in outbox than inputbox
             val NeutronsActualValue: BigInt = (OUT_NEUTRONS_TOKEN._2 - NEUTRONS_TOKEN._2).toBigInt
