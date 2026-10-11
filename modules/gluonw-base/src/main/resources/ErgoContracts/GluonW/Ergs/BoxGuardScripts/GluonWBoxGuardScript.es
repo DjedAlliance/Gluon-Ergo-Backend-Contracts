@@ -110,15 +110,19 @@
     val supplyNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - NEUTRONS_TOKEN._2).toBigInt // Variable in Paper: S_neutrons
     val supplyProtons: BigInt  = (PROTONS_TOTAL_SUPPLY - PROTONS_TOKEN._2).toBigInt   // Variable in Paper: S_protons
     val reserve: BigInt        = (GLUON_BOX.value - _MinFee).toBigInt // Variable in Paper: R
-    
+    val outSupplyNeutrons: BigInt = (NEUTRONS_TOTAL_SUPPLY - OUT_NEUTRONS_TOKEN._2).toBigInt
+    val outReserve: BigInt        = (OUT_GLUON_BOX.value - _MinFee).toBigInt
+
     // # External State Variables
     val price: BigInt = ORACLE_BOX.R4[Long].get.toBigInt / 1000  // Oracle price
 
     // # State Dependent Variables
     val priceAdjusted: BigInt     = price * PEG_FACTOR.toBigInt / one // Adjusted oracle price: P_adjusted = price * pegFactor / one
     val q: BigInt = supplyNeutrons * priceAdjusted / reserve  // fusion ratio
+    val qOut: BigInt = outSupplyNeutrons * priceAdjusted / outReserve 
     val qNorm: BigInt = min(one * q / (q + one - qStar), q)   // normalized fusion ratio
     val isHealthy: Boolean    = (q >= qLowerThreshold) && (q <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
+    val isHealthyAfter: Boolean   = (qOut >= qLowerThreshold) && (qOut <= qUpperThreshold) // Fusion, fission and beta decays only permitted when 0.50 <= q <= 0.98
 
     // # Transaction Type Definitions //
 
@@ -274,7 +278,7 @@
             val __outProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthy,
+                isHealthy, // isHealthyAfter is not necessary, because fission does not change the ratio
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
@@ -302,7 +306,7 @@
             val __inProtonsValueValid: Boolean = ProtonsActualValue == ProtonsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthy,
+                isHealthy, // isHealthyAfter is not necessary, because fusion does not change the ratio
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
                 cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
@@ -432,7 +436,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthy,
+                isHealthy, isHealthyAfter,
                 cSameContract, cSameTokenIdentifiers,  
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5,
@@ -543,7 +547,7 @@
             val __ergsValueValid: Boolean = ErgsActualValue == ErgsExpectedValue
 
             sigmaProp(allOf(Coll(
-                isHealthy,
+                isHealthy, isHealthyAfter,
                 cSameContract, cSameTokenIdentifiers, 
                 __neutronsValueValid, __protonsValueValid, __ergsValueValid,
                 cSameR4, cSameR5,
