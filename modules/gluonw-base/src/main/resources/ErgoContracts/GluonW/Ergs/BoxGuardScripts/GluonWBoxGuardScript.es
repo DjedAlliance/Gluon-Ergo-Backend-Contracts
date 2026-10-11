@@ -306,7 +306,7 @@
                 isHealthy,
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
-                cSameR4, cSameR5, MaxDevFeeThreshold, cSameR7, cSameR8, cSameR9,
+                cSameR4, cSameR5, c6SameR6MaxDevFeeThreshold, cSameR7, cSameR8, cSameR9,
                 cFees
             )))
         }
