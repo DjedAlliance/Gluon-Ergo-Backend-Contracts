@@ -1,0 +1,42 @@
+{
+  "deployment": "gluon-dollar-v3",
+  "network": "mainnet",
+  "peg": "1 USD",
+  "contract": {
+    "source": "contracts/Gluon.es",
+    "ergoTreeVersion": 0
+  },
+  "minFee": "1000000",
+  "oracle": {
+    "description": "USD Pool: R4 = nanoERG per USD. With the initial peg factor of 1, one neutron is pegged to one USD.",
+    "poolNft": "6a2b821b5727e85beb5e78b4efb9f0250d59cd48481d2ded2c23e91ba1d07c66",
+    "buybackNft": "dcce07af04ea4f9b7979336476594dc16321547bcc9c6b95a67cb1a94192da4f",
+    "buybackContractAddress": "TBHrt7kYkmxqwSo2EEPDQkTn1R76iPw919ep4y1sZMqRN9SXLnm8FM2AvjVJ1mqLuD1Yuoaq9LVjrgwGNBoMyvyqqUuZpEY4rvy7oKEgyxjBU7oujwC3qVhTrSq733Yd2Fen6WGnDDePh9FfCyoDTnvFMcZWMZgR729VRnddfHHnYG7TUcjv5nmQHc2PeAFjfnGfb2MYdE31xfyJYNaf49ExmNJspee7sFt8NxPb742M3Nbr9ejZbcHGcWtiK78ck3aFwuJcdJvejk8zGWp3zmpEryryCAnAUnYrYEeatjQwn1Ke3T6g6NDK1Sy8dWCcTB2wzhZf8ZgRXAWGpfZMJdsCEQs5xaarkucSZKNhHoawJyU87s2fVhs7QfwnyvnT8s6vjWiWBsJLZ4AzBnrzNGmiH4nW6hJboe9dwan9AE55x48ZCxXErHxzkJf6dTmpa6YZ2u67gTcJF9LQg9nfx2sm1f7aQcnYWXiECayPHx6aC82bXxDhBiNLeWb6fXhJKjYuYcrEymvSohcbBfGiyNpZLuCQLsPcmu4MxdqtUTW7Y7QiuehW4c12Uvi7phfhpyDEVsyjDNM1URKFcaBDMdTzbLSi1cWg2afX9xSeQkg9VCQ1GghmBxsZWCDfwc82LYp5acDWqEMKg5m1xdxjaaudcyfGGz62T3DF3MHGzNBNNG3YVun1uAEfsijku3Lb1EG5AeKJodAJPCM2hoxPEXQ2nZkbtYhCF3Xib7yKfU1m2He4PVfPEaYaLa318CWSgMdEENJbCUVt19hkPJbgm7wHNfPGv9bfMekkrvmx8fHwWKAXuwQF2sivBJeRtMyVor5D7Fjw2mLJRnCKfJp1YDBS4XFLJQy5yzNpAUHxtpGjurwBeXJmWm6QADoVkMwWUfB1WyEckvJreA"
+  },
+  "treasuryAddress": "TODO: single-signature address, to be provided",
+  "bootstrap": {
+    "seedErg": "TODO: at most 10; the genesis tokens are burned, so the seed stays in the reserve for good",
+    "initialFusionRatio": "0.6",
+    "initialProtonPriceErg": "1",
+    "initialPegFactor": "1",
+    "maxDevFeeErg": "10000000",
+    "tokenEmission": "100000000"
+  },
+  "tokens": {
+    "nft": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    },
+    "neutron": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    },
+    "proton": {
+      "ticker": "TODO: short name shown by wallets; avoid the tickers of existing Gluon tokens",
+      "name": "TODO",
+      "description": "TODO"
+    }
+  }
+}
