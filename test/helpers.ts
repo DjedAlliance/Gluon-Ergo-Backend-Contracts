@@ -57,11 +57,12 @@ export function constantsFor(profile: Profile): GluonConstants {
 
 const trees = new Map<string, ErgoTree>();
 
-export function reactorTree(profile: Profile): ErgoTree {
-  let tree = trees.get(profile.name);
+export function reactorTree(constants: GluonConstants): ErgoTree {
+  const key = JSON.stringify(constants, (_, v) => (typeof v === "bigint" ? v.toString() : v));
+  let tree = trees.get(key);
   if (!tree) {
-    tree = compileGluon(constantsFor(profile));
-    trees.set(profile.name, tree);
+    tree = compileGluon(constants);
+    trees.set(key, tree);
   }
   return tree;
 }
@@ -102,6 +103,8 @@ export interface SetupOptions {
   /** Blocks between the oracle box's creation and the HEIGHT the scripts see. */
   oracleAge?: number;
   buybackNft?: string;
+  /** A real buyback box (e.g. a mainnet fixture) to use instead of the stand-in. The reactor is compiled for it. */
+  buybackBox?: Box<Amount>;
 }
 
 export interface World {
@@ -137,8 +140,13 @@ export function setup(profile: Profile, options: SetupOptions = {}): World {
   });
   const ui = chain.newParty("ui");
   const oracle = chain.newParty("oracle");
-  const buyback = chain.addParty(BUYBACK_TREE, "buyback");
-  const tree = reactorTree(profile).toHex();
+  const real = options.buybackBox;
+  const buybackTree = real?.ergoTree ?? BUYBACK_TREE;
+  const buyback = chain.addParty(buybackTree, "buyback");
+  const constants = real
+    ? { ...constantsFor(profile), oracleFeeTree: real.ergoTree, oracleBuybackNft: real.assets[0].tokenId }
+    : constantsFor(profile);
+  const tree = reactorTree(constants).toHex();
   const reactor = chain.addParty(tree, "reactor");
 
   reactor.addUTxOs({
@@ -155,13 +163,17 @@ export function setup(profile: Profile, options: SetupOptions = {}): World {
     assets: [{ tokenId: options.oracleNft ?? profile.poolNft, amount: 1n }],
     additionalRegisters: { R4: SLong(options.oraclePrice ?? profile.oraclePrice).toHex() },
   });
-  buyback.addUTxOs({
-    value: ONE,
-    ergoTree: BUYBACK_TREE,
-    creationHeight: HEIGHT - 100,
-    assets: [{ tokenId: options.buybackNft ?? profile.buybackNft, amount: 1n }],
-    additionalRegisters: {},
-  });
+  buyback.addUTxOs(
+    real
+      ? real // as on chain: its box id is a hash of its content
+      : {
+          value: ONE,
+          ergoTree: BUYBACK_TREE,
+          creationHeight: HEIGHT - 100,
+          assets: [{ tokenId: options.buybackNft ?? profile.buybackNft, amount: 1n }],
+          additionalRegisters: {},
+        },
+  );
 
   return {
     chain,

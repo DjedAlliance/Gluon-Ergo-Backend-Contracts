@@ -8,7 +8,7 @@ import {
   SAFE_MIN_BOX_VALUE,
   TransactionBuilder,
 } from "@fleet-sdk/core";
-import { SGroupElement, SSigmaProp } from "@fleet-sdk/serializer";
+import { SByte, SColl, SGroupElement, SInt, SSigmaProp } from "@fleet-sdk/serializer";
 import {
   type ActionResult,
   type Fees,
@@ -39,9 +39,13 @@ export interface TxContext {
   uiFeeKey?: string;
   /** The oracle buyback box. A beta decay that owes an oracle fee spends it as its last input. */
   buyback?: Box<Amount>;
-  /** Context extension for the buyback input, e.g. `{ 0: SInt(1).toHex() }` for the DORT buyback contract. */
-  buybackExtension?: Record<number, string>;
 }
+
+// Oracle-core v2 buyback contracts (such as the USD oracle's DORT buyback) let anyone top them up: the
+// spending input sets context variable 0 to 1, and the successor box keeps the script and tokens and
+// stores the id of the box it replaces in R4. The Gluon contract itself only checks the successor's
+// script, first token and value.
+const TOP_UP = { 0: SInt(1).toHex() };
 
 export function fissionTx(ctx: TxContext, erg: bigint): EIP12UnsignedTransaction {
   const { state, tokens } = readReactor(ctx.reactor);
@@ -133,7 +137,7 @@ function feeOutputs(ctx: TxContext, s: ReactorState, fees: Fees, betaDecay: bool
     outputs.push(
       new OutputBuilder(BigInt(buyback.value) + fees.oracle + ctx.minFee, buyback.ergoTree)
         .addTokens(buyback.assets)
-        .setAdditionalRegisters(buyback.additionalRegisters),
+        .setAdditionalRegisters({ R4: SColl(SByte, buyback.boxId).toHex() }),
     );
   }
   if (fees.dev > 0n) outputs.push(new OutputBuilder(fees.dev + ctx.minFee, p2pkTree(s.treasury)));
@@ -147,9 +151,7 @@ function requireBuyback(ctx: TxContext): Box<Amount> {
 }
 
 function buybackInput(ctx: TxContext): ErgoUnsignedInput {
-  const input = new ErgoUnsignedInput(requireBuyback(ctx));
-  if (ctx.buybackExtension) input.setContextExtension(ctx.buybackExtension);
-  return input;
+  return new ErgoUnsignedInput(requireBuyback(ctx)).setContextExtension(TOP_UP);
 }
 
 function assemble(ctx: TxContext, outputs: OutputBuilder[], lastInput?: ErgoUnsignedInput): EIP12UnsignedTransaction {
