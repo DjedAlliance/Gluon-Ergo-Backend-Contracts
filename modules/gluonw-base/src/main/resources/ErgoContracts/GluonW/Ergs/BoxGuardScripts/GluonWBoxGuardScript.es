@@ -283,7 +283,7 @@
                 __outNeutronsValueValid, __outProtonsValueValid,
                 cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
                 cFees, // cFees also checks that R6._2 remains the same
-                cOracle,
+                cOracle
             )))
         }
         else if (isFusionTx) {
