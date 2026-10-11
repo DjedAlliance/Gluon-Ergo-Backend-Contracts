@@ -282,7 +282,8 @@
                 cSameContract, cSameTokenIdentifiers,
                 __outNeutronsValueValid, __outProtonsValueValid,
                 cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
-                cFees // cFees also checks that R6._2 remains the same
+                cFees, // cFees also checks that R6._2 remains the same
+                cOracle,
             )))
         }
         else if (isFusionTx) {
@@ -310,7 +311,8 @@
                 cSameContract, cSameTokenIdentifiers,  
                 __inNeutronsValueValid, __inProtonsValueValid,
                 cSameR4, cSameR5, cSameR7, cSameR8, cSameR9,
-                cFees // cFees also checks that R6._2 remains the same
+                cFees, // cFees also checks that R6._2 remains the same
+                cOracle
             )))
         }
         else if (isBetaDecayPlusTx) {
