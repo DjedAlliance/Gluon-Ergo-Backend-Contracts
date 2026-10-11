@@ -240,7 +240,6 @@
         val _optUIFeeAddress = getVar[SigmaProp](0)
         val uiFeesPaid: Boolean = {
             if (_optUIFeeAddress.isDefined && uiFeePayout > 0) {
-                val uiFees: (Coll[Byte], BigInt) = if (isBetaDecayPlusTx || isBetaDecayMinusTx) fees(2) else fees(1)
                 val uiOutput: Box = if (oracleFeesToBePaid && devFeesToBePaid) OUTPUTS(4) 
                                     else if (oracleFeesToBePaid || devFeesToBePaid) OUTPUTS(3)
                                     else OUTPUTS(2)
