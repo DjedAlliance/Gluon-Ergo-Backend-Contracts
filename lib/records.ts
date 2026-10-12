@@ -9,10 +9,9 @@ import { type NetworkName, formatUnits } from "./config.ts";
 // been deployed, and Deployments.md is generated from it (N3).
 
 export const REPOSITORY_URL = "https://github.com/DjedAlliance/Gluon-Ergo-Backend-Contracts";
-export const NETWORKS: NetworkName[] = ["mainnet", "testnet"];
+export const NETWORKS: NetworkName[] = ["mainnet"];
 const EXPLORERS: Record<NetworkName, string> = {
   mainnet: "https://explorer.ergoplatform.com",
-  testnet: "https://testnet.ergoplatform.com",
 };
 
 export interface TokenRecord {

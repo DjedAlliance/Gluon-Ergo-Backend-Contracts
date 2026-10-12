@@ -34,7 +34,7 @@ export function namedConstants(c: GluonConstants) {
 
 export function compileGluon(
   constants: GluonConstants,
-  network: "mainnet" | "testnet" = "mainnet",
+  network: "mainnet" = "mainnet",
   source = CONTRACT_SOURCE,
 ): ErgoTree {
   return compile(source, { ...COMPILER_OPTIONS, network, map: namedConstants(constants) });

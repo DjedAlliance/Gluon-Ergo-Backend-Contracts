@@ -169,8 +169,3 @@ TBHrt7kYkmxqwSo2EEPDQkTn1R76iPw919ep4y1sZMqRN9SXLnm8FM2AvjVJ1mqLuD1Yuoaq9LVjrgwG
 ```
 
 </details>
-
-
-## Testnet
-
-No deployments yet.

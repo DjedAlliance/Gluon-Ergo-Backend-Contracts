@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import type { Box, SignedTransaction } from "@fleet-sdk/common";
 import { Network } from "@fleet-sdk/core";
 import type { ErgoHDKey } from "@fleet-sdk/wallet";
-import { type DeploymentConfig, type NetworkConfig, type NetworkName, formatUnits, isTodo, readNetworks } from "./config.ts";
+import { type DeploymentConfig, type NetworkConfig, formatUnits, isTodo, readNetworks } from "./config.ts";
 import { MAX_ORACLE_AGE } from "./math.ts";
 import { ErgoNode } from "./node.ts";
 
@@ -20,9 +20,9 @@ export function nodeFor(config: DeploymentConfig): { node: ErgoNode; network: Ne
   return { node: new ErgoNode(network.nodeUrl), network };
 }
 
-/** The P2PK address of a key on a network. */
-export function addressOf(key: ErgoHDKey, network: NetworkName): string {
-  return key.address.encode(network === "mainnet" ? Network.Mainnet : Network.Testnet);
+/** The mainnet P2PK address of a key. */
+export function addressOf(key: ErgoHDKey): string {
+  return key.address.encode(Network.Mainnet);
 }
 
 export function erg(nanoerg: bigint): string {

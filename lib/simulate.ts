@@ -9,7 +9,7 @@ import { type TxContext, adjustPegTx, betaDecayMinusTx, betaDecayPlusTx, fission
 /**
  * Problems a node would reject but MockChain does not check: ERG must be preserved, a miner fee paid, every
  * output must hold the minimum value for its size, and creation heights must be plausible. `height` is the
- * current chain height; `minValuePerByte` is the blockchain parameter (360 nanoERG on mainnet and testnet).
+ * current chain height; `minValuePerByte` is the blockchain parameter (360 nanoERG on mainnet).
  */
 export function consensusIssues(tx: EIP12UnsignedTransaction, height: number, minValuePerByte = 360n): string[] {
   const issues: string[] = [];

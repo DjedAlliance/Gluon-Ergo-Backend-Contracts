@@ -2,9 +2,5 @@
   "mainnet": {
     "nodeUrl": "https://node.sigmaspace.io",
     "explorerUrl": "https://explorer.ergoplatform.com"
-  },
-  "testnet": {
-    "nodeUrl": "TODO: a testnet node that serves the indexed API (/blockchain/...)",
-    "explorerUrl": "https://testnet.ergoplatform.com"
   }
 }

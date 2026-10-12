@@ -26,15 +26,14 @@ run(async () => {
 
   loadEnvironment();
   const key = keyFromEnvironment();
-  const signer = addressOf(key, config.network);
+  const signer = addressOf(key);
   const { node } = nodeFor(config);
   const height = await node.height();
   const reactor = await uniqueBox(node, record.tokens.nft.id, "reactor", record.ergoTree);
   // Update Treasury does not use the oracle, but the contract reads data input 0 in every transaction.
   const oracle = await uniqueBox(node, record.constants._OraclePoolNFT, "oracle pool");
   const { state } = readReactor(reactor);
-  const network = config.network === "mainnet" ? Network.Mainnet : Network.Testnet;
-  const current = ErgoAddress.fromPublicKey(state.treasury, network).encode();
+  const current = ErgoAddress.fromPublicKey(state.treasury, Network.Mainnet).encode();
   if (signer !== current) throw new Error(`the wallet in .env (${signer}) is not the current treasury (${current})`);
 
   const inputs = selectFunds(await node.unspentByAddress(signer), RECOMMENDED_MIN_FEE_VALUE + SAFE_MIN_BOX_VALUE);
@@ -43,5 +42,5 @@ run(async () => {
     publicKeyOf(newTreasury),
   );
   console.log(`${config.deployment}: treasury ${current} → ${newTreasury}`);
-  await checkOrSubmit(node, await signTransaction(node, config.network, tx, [key]), values.submit);
+  await checkOrSubmit(node, await signTransaction(node, tx, [key]), values.submit);
 });

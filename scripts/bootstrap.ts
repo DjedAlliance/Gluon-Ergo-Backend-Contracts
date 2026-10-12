@@ -58,7 +58,7 @@ run(async () => {
 
   loadEnvironment();
   const key = keyFromEnvironment();
-  const deployer = addressOf(key, config.network);
+  const deployer = addressOf(key);
   const { node } = nodeFor(config);
   const [height, { parameters }] = await Promise.all([node.height(), node.info()]);
 
@@ -98,7 +98,7 @@ Tokens            ${txs.tokens.nft} ${config.tokens.nft.ticker}
 Simulation        fission, beta decay +, beta decay −, fusion and Adjust Peg are accepted`);
 
   const signed = [];
-  for (const tx of chain) signed.push(await signTransaction(node, config.network, tx, [key]));
+  for (const tx of chain) signed.push(await signTransaction(node, tx, [key]));
   if (!values.submit) {
     await node.checkTransaction(signed[0]);
     console.log("\nThe four transactions are signed and the node accepts the first one. Run again with --submit to deploy.");

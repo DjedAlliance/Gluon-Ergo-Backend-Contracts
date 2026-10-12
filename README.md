@@ -130,7 +130,7 @@ checks the deployment configs and records (see [Deployments](#deployments)).
 
 ```
 contracts/Gluon.es   the Gluon reactor contract
-config/              public deployment parameters: networks, Gold, Dollar and testnet rehearsals
+config/              public deployment parameters: the node, Gold and Dollar
 lib/                 code shared by tests and scripts: compilation, reference math, transaction builders, node client
 test/                contract tests, on a simulated chain
 scripts/             deployment and operation scripts
@@ -239,8 +239,8 @@ In v3, [`contracts/Gluon.es`](contracts/Gluon.es):
 
 ## Configuration and Deployment
 
-Public parameters live in [`config/`](config/): [`networks.json`](config/networks.json) names a node and an explorer
-per network, and each deployment has a config, such as [`config/gold.json`](config/gold.json) and
+Public parameters live in [`config/`](config/): [`networks.json`](config/networks.json) names the mainnet node and explorer,
+and each deployment has a config, such as [`config/gold.json`](config/gold.json) and
 [`config/dollar.json`](config/dollar.json). Values that are not decided yet start with `TODO`, and the scripts refuse
 to use them. The only secret is the mnemonic of the wallet that signs, in `.env`:
 
@@ -254,7 +254,6 @@ cp .env.example .env   # then set MNEMONIC
 | `node scripts/bootstrap.ts <config> [--submit]` | Deploy a reactor |
 | `node scripts/adjust-peg.ts <config> [--submit [--repeat]]` | Adjust the peg of an unhealthy reactor, once or until it is healthy |
 | `node scripts/update-treasury.ts <config> <address> [--submit]` | Move the treasury to another single-signature address |
-| `node scripts/testnet-oracle.ts <testnet config> [--price <nanoERG>] [--submit]` | Create or refresh stand-ins for an oracle pool box and its buyback box on testnet |
 | `node scripts/render-deployments.ts` | Regenerate `Deployments.md` from `deployments/` |
 
 Scripts that send transactions do a dry run by default: they build and sign the transactions and have the node check
@@ -273,23 +272,6 @@ at a fusion ratio of 0.6, with one proton worth 1 ERG.
    decays, a fusion and an Adjust Peg against the new reactor box.
 4. Run it again with `--submit`. It records the deployment in `deployments/<network>.json` and `Deployments.md`.
    Commit both, and tag the deployed commit.
-
-### Testnet Rehearsal
-
-The mainnet oracles do not exist on testnet, so [`config/testnet/`](config/testnet/) holds rehearsal configs that use
-stand-ins.
-
-1. Set the testnet node in [`config/networks.json`](config/networks.json). The scripts need a node with the blockchain
-   index API (`/blockchain/...`), which nodes serve when `extraIndex = true`.
-2. Fund the first address of a testnet wallet, and put its mnemonic in `.env`.
-3. Create the stand-ins, for example at the USD Pool's price:
-   `node scripts/testnet-oracle.ts config/testnet/dollar.json --price 3048107555 --submit`.
-   This writes their token ids and the buyback contract's address into the config.
-4. Set the treasury in the config, refresh the oracle box (`node scripts/testnet-oracle.ts config/testnet/dollar.json --submit`),
-   then bootstrap as above. The contract only accepts oracle boxes created in the last 34 blocks, so refresh the oracle
-   box before each step.
-5. To rehearse Adjust Peg, push the fusion ratio out of the healthy range with a higher `--price`, then run
-   `node scripts/adjust-peg.ts config/testnet/dollar.json --submit --repeat`.
 
 ---
 
