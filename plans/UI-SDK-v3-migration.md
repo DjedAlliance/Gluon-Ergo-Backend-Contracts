@@ -1,12 +1,12 @@
-# Gluon, third way: the SDK in the contracts repository, and a v3-only static UI on GitHub Pages
+# Gluon v3 migration: the SDK in the contracts repository, and a v3-only static UI on GitHub Pages
 
 *Plan for the maintainers of the contracts repository
 ([DjedAlliance/Gluon-Ergo-Backend-Contracts](https://github.com/DjedAlliance/Gluon-Ergo-Backend-Contracts)) and of
 [StabilityNexus/Gluon-Ergo-UI](https://github.com/StabilityNexus/Gluon-Ergo-UI), written on 2026-10-13. It is meant to
-be executed step by step by a developer or a coding agent, and it is self-contained. It is the third of three routes to
-the same v3 UI: `SDK_PLAN.md` + `UI_PLAN.md` build the SDK in a repository of its own,
-`UI_PLAN_ALTERNATIVE_WITHOUT_SDK.md` builds the library inside the UI, and this plan builds the SDK in the repository
-where the contract and its tests already are. `comparison.md` compares the three.*
+be executed step by step by a developer or a coding agent, and it is self-contained. The maintainers chose it over two
+other routes, an SDK in a repository of its own and a library inside the UI, because it keeps one copy of the code that
+must match the contract, next to the contract and its tests; those plans and their comparison are in this repository's
+history (commit `7f60beb`). The npm setup it relies on is in `references/npm-guide.md`.*
 
 ## 0. Scope, and how to use this plan
 
@@ -41,7 +41,7 @@ where the contract and its tests already are. `comparison.md` compares the three
 
   §16 says how they interleave: the UI starts against a fake client, and depends on a published pre-release from A6 on.
 - **npm.** The package's one-time setup (the organization, the first version, the trusted publisher) is in
-  `NPM_GUIDE.md`; step A6 follows it.
+  `references/npm-guide.md`; step A6 follows it.
 - **Starting points.** The contracts repository at `main` once its testnet tooling is removed (branch
   `cleanup/remove-testnet`); the file sizes and the test count below are from that state. The UI repository at `main`,
   `e4e30ab`, which Step 0 (§9) tags `pre-v3`.
@@ -84,11 +84,11 @@ the real contract on a simulated chain. This plan:
   the records) stays an unpublished project.
 - **CD3. A new package, owned by the maintainers.** The SDK is `@stabilitynexus/gluon-ergo-sdk`, in the npm
   organization `stabilitynexus`: v3 only, mainnet only, with no 1.x API. Its versions start at 2.0.0 and follow
-  `gluon-ergo-sdk` 1.x, which stays on npm and in its own repository, untouched. `NPM_GUIDE.md` sets up the
+  `gluon-ergo-sdk` 1.x, which stays on npm and in its own repository, untouched. `references/npm-guide.md` sets up the
   organization, the package and its trusted publisher.
 - **CD4. GPL-3.0 for the package only.** `sdk/LICENSE` holds the GPL-3.0 text and `sdk/package.json` declares
   `GPL-3.0-only`. The repository as a whole keeps having no license file, as decided in its cleanup (decision D4 of
-  `CLEANUP_PLAN.md`); the maintainers confirmed this split on 2026-10-13. One license for the whole repository would be a
+  `cleanup.md`); the maintainers confirmed this split on 2026-10-13. One license for the whole repository would be a
   separate decision: it would mean moving `sdk/LICENSE` to the root.
 - **CD5. Browser-safe by construction.** The package's source uses no Node module, no `Buffer` and no `process`. Its
   build compiles it without Node's type definitions, so any such use is a compile error (tried on 2026-10-12 with
@@ -102,7 +102,7 @@ the real contract on a simulated chain. This plan:
   by CI, as `Deployments.md` is today.
 - **CD9. CI publishes, from a tag.** A tag `sdk-v<version>` runs a release workflow that tests, builds, checks and
   publishes the package with npm trusted publishing (OIDC). No npm token is stored anywhere. Only the first version is
-  published by hand, because npm can add a trusted publisher only to a package that exists (`NPM_GUIDE.md`).
+  published by hand, because npm can add a trusted publisher only to a package that exists (`references/npm-guide.md`).
 - **CD10. The public API is that of §5.4, and no more.** The repository's scripts and tests import modules from
   `sdk/src` directly, so internal functions, such as the low-level transaction builders and the node client, need not
   be exported.
@@ -281,7 +281,7 @@ sdk/                      the package @stabilitynexus/gluon-ergo-sdk, an npm wor
 
 - **`repository`** names the repository that runs the release workflow, with `"directory": "sdk"`: npm requires
   `repository.url` to match the repository that publishes. If the repository moves to another organization, update it
-  and the trusted publisher (`NPM_GUIDE.md` §10).
+  and the trusted publisher (`references/npm-guide.md` §10).
 - **Dependencies** are the packages that `sdk/src` imports, at exact versions, the same ones the root `package.json`
   uses. `@fleet-sdk/common` is imported for types only, but the emitted declarations name it, so consumers need it
   installed. npm always packs `package.json`, `README.md` and `LICENSE`; `files` adds the rest.
@@ -697,8 +697,8 @@ the four modules and `index`, and `git log --follow sdk/src/math.ts` shows the f
 3. The repository's `README.md`: a short "SDK" section (what it is, `npm run build:sdk`, and how releases work, §7);
    the license note of CD4; and, in the introduction, the SDK is in `sdk/`, while the UI is in its own repository.
 4. `.github/workflows/release.yml` (§7).
-5. The one-time setup of §7, as `NPM_GUIDE.md` describes: the npm organization, the first version (`2.0.0-next.0`,
-   published by hand), the trusted publisher, the lock-down and the GitHub environment.
+5. The one-time setup of §7, as `references/npm-guide.md` describes: the npm organization, the first version
+   (`2.0.0-next.0`, published by hand), the trusted publisher, the lock-down and the GitHub environment.
 6. Set `sdk/package.json` to `2.0.0-next.1`, commit, tag `sdk-v2.0.0-next.1`, and push the commit and the tag. The
    workflow publishes.
 
@@ -720,9 +720,10 @@ shows that version's provenance from this repository.
 - **Versions.** Pre-releases are `2.0.0-next.N`, under the `next` dist-tag (`publishConfig.tag`), and the UI installs
   them by exact version. `gluon-ergo-sdk` 1.x is another package, which nothing here affects.
 - **2.0.0** is released when the first mainnet v3 deployment is recorded, bundled and live-checked (§8.5), and becomes
-  `latest`: remove `"tag": "next"` from `publishConfig` in the commit that gets the tag `sdk-v2.0.0` (`NPM_GUIDE.md` §8).
+  `latest`: remove `"tag": "next"` from `publishConfig` in the commit that gets the tag `sdk-v2.0.0`
+  (`references/npm-guide.md` §8).
 - **One way to publish:** push a tag `sdk-v<version>`, and the release workflow publishes. Nobody runs `npm publish` by
-  hand, except once, for the first version (`NPM_GUIDE.md` §4).
+  hand, except once, for the first version (`references/npm-guide.md` §4).
 - **The UI depends on an exact version**, never on a range.
 
 `.github/workflows/release.yml`:
@@ -779,7 +780,7 @@ Notes:
 - No npm token is stored in GitHub.
 - The actions are pinned to the same commits as the repository's `ci.yml`.
 
-**One-time setup, in A6:** follow `NPM_GUIDE.md`. In short:
+**One-time setup, in A6:** follow `references/npm-guide.md`. In short:
 1. Create the npm organization `stabilitynexus`, with at least two owners who use 2FA (guide §2, §3).
 2. Publish the first version, `2.0.0-next.0`, by hand from a clean checkout (guide §4): npm can add a trusted
    publisher only to a package that exists.
@@ -1567,7 +1568,7 @@ organization `stabilitynexus`, its package. The UI's maintainers own the UI and 
 **Contracts repository.**
 - A1 to A6 are merged into `main`, and CI is green: type check, tests, `verify`, the SDK's build and `check:sdk`.
 - `@stabilitynexus/gluon-ergo-sdk` 2.0.0 is published by the release workflow, with provenance, and bundles at least
-  the first mainnet v3 deployment; the package's publishing access disallows tokens (`NPM_GUIDE.md` §6).
+  the first mainnet v3 deployment; the package's publishing access disallows tokens (`references/npm-guide.md` §6).
 - The scripts use the SDK: `lib/cli.ts` has no `uniqueBox`, `requireFreshOracle` or `selectFunds`.
 - The SDK repository, `StabilityNexus/Gluon-Ergo-SDK`, and the old package, `gluon-ergo-sdk` 1.x, are unchanged.
 
@@ -1597,8 +1598,8 @@ organization `stabilitynexus`, its package. The UI's maintainers own the UI and 
    `deployments/` and `.github/` there the same way.
 
 **Decided by the maintainers (2026-10-13).**
-1. The SDK is a new npm package that the maintainers own, `@stabilitynexus/gluon-ergo-sdk`, set up as `NPM_GUIDE.md`
-   describes; the old `gluon-ergo-sdk` keeps 1.x.
+1. The SDK is a new npm package that the maintainers own, `@stabilitynexus/gluon-ergo-sdk`, set up as
+   `references/npm-guide.md` describes; the old `gluon-ergo-sdk` keeps 1.x.
 2. `sdk/` is licensed GPL-3.0-only, and the rest of the contracts repository keeps having no license file (CD4).
 3. The maintainers control the DNS of `stability.nexus`, for the records of §15.3, step 7.
 4. The sites use `https://node.sigmaspace.io` as their node.
@@ -1615,10 +1616,10 @@ organization `stabilitynexus`, its package. The UI's maintainers own the UI and 
 
 **Good to know.**
 - If the name `stabilitynexus` is already taken on npm, the organization needs another name, and `@stabilitynexus`
-  changes everywhere (`NPM_GUIDE.md` §1).
+  changes everywhere (`references/npm-guide.md` §1).
 - The contracts repository is `DjedAlliance/Gluon-Ergo-Backend-Contracts`, while the UI and its forks are in
   `StabilityNexus`. The package's `repository` field and its trusted publisher name the contracts repository; if it
-  moves, update both (`NPM_GUIDE.md` §10).
+  moves, update both (`references/npm-guide.md` §10).
 
 ## Appendix A: Formulas
 
@@ -1779,7 +1780,7 @@ For development, copy it to `.env.local`. A fork commits its own `.env.productio
 - Forks within one organization: https://github.blog/changelog/2022-06-27-improved-innersource-collaboration-and-enterprise-fork-policies/
 - Next.js static exports: https://nextjs.org/docs/app/guides/static-exports
 - Next.js 16 requirements and the removal of `next lint`: https://nextjs.org/docs/app/guides/upgrading/version-16
-- Setting up the npm package and its trusted publisher: `NPM_GUIDE.md`, next to this plan
+- Setting up the npm package and its trusted publisher: `references/npm-guide.md`, next to this plan
 - npm trusted publishing: https://docs.npmjs.com/trusted-publishers
 - npm workspaces: https://docs.npmjs.com/cli/v11/using-npm/workspaces
 - TypeScript's `rewriteRelativeImportExtensions`: https://www.typescriptlang.org/tsconfig/#rewriteRelativeImportExtensions
