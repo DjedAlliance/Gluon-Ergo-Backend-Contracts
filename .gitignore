@@ -23,3 +23,7 @@ coverage/
 
 # security reviews with unremediated findings (never commit)
 unremediated-security-reviews/
+
+# Scala tooling leftovers
+.metals/
+.bloop/
