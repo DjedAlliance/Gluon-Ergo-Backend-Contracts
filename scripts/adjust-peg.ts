@@ -56,7 +56,7 @@ run(async () => {
 
   loadEnvironment();
   const key = keyFromEnvironment();
-  const caller = addressOf(key, config.network);
+  const caller = addressOf(key);
   const { node } = nodeFor(config);
 
   let previous: string | undefined;
@@ -77,7 +77,7 @@ run(async () => {
     requireFreshOracle(oracle, height);
     const inputs = selectFunds(await node.unspentByAddress(caller), RECOMMENDED_MIN_FEE_VALUE + SAFE_MIN_BOX_VALUE);
     const tx = adjustPegTx({ height, minFee, reactor, oracle, inputs, recipient: caller });
-    previous = await checkOrSubmit(node, await signTransaction(node, config.network, tx, [key]), values.submit);
+    previous = await checkOrSubmit(node, await signTransaction(node, tx, [key]), values.submit);
     if (!values.repeat || steps.length === 1) return;
   }
 });

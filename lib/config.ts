@@ -6,7 +6,7 @@ import { ONE, Q_LOWER, Q_UPPER } from "./math.ts";
 // Public parameters of deployments live in config/*.json (N2). Fields that are not decided yet hold a
 // string starting with "TODO"; scripts refuse to run while a field they need is TODO.
 
-export type NetworkName = "mainnet" | "testnet";
+export type NetworkName = "mainnet";
 
 export interface NetworkConfig {
   nodeUrl: string;
@@ -43,7 +43,7 @@ export interface DeploymentConfig {
 /** Largest allowed seed (D11). The genesis tokens are burned, so the seed stays in the reserve for good. */
 export const MAX_SEED = 10n * ONE;
 const MAX_LONG = 2n ** 63n - 1n;
-const NETWORKS: Record<NetworkName, Network> = { mainnet: Network.Mainnet, testnet: Network.Testnet };
+const NETWORKS: Record<NetworkName, Network> = { mainnet: Network.Mainnet };
 
 export function isTodo(value: unknown): boolean {
   return typeof value === "string" && value.trimStart().startsWith("TODO");
@@ -91,7 +91,7 @@ export function validateDeployment(c: DeploymentConfig): string[] {
   const hex32 = (v: string) => (/^[0-9a-f]{64}$/.test(v) ? undefined : "must be 32 bytes of lowercase hex");
   const address = (types: AddressType[], what: string) => (v: string) => addressProblem(v, c.network, types, what);
 
-  if (!(c.network in NETWORKS)) problems.push(`network: must be "mainnet" or "testnet"`);
+  if (!(c.network in NETWORKS)) problems.push(`network: must be "mainnet"`);
   check("contract.source", (v) => (existsSync(new URL(`../${v}`, import.meta.url)) ? undefined : "file not found"));
   if (c.contract.ergoTreeVersion !== 0) problems.push("contract.ergoTreeVersion: must be 0");
   check("minFee", decimal(0n, MAX_LONG, 0));

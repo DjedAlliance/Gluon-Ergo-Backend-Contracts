@@ -33,14 +33,9 @@ function sourceAt(revision: string, paths: string[]): string {
 run(async () => {
   const problems: string[] = [];
 
-  const configs = ["config", "config/testnet"].flatMap((dir) => {
-    const url = new URL(`${dir}/`, ROOT);
-    return existsSync(url)
-      ? readdirSync(url)
-          .filter((f) => f.endsWith(".json") && f !== "networks.json")
-          .map((f) => `${dir}/${f}`)
-      : [];
-  });
+  const configs = readdirSync(new URL("config/", ROOT))
+    .filter((f) => f.endsWith(".json") && f !== "networks.json")
+    .map((f) => `config/${f}`);
   for (const file of configs) {
     for (const problem of validateDeployment(readDeployment(new URL(file, ROOT)))) problems.push(`${file}: ${problem}`);
   }

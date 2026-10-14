@@ -78,6 +78,7 @@ describe("Config validation", () => {
     ["a peg factor with more than 9 decimals", (c: DeploymentConfig) => void (c.bootstrap.initialPegFactor = "0.0000000001"), /at most 9 decimals/],
     ["a treasury that is not a single-signature address (N5)", (c: DeploymentConfig) => void (c.treasuryAddress = c.oracle.buybackContractAddress), /single-signature/],
     ["a treasury on another network", (c: DeploymentConfig) => void (c.treasuryAddress = TESTNET_P2PK), /not a mainnet address/],
+    ["a network other than mainnet", (c: DeploymentConfig) => void Object.assign(c, { network: "testnet" }), /network: must be "mainnet"/],
     ["a buyback NFT that is not 32 bytes of hex", (c: DeploymentConfig) => void (c.oracle.buybackNft = "dcce07af"), /32 bytes/],
     ["a ticker with spaces", (c: DeploymentConfig) => void (c.tokens.neutron.ticker = "Gluon Dollar"), /without spaces/],
     ["an emission that overflows a Long", (c: DeploymentConfig) => void (c.bootstrap.tokenEmission = "10000000000"), /tokenEmission: must be at most/],

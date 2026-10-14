@@ -2,7 +2,6 @@ import type { EIP12UnsignedTransaction, SignedTransaction } from "@fleet-sdk/com
 import { Network, utxoDiff, utxoSum } from "@fleet-sdk/common";
 import { ErgoHDKey } from "@fleet-sdk/wallet";
 import { type AvlTree, AvlTree$, type BlockchainStateContext, GroupElement$, ProverBuilder$ } from "sigmastate-js/main";
-import type { NetworkName } from "./config.ts";
 import type { ErgoNode } from "./node.ts";
 
 /**
@@ -61,14 +60,13 @@ export async function blockchainContext(node: ErgoNode): Promise<BlockchainState
  */
 export async function signTransaction(
   node: ErgoNode,
-  network: NetworkName,
   tx: EIP12UnsignedTransaction,
   keys: ErgoHDKey[],
 ): Promise<SignedTransaction> {
   const [{ parameters }, context] = await Promise.all([node.info(), blockchainContext(node)]);
   const builder = ProverBuilder$.create(
     { ...parameters, softForkStartingHeight: undefined, softForkVotesCollected: undefined },
-    network === "mainnet" ? Network.Mainnet : Network.Testnet,
+    Network.Mainnet,
   );
   for (const key of keys) {
     if (!key.privateKey) throw new Error("the signing key has no private key");
