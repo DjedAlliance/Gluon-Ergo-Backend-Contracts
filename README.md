@@ -60,21 +60,6 @@ for the reactors.
 
 ---
 
-## Project Maturity
-
-* [x] The project has a logo.
-* [ ] The protocol:
-   - [x] has been described and formally specified in a paper.
-   - [ ] has had its main properties mathematically proven.
-   - [ ] has been formally verified.
-* [ ] The smart contracts:
-   - [ ] were thoroughly reviewed by at least two knights of The Stable Order.
-   - [x] were deployed to:
-      - [x] Ergo
-* [ ] the project is listed in [https://stability.nexus/protocols](https://stability.nexus/protocols).
-
----
-
 ## Tech Stack
 
 ### Smart Contract
@@ -223,7 +208,7 @@ with the initial factor, which `deployments/` records.
 
 ### Changes from v2 to v3
 
-The live Gold reactor runs v2 (tag [`v2`](https://github.com/DjedAlliance/Gluon-Ergo-Backend-Contracts/tree/v2)).
+The live Gold reactor runs v2 (tag [`v2`](https://github.com/StabilityNexus/Gluon-Ergo-Contracts/tree/v2)).
 In v3, [`contracts/Gluon.es`](contracts/Gluon.es):
 
 - stores `(LastBucketBlock, PegFactor)` in R9, instead of `LastBucketBlock` alone;
